@@ -51,4 +51,6 @@ enum AppInfo {
 
     static let repositoryURL = URL(string: "https://github.com/TimmyAmant/marquee")!
     static let issuesURL = URL(string: "https://github.com/TimmyAmant/marquee/issues")!
+    /// docs/features.md: every feature, explained (Settings › About, Help).
+    static let featuresURL = URL(string: "https://github.com/TimmyAmant/marquee/blob/main/docs/features.md")!
 }

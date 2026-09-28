@@ -151,6 +151,7 @@ public sealed partial class AboutSettingsViewModel : ObservableObject
             ];
             AboutLinks = new[]
             {
+                LinkItem.Https(Loc.Get("About_AllFeatures"), about.FeaturesUri),
                 LinkItem.Https("GitHub", about.RepoUri),
                 LinkItem.Https(Loc.Get("About_ReportIssue"), about.IssuesUri),
             }.OfType<LinkItem>().ToList();

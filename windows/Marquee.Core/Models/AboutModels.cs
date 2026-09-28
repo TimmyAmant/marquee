@@ -41,6 +41,10 @@ public sealed record AboutInfo
 
     /// <summary>The "Report an issue" link.</summary>
     public Uri? IssuesUri => Uri.TryCreate(IssuesUrl, UriKind.Absolute, out var url) ? url : null;
+
+    /// <summary>The "All features" link: docs/features.md in the repository.</summary>
+    public Uri? FeaturesUri =>
+        RepoUri is null ? null : Uri.TryCreate($"{RepoUrl.TrimEnd('/')}/blob/main/docs/features.md", UriKind.Absolute, out var url) ? url : null;
 }
 
 /// <summary><c>GET /changelog</c>: one release, newest first. The website shows "Release v0.22.0" with "Latest" on the first.</summary>

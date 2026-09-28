@@ -61,6 +61,9 @@
   <data name="About_AboutHeading.Text" xml:space="preserve">
     <value>Sobre</value>
   </data>
+  <data name="About_AllFeatures" xml:space="preserve">
+    <value>Todos os recursos</value>
+  </data>
   <data name="About_AppVersion" xml:space="preserve">
     <value>Marquee para Windows {0}</value>
   </data>

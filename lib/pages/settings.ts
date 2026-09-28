@@ -25,6 +25,8 @@ import type { MessageKey } from "@/lib/i18n/translator";
 // app/settings/** and /api/v1/settings/**.
 
 export const REPO_URL = "https://github.com/TimmyAmant/marquee";
+/** docs/features.md on GitHub: every feature, explained (Settings › About). */
+export const FEATURES_URL = `${REPO_URL}/blob/main/docs/features.md`;
 
 /** Settings → About: version, library stats and support links. */
 export async function loadAboutPage(viewer: ViewerIdentity) {

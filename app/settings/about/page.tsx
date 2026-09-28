@@ -1,5 +1,5 @@
 import { getViewerContext } from "@/lib/integrations/library-owner";
-import { loadAboutPage, REPO_URL } from "@/lib/pages/settings";
+import { FEATURES_URL, loadAboutPage, REPO_URL } from "@/lib/pages/settings";
 import { getT } from "@/lib/i18n/server";
 import { formatNumber } from "@/lib/i18n/format";
 import { latestReleaseVersion, updateStatus } from "@/lib/updates/latest-release";
@@ -93,6 +93,7 @@ export default async function AboutSettingsPage() {
 
       <SettingsSection title={t("admin.gettingSupport")}>
         <SettingsGroup>
+          <LinkRow label={t("admin.allFeatures")} href={FEATURES_URL} />
           <LinkRow label={t("admin.changelog")} href="/changelog" />
           <LinkRow label={t("admin.colorsMeaning")} href="/help/colors" />
           <LinkRow label={t("admin.errorReference")} href="/help/errors" />
