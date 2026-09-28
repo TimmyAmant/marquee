@@ -177,7 +177,7 @@ struct PersonalNotificationsSection: View {
                         set: { set(row.event, column, on: $0) }
                     )
                 )
-                .toggleStyle(.checkbox)
+                .checkboxToggleStyle()
                 .labelsHidden()
             }
         }
@@ -445,8 +445,8 @@ private struct AddNotificationChannelSheet: View {
                     Text("A topic on the household's server").tag(ChannelForm.NtfyMode.household)
                     Text("A full topic URL").tag(ChannelForm.NtfyMode.url)
                 }
-                .pickerStyle(.radioGroup)
-                .horizontalRadioGroupLayout()
+                .choicePickerStyle()
+                .horizontalChoiceLayout()
                 .labelsHidden()
                 .font(.system(size: 12))
             }
@@ -484,7 +484,8 @@ private struct AddNotificationChannelSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 480)
+        .scrollsOnPhone()
+        .sheetWidth(480)
         .background(Theme.bg1)
         .onChange(of: form.kind) {
             error = nil
@@ -596,7 +597,7 @@ struct HouseholdEventsCard: View {
                                 get: { event.enabled },
                                 set: { toggle(event.event, $0) }
                             ))
-                            .toggleStyle(.checkbox)
+                            .checkboxToggleStyle()
                             .font(.system(size: 13))
                             .foregroundStyle(Theme.textSecondary)
                         }

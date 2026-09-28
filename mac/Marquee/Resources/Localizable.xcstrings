@@ -9772,35 +9772,6 @@
         }
       }
     },
-    "Choose what you're notified about" : {
-      "comment" : "Marquee for iPhone only.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auswählen, worüber du benachrichtigt wirst"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elige de qué recibes notificaciones"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisir ce qui vous est notifié"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escolher sobre o que você é notificado"
-          }
-        }
-      }
-    },
     "Choose where each kind of notification goes. The bell is the list at the top of every page; devices are the browsers, Macs and PCs you turned notifications on for." : {
       "localizations" : {
         "de" : {
@@ -16390,6 +16361,35 @@
         }
       }
     },
+    "Get notifications on this iPad?" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen auf diesem iPad erhalten?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Recibir notificaciones en este iPad?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recevoir des notifications sur cet iPad ?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receber notificações neste iPad?"
+          }
+        }
+      }
+    },
     "Get notifications on this iPhone?" : {
       "comment" : "Marquee for iPhone only.",
       "localizations" : {
@@ -21073,35 +21073,6 @@
         }
       }
     },
-    "Marquee for iPhone" : {
-      "comment" : "Marquee for iPhone only.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marquee für iPhone"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marquee para iPhone"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marquee pour iPhone"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marquee para iPhone"
-          }
-        }
-      }
-    },
     "Marquee for iPhone %@ is installed." : {
       "comment" : "Marquee for iPhone only.",
       "localizations" : {
@@ -25458,6 +25429,35 @@
         }
       }
     },
+    "Open on the website" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf der Website öffnen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir en el sitio web"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir sur le site web"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir no site"
+          }
+        }
+      }
+    },
     "Open the importer in your browser" : {
       "localizations" : {
         "de" : {
@@ -27304,6 +27304,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Executada deste Mac %@"
+          }
+        }
+      }
+    },
+    "Ran from this iPad %@" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von diesem iPad ausgeführt: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutada desde este iPad %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lancée depuis cet iPad %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executada deste iPad %@"
+          }
+        }
+      }
+    },
+    "Ran from this iPhone %@" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von diesem iPhone ausgeführt: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejecutada desde este iPhone %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lancée depuis cet iPhone %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Executada deste iPhone %@"
           }
         }
       }
@@ -32736,35 +32794,6 @@
         }
       }
     },
-    "Server settings" : {
-      "comment" : "Marquee for iPhone only.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Servereinstellungen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajustes del servidor"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paramètres du serveur"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Configurações do servidor"
-          }
-        }
-      }
-    },
     "Services" : {
       "localizations" : {
         "es" : {
@@ -32845,6 +32874,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Definir uma nova senha faz você sair de todos os dispositivos, inclusive deste Mac."
+          }
+        }
+      }
+    },
+    "Setting a new password signs you out of every device, including this iPad." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn du ein neues Passwort setzt, wirst du auf allen Geräten abgemeldet, auch auf diesem iPad."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poner una contraseña nueva cierra tu sesión en todos los dispositivos, incluido este iPad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir un nouveau mot de passe vous déconnecte de tous les appareils, y compris cet iPad."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir uma nova senha faz você sair de todos os dispositivos, inclusive deste iPad."
+          }
+        }
+      }
+    },
+    "Setting a new password signs you out of every device, including this iPhone." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn du ein neues Passwort setzt, wirst du auf allen Geräten abgemeldet, auch auf diesem iPhone."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poner una contraseña nueva cierra tu sesión en todos los dispositivos, incluido este iPhone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définir un nouveau mot de passe vous déconnecte de tous les appareils, y compris cet iPhone."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definir uma nova senha faz você sair de todos os dispositivos, inclusive deste iPhone."
           }
         }
       }
@@ -33353,6 +33440,35 @@
         }
       }
     },
+    "Show notifications on this iPad" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benachrichtigungen auf diesem iPad anzeigen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar notificaciones en este iPad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les notifications sur cet iPad"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar notificações neste iPad"
+          }
+        }
+      }
+    },
     "Show notifications on this iPhone" : {
       "comment" : "Marquee for iPhone only.",
       "localizations" : {
@@ -33855,6 +33971,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sai do Marquee neste Mac."
+          }
+        }
+      }
+    },
+    "Signs you out of Marquee on this iPad." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meldet dich auf diesem iPad von Marquee ab."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cierra tu sesión de Marquee en este iPad."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous déconnecte de Marquee sur cet iPad."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sai do Marquee neste iPad."
+          }
+        }
+      }
+    },
+    "Signs you out of Marquee on this iPhone." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meldet dich auf diesem iPhone von Marquee ab."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cierra tu sesión de Marquee en este iPhone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous déconnecte de Marquee sur cet iPhone."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sai do Marquee neste iPhone."
           }
         }
       }
@@ -37021,35 +37195,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não há nada para alterar: o 4K não está configurado neste servidor."
-          }
-        }
-      }
-    },
-    "These open on your Marquee server's website." : {
-      "comment" : "Marquee for iPhone only.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sie öffnen sich auf der Website deines Marquee-Servers."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se abren en el sitio web de tu servidor de Marquee."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ils s’ouvrent sur le site web de votre serveur Marquee."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elas abrem no site do seu servidor do Marquee."
           }
         }
       }
@@ -40637,35 +40782,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Em qual borda da janela o menu fica."
-          }
-        }
-      }
-    },
-    "While Marquee is open, from your Marquee server. The bell keeps them either way; for alerts when the app is closed, add a personal channel (ntfy, Pushover, Telegram…) on the website." : {
-      "comment" : "Marquee for iPhone only.",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Solange Marquee geöffnet ist, direkt von deinem Marquee-Server. Die Glocke behält sie so oder so; für Hinweise bei geschlossener App füge auf der Website einen persönlichen Kanal hinzu (ntfy, Pushover, Telegram …)."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mientras Marquee está abierto, desde tu servidor de Marquee. La campana las guarda de todos modos; para recibir avisos con la app cerrada, añade un canal personal (ntfy, Pushover, Telegram…) en el sitio web."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tant que Marquee est ouvert, depuis votre serveur Marquee. La cloche les conserve dans tous les cas ; pour être alerté quand l’app est fermée, ajoutez un canal personnel (ntfy, Pushover, Telegram…) sur le site web."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enquanto o Marquee está aberto, direto do seu servidor do Marquee. O sino guarda tudo de qualquer forma; para receber alertas com o app fechado, adicione um canal pessoal (ntfy, Pushover, Telegram…) no site."
           }
         }
       }

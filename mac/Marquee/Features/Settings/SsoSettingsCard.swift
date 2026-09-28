@@ -113,7 +113,7 @@ struct SsoSettingsCard: View {
             )
             if saved.hasClientSecret {
                 Toggle("Remove the saved secret (a public client)", isOn: $clearClientSecret)
-                    .toggleStyle(.checkbox)
+                    .checkboxToggleStyle()
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textMuted)
             }
@@ -334,6 +334,6 @@ private struct HintedToggle: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .toggleStyle(.checkbox)
+        .checkboxToggleStyle()
     }
 }

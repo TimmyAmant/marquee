@@ -382,6 +382,8 @@ private struct PlexCard: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
+    /// Where the plex.tv page opens: a sheet on iOS.
+    @State private var browser = SignInBrowser()
     @State private var waiting = false
     @State private var error: String?
     @State private var pollTask: Task<Void, Never>?
@@ -436,9 +438,10 @@ private struct PlexCard: View {
         error = nil
         let api = model.api
         pollTask = Task {
+            defer { browser.close() }
             do {
                 let pin = try await api.integrations.plex.startPin()
-                if let url = pin.url { openURL(url) }
+                if let url = pin.url { browser.open(url, openURL: openURL) }
                 let deadline = Date().addingTimeInterval(Self.timeout)
                 while Date() < deadline {
                     try await Task.sleep(for: Self.pollInterval)
@@ -1127,7 +1130,7 @@ private struct EmailCard: View {
                 hint: String(localized: "One or more addresses, separated by commas.")
             )
             Toggle("Secure connection from the start (TLS, usually port 465)", isOn: $secure)
-                .toggleStyle(.checkbox)
+                .checkboxToggleStyle()
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textSecondary)
         }

@@ -348,7 +348,7 @@ private struct OverrideRuleEditor: View {
             }
             .padding(20)
         }
-        .frame(width: 640, height: 640)
+        .sheetSize(width: 640, height: 640)
         .background(Theme.bg0)
         .task(id: rule.serverId) { await loadServer() }
         .onChange(of: rule.serverId) { _, _ in

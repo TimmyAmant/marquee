@@ -125,8 +125,20 @@ struct LogsSettingsView: View {
     @State private var loadError: String?
     @State private var copied = false
     @State private var exporting = false
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     private static let keep = 2000
+
+    /// A phone's width: the filters on one line and the buttons under them.
+    private var isCompact: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
         SettingsPane(
@@ -168,34 +180,52 @@ struct LogsSettingsView: View {
             : String(localized: "Updating every few seconds · \(entries.count) lines")
     }
 
+    @ViewBuilder
     private var toolbar: some View {
-        HStack(spacing: 10) {
-            Picker("Level", selection: $level) {
-                ForEach(API.LogLevel.knownCases, id: \.self) { level in
-                    Text("\(level.title) and up").tag(level)
-                }
+        if isCompact {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) { filters }
+                HStack(spacing: 10) { actions }
             }
-            .labelsHidden()
-            .fixedSize()
-            TextField("Filter lines", text: $query)
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: 260)
-            Spacer()
-            Button(paused ? "Resume" : "Pause") { paused.toggle() }
-                .buttonStyle(OutlineButtonStyle(compact: true))
-            Button(copied ? "Copied" : "Copy") { copy() }
-                .buttonStyle(OutlineButtonStyle(compact: true))
-                .disabled(entries.isEmpty)
-            Button("Download") { exporting = true }
-                .buttonStyle(OutlineButtonStyle(compact: true))
-                .disabled(entries.isEmpty)
-                .fileExporter(
-                    isPresented: $exporting,
-                    document: LogDocument(text: logText),
-                    contentType: .plainText,
-                    defaultFilename: "marquee.log"
-                ) { _ in }
+        } else {
+            HStack(spacing: 10) {
+                filters
+                Spacer()
+                actions
+            }
         }
+    }
+
+    @ViewBuilder
+    private var filters: some View {
+        Picker("Level", selection: $level) {
+            ForEach(API.LogLevel.knownCases, id: \.self) { level in
+                Text("\(level.title) and up").tag(level)
+            }
+        }
+        .labelsHidden()
+        .fixedSize()
+        TextField("Filter lines", text: $query)
+            .textFieldStyle(.roundedBorder)
+            .frame(maxWidth: isCompact ? .infinity : 260)
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        Button(paused ? "Resume" : "Pause") { paused.toggle() }
+            .buttonStyle(OutlineButtonStyle(compact: true))
+        Button(copied ? "Copied" : "Copy") { copy() }
+            .buttonStyle(OutlineButtonStyle(compact: true))
+            .disabled(entries.isEmpty)
+        Button("Download") { exporting = true }
+            .buttonStyle(OutlineButtonStyle(compact: true))
+            .disabled(entries.isEmpty)
+            .fileExporter(
+                isPresented: $exporting,
+                document: LogDocument(text: logText),
+                contentType: .plainText,
+                defaultFilename: "marquee.log"
+            ) { _ in }
     }
 
     private var logText: String {
@@ -256,31 +286,73 @@ struct LogsSettingsView: View {
 /// One log line: when, how bad, from where, and what.
 private struct LogLineRow: View {
     let entry: API.LogEntry
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(entry.time.formatted(date: .abbreviated, time: .standard))
-                .foregroundStyle(Theme.textMuted)
-                .frame(width: 150, alignment: .leading)
-            Text(entry.level.title)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(tone)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 1)
-                .overlay(Capsule().strokeBorder(tone.opacity(0.5)))
-            Text(entry.source)
-                .foregroundStyle(Theme.textSecondary)
-                .lineLimit(1)
-                .frame(width: 110, alignment: .leading)
-            Text(entry.message)
-                .foregroundStyle(Theme.textPrimary)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+        Group {
+            #if os(iOS)
+            if horizontalSizeClass == .compact {
+                // A phone's width: when, how bad and where on one line, the
+                // message under it.
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        time
+                        level
+                        source
+                    }
+                    message
+                }
+            } else {
+                columns
+            }
+            #else
+            columns
+            #endif
         }
         .font(.system(size: 11.5, design: .monospaced))
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
+    }
+
+    private var columns: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            time
+                .frame(width: 150, alignment: .leading)
+            level
+            source
+                .frame(width: 110, alignment: .leading)
+            message
+        }
+    }
+
+    private var time: some View {
+        Text(entry.time.formatted(date: .abbreviated, time: .standard))
+            .foregroundStyle(Theme.textMuted)
+    }
+
+    private var level: some View {
+        Text(entry.level.title)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(tone)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .overlay(Capsule().strokeBorder(tone.opacity(0.5)))
+    }
+
+    private var source: some View {
+        Text(entry.source)
+            .foregroundStyle(Theme.textSecondary)
+            .lineLimit(1)
+    }
+
+    private var message: some View {
+        Text(entry.message)
+            .foregroundStyle(Theme.textPrimary)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var tone: Color {

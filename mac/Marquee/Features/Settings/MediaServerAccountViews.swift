@@ -10,6 +10,8 @@ struct LinkedAccountsCard: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
+    /// Where the plex.tv (or single sign-on) page opens: a sheet on iOS.
+    @State private var browser = SignInBrowser()
     @State private var busy: API.MediaServer?
     @State private var plexTask: Task<Void, Never>?
     /// Linking or unlinking single sign-on (not a media server).
@@ -81,7 +83,7 @@ struct LinkedAccountsCard: View {
             cancelPlex()
             cancelSso()
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: Platform.willTerminateNotification)) { _ in
             cancelPlex()
             cancelSso()
         }
@@ -124,13 +126,14 @@ struct LinkedAccountsCard: View {
         let api = model.api
         let server = model.session.server?.baseURL
         ssoTask = Task {
+            defer { browser.close() }
             do {
                 let start = try await api.links.ssoStart()
                 // Only https, or the server's own address — never anything else.
                 guard let url = start.url(server: server) else {
                     throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
                 }
-                openURL(url)
+                browser.open(url, openURL: openURL)
                 _ = try await PlexPoll.run(expiresAt: start.expiresAt, expired: .ssoExpired) {
                     try await api.links.ssoPoll(handle: start.handle) ? true : nil
                 }
@@ -219,12 +222,13 @@ struct LinkedAccountsCard: View {
         busy = .plex
         let api = model.api
         plexTask = Task {
+            defer { browser.close() }
             do {
                 let start = try await api.links.plexStart()
                 guard let url = start.url else {
                     throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
                 }
-                openURL(url)
+                browser.open(url, openURL: openURL)
                 _ = try await PlexPoll.run(expiresAt: start.expiresAt) {
                     try await api.links.plexPoll(handle: start.handle) ? true : nil
                 }
@@ -271,6 +275,8 @@ struct PlexWatchlistCard: View {
 
     @Environment(AppModel.self) private var model
     @Environment(\.openURL) private var openURL
+    /// Where the plex.tv (or single sign-on) page opens: a sheet on iOS.
+    @State private var browser = SignInBrowser()
     @State private var approval: Task<Void, Never>?
     @State private var followUp: Task<Void, Never>?
     @State private var busy = false
@@ -283,7 +289,7 @@ struct PlexWatchlistCard: View {
     var body: some View {
         card(state ?? .unavailable)
             .onDisappear { stopWaiting() }
-            .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            .onReceive(NotificationCenter.default.publisher(for: Platform.willTerminateNotification)) { _ in
                 stopWaiting()
             }
     }
@@ -334,7 +340,7 @@ struct PlexWatchlistCard: View {
                         set: { on in apply { api in try await api.plexWatchlist.setTypes(tv: on) } }
                     ))
                 }
-                .toggleStyle(.checkbox)
+                .checkboxToggleStyle()
                 .font(.system(size: 12.5))
                 .foregroundStyle(Theme.textSecondary)
                 .disabled(busy)
@@ -383,12 +389,13 @@ struct PlexWatchlistCard: View {
         error = nil
         let api = model.api
         approval = Task {
+            defer { browser.close() }
             do {
                 let start = try await api.plexWatchlist.start()
                 guard let url = start.url else {
                     throw APIError.server(String(localized: "Your Marquee server sent a Plex sign-in link this app couldn't open."))
                 }
-                openURL(url)
+                browser.open(url, openURL: openURL)
                 state = try await PlexPoll.run(expiresAt: start.expiresAt) {
                     try await api.plexWatchlist.poll(handle: start.handle)
                 }
@@ -460,7 +467,8 @@ private struct JellyfinLinkSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 400)
+        .scrollsOnPhone()
+        .sheetWidth(400)
         .background(Theme.bg1)
     }
 
@@ -636,9 +644,9 @@ private struct ImportMembersSheet: View {
                     .disabled(pending || selected.isEmpty)
             }
         }
-        .toggleStyle(.checkbox)
+        .checkboxToggleStyle()
         .padding(24)
-        .frame(width: 440)
+        .sheetWidth(440)
         .background(Theme.bg1)
         .task { await load() }
     }

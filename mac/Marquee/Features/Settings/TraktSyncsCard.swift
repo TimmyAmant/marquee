@@ -275,7 +275,7 @@ struct TraktSyncsCard: View {
                     }
                 ))
             }
-            .toggleStyle(.checkbox)
+            .checkboxToggleStyle()
             .font(.system(size: 12.5))
             .foregroundStyle(Theme.textSecondary)
             .disabled(busy)
@@ -339,7 +339,7 @@ struct TraktSyncsCard: View {
                 Toggle("TV shows", isOn: $trakt.tv)
                 Toggle("Also request what's on it now", isOn: $trakt.requestExisting)
             }
-            .toggleStyle(.checkbox)
+            .checkboxToggleStyle()
             .font(.system(size: 12.5))
             .foregroundStyle(Theme.textSecondary)
             if let error = trakt.addError { InlineMessage(text: error) }

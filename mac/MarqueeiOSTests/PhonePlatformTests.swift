@@ -55,6 +55,24 @@ struct PhonePlatformTests {
         #expect(PlatformText.openSystemSettings == "Open Settings")
     }
 
+    /// "this iPad" on an iPad (the notification prompt said iPhone there).
+    @MainActor
+    @Test func messagesNameThisDevice() {
+        let device = PlatformText.isPad ? "iPad" : "iPhone"
+        let messages = [
+            PlatformText.showNotificationsHere,
+            PlatformText.getNotificationsHere,
+            PlatformText.signsOutHere,
+            PlatformText.newPasswordSignsOut,
+            PlatformText.ranHere("now"),
+        ]
+        for message in messages {
+            #expect(message.contains(device), "\(message)")
+            #expect(!message.contains("Mac"), "\(message)")
+        }
+        #expect(!PlatformText.notificationsOffInSystem.contains("System Settings"))
+    }
+
     @MainActor
     @Test func theDeviceListNamesTheModel() {
         #expect(DeviceModels.names["iPhone18,1"] == "iPhone 17 Pro")

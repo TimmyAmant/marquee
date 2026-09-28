@@ -418,7 +418,7 @@ private struct ArrServerSheet: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 14)
         }
-        .frame(width: 540, height: 640)
+        .sheetSize(width: 540, height: 640)
         .background(Theme.bg1)
         .task { await loadSavedOptions() }
     }
@@ -448,11 +448,11 @@ private struct ArrServerSheet: View {
             }
         }
         Toggle("4K server — 4K requests and Add in 4K go here", isOn: $form.is4k)
-            .toggleStyle(.checkbox)
+            .checkboxToggleStyle()
             .font(.system(size: 12.5))
         VStack(alignment: .leading, spacing: 4) {
             Toggle("Default — titles go here when nobody picks a server", isOn: $form.isDefault)
-                .toggleStyle(.checkbox)
+                .checkboxToggleStyle()
                 .font(.system(size: 12.5))
                 .disabled(!form.canChangeDefault)
             if !form.canChangeDefault {
@@ -498,7 +498,7 @@ private struct ArrServerSheet: View {
                 }
                 hint(String(localized: "For shows that aren't anime. Anime shows are added as Anime unless you pick otherwise when approving."))
                 Toggle("Season folders", isOn: $form.seasonFolders)
-                    .toggleStyle(.checkbox)
+                    .checkboxToggleStyle()
                     .font(.system(size: 12.5))
                 Text("Anime")
                     .font(.system(size: 12.5, weight: .semibold))
@@ -565,7 +565,7 @@ private struct ArrServerSheet: View {
                                 if on { selection.wrappedValue.insert(tag.id) } else { selection.wrappedValue.remove(tag.id) }
                             }
                         ))
-                        .toggleStyle(.checkbox)
+                        .checkboxToggleStyle()
                         .font(.system(size: 12))
                     }
                 }

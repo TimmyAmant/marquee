@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import Observation
 
@@ -422,8 +421,7 @@ private struct SecretCopyButton: View {
 
     var body: some View {
         Button(copied ? "Copied" : "Copy") {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(value, forType: .string)
+            Platform.copy(value)
             copied = true
             Task {
                 try? await Task.sleep(for: .seconds(1.5))
