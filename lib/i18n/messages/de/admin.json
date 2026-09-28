@@ -47,7 +47,7 @@
   "jobDiskSpaceDescription": "Erfasst freien und belegten Speicherplatz für die Speicherprognose an anderer Stelle in der App.",
   "jobCleanupName": "Datenbank aufräumen",
   "jobCleanupDescription": "Entfernt alte Benachrichtigungen und Aktivitäten, ein Jahr alte Speicher-Momentaufnahmen und abgelaufene App-Anmeldungen, damit die Datenbank nicht endlos wächst.",
-  "jobScheduleInvalid": "Wähle, wie oft: alle 5, 10, 15 oder 30 Minuten, alle 1–12 Stunden oder einmal am Tag zu einer Uhrzeit.",
+  "jobScheduleInvalid": "Wähle, wie oft: alle 5, 10, 15 oder 30 Minuten, alle 1, 2, 3, 4, 6, 8 oder 12 Stunden oder einmal am Tag zu einer Uhrzeit.",
   "jobScheduleSaved": "Zeitplan gespeichert",
   "jobHowOften": "Wie oft {job} läuft",
   "scheduleDaily": "Einmal am Tag",

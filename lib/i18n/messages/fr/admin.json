@@ -47,7 +47,7 @@
   "jobDiskSpaceDescription": "Enregistre l’espace disque libre et utilisé pour la prévision de stockage affichée ailleurs dans l’app.",
   "jobCleanupName": "Nettoyage de la base de données",
   "jobCleanupDescription": "Supprime les anciennes notifications et activités, les relevés disque de plus d’un an et les connexions d’app expirées, pour que la base de données ne grossisse pas indéfiniment.",
-  "jobScheduleInvalid": "Choisissez la fréquence : toutes les 5, 10, 15 ou 30 minutes, toutes les 1 à 12 heures, ou une fois par jour à une heure donnée.",
+  "jobScheduleInvalid": "Choisissez la fréquence : toutes les 5, 10, 15 ou 30 minutes, toutes les 1, 2, 3, 4, 6, 8 ou 12 heures, ou une fois par jour à une heure donnée.",
   "jobScheduleSaved": "Planification enregistrée",
   "jobHowOften": "Fréquence de {job}",
   "scheduleDaily": "Une fois par jour",

@@ -235,7 +235,7 @@ function ChannelRow({
   );
 }
 
-type Field = { name: string; label: string; placeholder?: string; hint?: string; type?: string };
+type Field = { name: string; label: string; placeholder?: string; hint?: string; type?: string; optional?: boolean };
 
 const WEBHOOK_SHAPE = "{ event, preference, title, message, mediaType, tmdbId }";
 
@@ -317,7 +317,7 @@ function fieldsFor(
       return [
         { name: "url", label: t("settings.gotifyServer"), placeholder: "https://gotify.example.com" },
         { name: "appToken", label: t("settings.gotifyAppToken"), type: "password", hint: t("settings.gotifyAppTokenHint") },
-        { name: "priority", label: t("settings.gotifyPriority"), placeholder: "5", type: "number", hint: t("settings.gotifyPriorityHint") },
+        { name: "priority", label: t("settings.gotifyPriority"), placeholder: "5", type: "number", hint: t("settings.gotifyPriorityHint"), optional: true },
       ];
     case "pushbullet":
       return [
@@ -327,7 +327,7 @@ function fieldsFor(
           type: "password",
           hint: t("settings.pushbulletTokenHint"),
         },
-        { name: "channelTag", label: t("settings.pushbulletChannel"), hint: t("settings.pushbulletChannelHint") },
+        { name: "channelTag", label: t("settings.pushbulletChannel"), hint: t("settings.pushbulletChannelHint"), optional: true },
       ];
   }
 }
@@ -464,7 +464,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
         {fields.map((field) => (
           <label key={field.name} className="flex flex-col gap-1.5 text-text-secondary">
             {field.label}
-            <input name={field.name} type={field.type ?? "text"} required autoComplete="off" placeholder={field.placeholder} className={inputClass} />
+            <input name={field.name} type={field.type ?? "text"} required={!field.optional} autoComplete="off" placeholder={field.placeholder} className={inputClass} />
             {field.hint && <span className="text-xs text-text-muted">{field.hint}</span>}
           </label>
         ))}

@@ -1,4 +1,4 @@
-import { inspect } from "util";
+import { formatWithOptions } from "util";
 import { redactSecrets } from "@/lib/logs/redact";
 
 // The log lines Settings › Logs shows: the last few thousand, in memory,
@@ -29,13 +29,8 @@ export function isLogLevel(value: unknown): value is LogLevel {
 /** The console arguments as one line of text, like console.log prints
  * them. */
 export function formatArgs(args: unknown[]): string {
-  return args
-    .map((arg) => {
-      if (typeof arg === "string") return arg;
-      if (arg instanceof Error) return arg.stack ?? `${arg.name}: ${arg.message}`;
-      return inspect(arg, { depth: 3, breakLength: Infinity, maxStringLength: 2000 });
-    })
-    .join(" ");
+  // console's own formatting, so "%s" placeholders fill in the same way.
+  return formatWithOptions({ depth: 3, breakLength: Infinity, maxStringLength: 2000 }, ...args);
 }
 
 /** "[plex-sync] scheduled sync failed" → source "plex-sync", the rest the

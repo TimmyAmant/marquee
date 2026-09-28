@@ -47,7 +47,7 @@
   "jobDiskSpaceDescription": "Records free/used disk space for the storage forecast shown elsewhere in the app.",
   "jobCleanupName": "Database Cleanup",
   "jobCleanupDescription": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever.",
-  "jobScheduleInvalid": "Pick how often: every 5, 10, 15 or 30 minutes, every 1–12 hours, or once a day at a time.",
+  "jobScheduleInvalid": "Pick how often: every 5, 10, 15 or 30 minutes, every 1, 2, 3, 4, 6, 8 or 12 hours, or once a day at a time.",
   "jobScheduleSaved": "Schedule saved",
   "jobHowOften": "How often {job} runs",
   "scheduleDaily": "Once a day",

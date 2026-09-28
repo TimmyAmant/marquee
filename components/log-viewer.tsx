@@ -109,7 +109,7 @@ export function LogViewer() {
           id="log-level"
           value={level}
           onChange={(e) => setLevel(e.target.value as LogLevel)}
-          className={`${SETTINGS_INPUT} w-auto py-2`}
+          className="rounded-lg border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent"
         >
           {(Object.keys(LEVEL_LABELS) as LogLevel[]).map((l) => (
             <option key={l} value={l}>

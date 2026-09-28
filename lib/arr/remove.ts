@@ -43,7 +43,7 @@ export async function removeTitleFromArr(
   const failed = copies.filter((_, i) => results[i].status === "rejected").map((c) => c.server.name);
   for (const [i, result] of results.entries()) {
     if (result.status === "rejected") {
-      console.error(`[arr-remove] ${copies[i].server.name} didn't remove ${mediaType} ${tmdbId}:`, result.reason);
+      console.error("[arr-remove] %s didn't remove %s %d:", copies[i].server.name, mediaType, tmdbId, result.reason);
     }
   }
   if (removedFrom.length === 0) {

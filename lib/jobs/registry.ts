@@ -115,7 +115,7 @@ function thenCheckComplete(sync: () => Promise<void>): () => Promise<void> {
   };
 }
 
-export const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
+const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   "plex-sync": thenCheckComplete(syncAllConnectedPlexUsers),
   "jellyfin-sync": thenCheckComplete(syncAllConnectedJellyfinUsers),
   "arr-sync": thenCheckComplete(syncAllConnectedArrUsers),
@@ -126,13 +126,20 @@ export const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   cleanup: pruneOldRecords,
 };
 
+const RUNNERS = new Map<string, () => Promise<void>>(Object.entries(JOB_RUNNERS));
+
+/** A job's runner; undefined for anything that isn't one of the jobs. */
+function runnerFor(jobId: string): (() => Promise<void>) | undefined {
+  return RUNNERS.get(jobId);
+}
+
 /** Runs a job and records it, however it was started. Throws what the job
  * threw. */
 export async function runRecorded(jobId: JobId): Promise<void> {
   const state = jobState();
   state.running.add(jobId);
   try {
-    await JOB_RUNNERS[jobId]();
+    await runnerFor(jobId)?.();
   } finally {
     state.running.delete(jobId);
     state.lastRunAt.set(jobId, new Date());
@@ -144,7 +151,7 @@ export async function runRecorded(jobId: JobId): Promise<void> {
  * every call site, since these sync every connected user's data. */
 export async function runJob(jobId: JobId): Promise<CoreResult> {
   const t = await getT();
-  if (!JOB_RUNNERS[jobId]) return fail("not_found", t("admin.unknownJob"));
+  if (!runnerFor(jobId)) return fail("not_found", t("admin.unknownJob"));
 
   try {
     await runRecorded(jobId);

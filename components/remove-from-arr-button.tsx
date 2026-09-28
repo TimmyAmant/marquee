@@ -65,6 +65,9 @@ export function RemoveFromArrButton({
       <button
         type="button"
         onClick={() => {
+          // The "…" menu closes on Escape (components/title-more-menu.tsx),
+          // so the dialog isn't drawn over it.
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
           setDeleteFiles(false);
           setError(null);
           setOpen(true);
