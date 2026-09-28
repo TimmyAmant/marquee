@@ -184,27 +184,31 @@ export default async function TitlePage({
         playLinks={viewer.session ? data.playLinks : []}
         arrLinks={viewer.session ? data.arrLinks : []}
         logo={titleLogo ? { path: titleLogo.file_path, aspectRatio: titleLogo.aspect_ratio } : null}
+        lead={
+          <>
+            {seasons.length > 0 && (
+              <section>
+                <h2 className="mb-3 font-display text-[20px] font-semibold leading-none tracking-[-0.005em] text-text-primary">
+                  {t("title.episodesHeading")}
+                </h2>
+                <SeasonAccordion
+                  seasons={seasons}
+                  tmdbId={tmdbId}
+                  tvdbId={title.tvdbId}
+                  completeness={seasonCompleteness ?? undefined}
+                />
+              </section>
+            )}
+
+            <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
+          </>
+        }
       />
 
       {/* Every row under the hero spans the same width, between the same
-          gutters as the hero's poster and facts card. */}
+          gutters as the hero's poster and facts card (Episodes and the cast
+          are in the hero, beside the facts card). */}
       <div className="flex flex-col gap-12 px-6 pb-20 pt-12 xl:pl-12 xl:pr-10">
-        <CastRow cast={cast} favoritedIds={castFavoritedIds} showFavorite={Boolean(viewer.session)} />
-
-        {seasons.length > 0 && (
-          <section>
-            <h2 className="mb-3 font-display text-[20px] font-semibold leading-none tracking-[-0.005em] text-text-primary">
-              {t("title.episodesHeading")}
-            </h2>
-            <SeasonAccordion
-              seasons={seasons}
-              tmdbId={tmdbId}
-              tvdbId={title.tvdbId}
-              completeness={seasonCompleteness ?? undefined}
-            />
-          </section>
-        )}
-
         {franchiseTitle && (
           <FranchiseRow
             title={franchiseTitle}

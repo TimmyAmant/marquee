@@ -13,10 +13,10 @@ const FADES = [
   // Behind the poster and the text column, strong enough across it that a
   // bright or busy frame (a grey sky, faces) never fights the logo, the pills
   // or the overview, and gone well before the right edge.
-  "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 94%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 84%, transparent) 30%, color-mix(in srgb, var(--marquee-bg-0) 62%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 26%, transparent) 74%, transparent 92%)",
+  "linear-gradient(to right, color-mix(in srgb, var(--marquee-bg-0) 82%, transparent) 0%, color-mix(in srgb, var(--marquee-bg-0) 66%, transparent) 30%, color-mix(in srgb, var(--marquee-bg-0) 40%, transparent) 52%, color-mix(in srgb, var(--marquee-bg-0) 12%, transparent) 74%, transparent 92%)",
   // A light veil over all of it, so a bright image sits at the same level as
   // a dark one.
-  "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 22%, transparent), color-mix(in srgb, var(--marquee-bg-0) 22%, transparent))",
+  "linear-gradient(color-mix(in srgb, var(--marquee-bg-0) 10%, transparent), color-mix(in srgb, var(--marquee-bg-0) 10%, transparent))",
 ].join(", ");
 
 /**
@@ -60,7 +60,7 @@ export const TITLE_HERO_GUTTERS = "px-6 xl:pl-12 xl:pr-10";
 
 /** Poster | the title and everything about it | facts, from 1280px. */
 export const TITLE_HERO_GRID =
-  "grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] 3xl:grid-cols-[264px_minmax(0,1fr)_340px] 3xl:gap-x-12 4xl:grid-cols-[300px_minmax(0,1fr)_380px] 4xl:gap-x-16";
+  "grid grid-cols-1 gap-x-8 gap-y-8 pt-[150px] sm:grid-cols-[224px_minmax(0,1fr)] sm:pt-[190px] md:pt-[calc(var(--hero-h)*0.4)] xl:grid-cols-[224px_minmax(0,1fr)_300px] xl:grid-rows-[auto_1fr] 3xl:grid-cols-[264px_minmax(0,1fr)_340px] 3xl:gap-x-12 4xl:grid-cols-[300px_minmax(0,1fr)_380px] 4xl:gap-x-16";
 
 /** The poster's frame at each width. */
 export const TITLE_POSTER_BOX =

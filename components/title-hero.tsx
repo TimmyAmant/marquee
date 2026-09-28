@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
@@ -161,6 +162,7 @@ export async function TitleHero({
   file,
   runtimeLabel,
   logo = null,
+  lead,
   share,
   myRequests = [],
   may,
@@ -206,6 +208,10 @@ export async function TitleHero({
   /** TMDb's title-treatment artwork (lib/tmdb/logo.ts), shown in place of
    * the plain-text name in the dark theme; null without one. */
   logo?: { path: string; aspectRatio: number } | null;
+  /** Episodes and the cast: under the poster and the title, beside the
+   * facts card from 1280px, so they start right under the overview and stop
+   * before the file details (the Mac and Windows apps' layout). */
+  lead?: ReactNode;
   /** "Share" (signed in): Marquee's public address, null when none is set. */
   share?: { publicBase: string | null } | null;
   /** The viewer's own requests for this title: Edit / Cancel and comments. */
@@ -467,7 +473,7 @@ export async function TitleHero({
             </div>
           </div>
 
-          <aside className="min-w-0 sm:col-span-2 xl:col-span-1">
+          <aside className="min-w-0 sm:col-span-2 xl:col-span-1 xl:col-start-3 xl:row-span-2 xl:row-start-1">
             <div className={TITLE_FACTS_CARD}>
               {meta.ratingPercent !== null && (
                 <div className="flex h-[50px] items-center justify-between gap-2.5">
@@ -548,6 +554,12 @@ export async function TitleHero({
               </div>
             )}
           </aside>
+
+          {lead && (
+            <div className="flex min-w-0 flex-col gap-12 self-start pt-4 sm:col-span-2 xl:col-start-1 xl:row-start-2">
+              {lead}
+            </div>
+          )}
         </div>
       </div>
     </div>

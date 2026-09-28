@@ -201,25 +201,35 @@ struct TitleDetailView: View {
                         )
                         .equatable()
 
+                        // Episodes and the cast sit under the poster and the
+                        // title, beside the facts rail, so they start right
+                        // under the overview and stop before the file card
+                        // (the Windows app's layout).
                         HStack(alignment: .top, spacing: Metrics.titleColumnGap) {
-                            TitlePoster(posterPath: detail.posterPath)
-                                .equatable()
+                            VStack(alignment: .leading, spacing: 0) {
+                                HStack(alignment: .top, spacing: Metrics.titleColumnGap) {
+                                    TitlePoster(posterPath: detail.posterPath)
+                                        .equatable()
 
-                            TitleMainColumn(
-                                screen: screen,
-                                detail: detail,
-                                onTrailer: { showingTrailer = true },
-                                onRelink: { showingRelink = true },
-                                onPickSeasons: { showingSeasonPicker = true },
-                                onReportProblem: { showingReportProblem = true },
-                                onShare: { showingShare = true }
-                            )
-                            // A readable measure however wide the window;
-                            // the artwork shows through beside it.
-                            .frame(maxWidth: hero.textWidth, alignment: .leading)
-                            .padding(.top, Metrics.titleColumnTop)
+                                    TitleMainColumn(
+                                        screen: screen,
+                                        detail: detail,
+                                        onTrailer: { showingTrailer = true },
+                                        onRelink: { showingRelink = true },
+                                        onPickSeasons: { showingSeasonPicker = true },
+                                        onReportProblem: { showingReportProblem = true },
+                                        onShare: { showingShare = true }
+                                    )
+                                    // A readable measure however wide the window;
+                                    // the artwork shows through beside it.
+                                    .frame(maxWidth: hero.textWidth, alignment: .leading)
+                                    .padding(.top, Metrics.titleColumnTop)
+                                }
 
-                            Spacer(minLength: 0)
+                                leadSections(detail)
+                                    .padding(.top, 40)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
                             TitleSidebarColumn(detail: detail)
                                 .frame(width: hero.railWidth)
@@ -230,7 +240,7 @@ struct TitleDetailView: View {
                         .padding(.top, hero.posterTop)
                     }
 
-                    lowerSections(detail)
+                    restSections(detail)
                     .padding(.leading, leading)
                     .padding(.trailing, trailing)
                     .padding(.top, 44)
@@ -243,6 +253,14 @@ struct TitleDetailView: View {
 
     /// Episodes, cast, the franchise, studios and "More like this".
     private func lowerSections(_ detail: API.TitleDetail) -> some View {
+        VStack(alignment: .leading, spacing: 44) {
+            leadSections(detail)
+            restSections(detail)
+        }
+    }
+
+    /// Episodes and the cast: beside the facts rail on the wide page.
+    private func leadSections(_ detail: API.TitleDetail) -> some View {
         VStack(alignment: .leading, spacing: 44) {
             if !detail.seasons.isEmpty {
                 VStack(alignment: .leading, spacing: Metrics.shelfHeadGap) {
@@ -265,6 +283,12 @@ struct TitleDetailView: View {
                     }
                 }
             }
+        }
+    }
+
+    /// The franchise, studios and "More like this", across the whole width.
+    private func restSections(_ detail: API.TitleDetail) -> some View {
+        VStack(alignment: .leading, spacing: 44) {
             if let franchise = detail.franchise, !franchise.items.isEmpty {
                 FranchiseSection(screen: screen, franchise: franchise)
             }
@@ -369,7 +393,7 @@ struct TitleBackdrop: View, Equatable {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     }
                     FilmGrain(seed: seed).opacity(Theme.grainOpacity)
-                    Theme.bg0.opacity(0.22)
+                    Theme.bg0.opacity(0.1)
                     LinearGradient(
                         stops: [
                             .init(color: Theme.bg0.opacity(0.7), location: 0),
@@ -394,10 +418,10 @@ struct TitleBackdrop: View, Equatable {
                     if sideFade {
                     LinearGradient(
                         stops: [
-                            .init(color: Theme.bg0.opacity(0.94), location: 0),
-                            .init(color: Theme.bg0.opacity(0.84), location: 0.3),
-                            .init(color: Theme.bg0.opacity(0.62), location: 0.52),
-                            .init(color: Theme.bg0.opacity(0.26), location: 0.74),
+                            .init(color: Theme.bg0.opacity(0.82), location: 0),
+                            .init(color: Theme.bg0.opacity(0.66), location: 0.3),
+                            .init(color: Theme.bg0.opacity(0.4), location: 0.52),
+                            .init(color: Theme.bg0.opacity(0.12), location: 0.74),
                             .init(color: .clear, location: 0.92),
                         ],
                         startPoint: .leading,
