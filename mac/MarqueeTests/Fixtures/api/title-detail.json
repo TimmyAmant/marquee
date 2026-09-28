@@ -148,7 +148,15 @@
     "blocked": null,
     "notFoundSince": null,
     "myRequests": [],
-    "autoApprove": true
+    "autoApprove": true,
+    "arrLinks": [
+      {
+        "kind": "radarr",
+        "serverName": "Radarr",
+        "is4k": false,
+        "url": "https://radarr.example.com/movie/603"
+      }
+    ]
   },
   "seasons": [],
   "cast": [

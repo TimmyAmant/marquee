@@ -791,6 +791,10 @@ private struct TitleActionRow: View {
     let onShare: () -> Void
 
     @Environment(AppModel.self) private var model
+    @Environment(\.openURL) private var openURL
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
     /// "Block requests" opened its reason field.
     @State private var askingBlockReason = false
     @State private var blockReason = ""
@@ -813,6 +817,10 @@ private struct TitleActionRow: View {
         // "Remove from Radarr 4K": only while a 4K server has it.
         let menuRemoveFourK = model.viewer?.isAdmin == true && viewer.fourK.map { $0.status != .untracked } == true
         let removeArrName = removingFourK ? "\(detail.mediaType.arrName) 4K" : detail.mediaType.arrName
+        // "Open in Radarr/Sonarr" (0.63+): pills after the status, or rows
+        // of "…" on a phone, where the row is already full.
+        let arrLinks = viewer.openInArrLinks
+        let arrLinksInMenu = linksInMenu && !arrLinks.isEmpty
         VStack(alignment: .leading, spacing: 8) {
             // components/title-hero.tsx (0.54+): one row of 32pt capsules on
             // a shared midline — the main action first, then the library
@@ -929,6 +937,18 @@ private struct TitleActionRow: View {
                     if splitFourK { advancedChevron(viewer, filled: false) }
                 }
 
+                if !linksInMenu {
+                    ForEach(arrLinks) { item in
+                        Button {
+                            open(item.link)
+                        } label: {
+                            arrLinkLabel(item.link, item.title)
+                        }
+                        .buttonStyle(OutlineButtonStyle(pill: .large))
+                        .help(item.link.url)
+                    }
+                }
+
                 // components/report-problem-button.tsx (0.38+): once something
                 // is reported, a "Problem reported" pill and "Report another"
                 // (another episode can still be reported).
@@ -967,8 +987,17 @@ private struct TitleActionRow: View {
 
                 // components/title-more-menu.tsx: the tools nobody needs
                 // every visit.
-                if menuTracking != nil || menuBlock || viewer.canRelink || menuRemoveFourK {
+                if menuTracking != nil || menuBlock || viewer.canRelink || menuRemoveFourK || arrLinksInMenu {
                     Menu {
+                        if arrLinksInMenu {
+                            ForEach(arrLinks) { item in
+                                Button {
+                                    open(item.link)
+                                } label: {
+                                    Label(item.title, systemImage: "arrow.up.right.square")
+                                }
+                            }
+                        }
                         if let tracking = menuTracking {
                             Button {
                                 screen.searchNow()
@@ -1224,6 +1253,33 @@ private struct TitleActionRow: View {
         .disabled(screen.isAdding || screen.isFourKBusy)
         .help("Pick the server, quality profile, root folder and tags it's added with.")
         .accessibilityLabel(String(localized: "Advanced options"))
+    }
+
+    /// The phone's compact title page puts "Open in …" in the "…" menu.
+    private var linksInMenu: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
+
+    private func open(_ link: API.ArrLink) {
+        if let url = URL(string: link.url) { openURL(url) }
+    }
+
+    /// A dot in Radarr's yellow or Sonarr's blue, the label, and an arrow
+    /// out — components/open-in-arr.tsx.
+    private func arrLinkLabel(_ link: API.ArrLink, _ title: String) -> some View {
+        HStack(spacing: PillSize.large.iconGap) {
+            Circle()
+                .fill(link.kind == .sonarr ? Color(red: 0x35 / 255, green: 0xC5 / 255, blue: 0xF4 / 255) : Color(red: 1, green: 0xC2 / 255, blue: 0x30 / 255))
+                .frame(width: 8, height: 8)
+            Text(title)
+            Image(systemName: "arrow.up.right")
+                .font(.system(size: Metrics.text(10), weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+        }
     }
 
     private func pillLabel(_ symbol: String, _ title: String, size: CGFloat) -> some View {

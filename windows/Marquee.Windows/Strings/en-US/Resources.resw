@@ -796,6 +796,12 @@
   <data name="Arr_EditorName.PlaceholderText" xml:space="preserve">
     <value>Leave blank to name it after its kind, like “Radarr 2”</value>
   </data>
+  <data name="Arr_EditorPublicUrl.Header" xml:space="preserve">
+    <value>Public URL (for links)</value>
+  </data>
+  <data name="Arr_EditorPublicUrlHelp" xml:space="preserve">
+    <value>Where “Open in {0}” on a title page takes you, when the address above only works for Marquee. Leave it blank to use that one.</value>
+  </data>
   <data name="Arr_EditorQualityProfile.Header" xml:space="preserve">
     <value>Quality profile</value>
   </data>
@@ -4639,6 +4645,10 @@
   </data>
   <data name="Title_Ok" xml:space="preserve">
     <value>OK</value>
+  </data>
+  <data name="Title_OpenIn" xml:space="preserve">
+    <value>Open in {0}</value>
+    <comment>{0} is Radarr, Sonarr, "Radarr 4K" or the name of one of the admin's servers. Opens the title's page there.</comment>
   </data>
   <data name="Title_OpenInBrowser.Content" xml:space="preserve">
     <value>Open in browser</value>

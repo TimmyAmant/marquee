@@ -342,6 +342,18 @@ public sealed partial class ArrServerEditorViewModel : ObservableObject
     [ObservableProperty]
     private string baseUrlPlaceholder = "";
 
+    /// <summary>"Public URL (for links)" (0.63+): where "Open in Radarr" on a title page goes.</summary>
+    [ObservableProperty]
+    private string publicUrl = "";
+
+    /// <summary>"https://radarr.example.com" / "https://sonarr.example.com".</summary>
+    [ObservableProperty]
+    private string publicUrlPlaceholder = "";
+
+    /// <summary>The public URL's help, naming the app ("Open in Radarr").</summary>
+    [ObservableProperty]
+    private string publicUrlHelp = "";
+
     /// <summary>"Use for 4K requests"; a 4K server only takes 4K requests and "Add in 4K".</summary>
     [ObservableProperty]
     private bool is4k;
@@ -462,6 +474,9 @@ public sealed partial class ArrServerEditorViewModel : ObservableObject
         IsSonarr = fresh.IsSonarr;
         Name = fresh.Name;
         BaseUrl = fresh.BaseUrl;
+        PublicUrl = fresh.PublicUrl;
+        PublicUrlPlaceholder = $"https://{fresh.Kind.Value}.example.com";
+        PublicUrlHelp = Loc.Format("Arr_EditorPublicUrlHelp", fresh.Kind.DisplayName);
         ApiKey = "";
         ApiKeyPlaceholder = fresh.ApiKeyPlaceholder;
         BaseUrlPlaceholder = fresh.BaseUrlPlaceholder;
@@ -516,6 +531,8 @@ public sealed partial class ArrServerEditorViewModel : ObservableObject
     partial void OnNameChanged(string value) => draft.Name = value;
 
     partial void OnBaseUrlChanged(string value) => draft.BaseUrl = value;
+
+    partial void OnPublicUrlChanged(string value) => draft.PublicUrl = value;
 
     partial void OnApiKeyChanged(string value) => draft.ApiKey = value;
 

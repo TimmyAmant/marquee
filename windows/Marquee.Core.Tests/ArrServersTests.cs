@@ -346,7 +346,7 @@ public sealed class ArrServersTests
         // No key typed (kept), Default unchanged (left out); "Same as above" is an explicit null.
         Assert.True(JsonNode.DeepEquals(
             JsonNode.Parse("""
-                {"name":"Sonarr","baseUrl":"http://192.168.1.10:8989","is4k":false,"qualityProfileId":4,"rootFolderPath":"/tv","tags":[],
+                {"name":"Sonarr","baseUrl":"http://192.168.1.10:8989","publicUrl":null,"is4k":false,"qualityProfileId":4,"rootFolderPath":"/tv","tags":[],
                  "seriesType":"daily","seasonFolders":true,"animeQualityProfileId":null,"animeRootFolderPath":null,"animeTags":[3]}
                 """),
             JsonNode.Parse(Json.EncodeBodyToString(draft.UpdateRequest()))));
@@ -364,7 +364,7 @@ public sealed class ArrServersTests
         var draft = new ArrServerDraft(SavedRadarr4k) { Name = "  " };
 
         Assert.Equal(
-            """{"baseUrl":"http://192.168.1.10:7879","is4k":true,"qualityProfileId":5,"rootFolderPath":"/movies-4k","tags":[]}""",
+            """{"baseUrl":"http://192.168.1.10:7879","publicUrl":null,"is4k":true,"qualityProfileId":5,"rootFolderPath":"/movies-4k","tags":[]}""",
             Json.EncodeBodyToString(draft.UpdateRequest()));
     }
 
@@ -394,6 +394,28 @@ public sealed class ArrServersTests
         empty.ApplyOptions(new ArrServerOptions { QualityProfiles = [], RootFolders = [] });
         Assert.Null(empty.QualityProfileId);
         Assert.Null(empty.RootFolderPath);
+    }
+
+    [Fact]
+    public void ThePublicUrlIsTrimmedSentAndCleared()
+    {
+        var draft = new ArrServerDraft(SavedRadarr4k with { PublicUrl = "https://radarr.example.com" });
+        Assert.Equal("https://radarr.example.com", draft.PublicUrl);
+
+        draft.PublicUrl = " https://movies.example.com/radarr/ ";
+        Assert.Equal("https://movies.example.com/radarr", (string?)JsonNode.Parse(Json.EncodeBodyToString(draft.UpdateRequest()))!["publicUrl"]);
+
+        // Blank clears it: an explicit null.
+        draft.PublicUrl = "  ";
+        var cleared = JsonNode.Parse(Json.EncodeBodyToString(draft.UpdateRequest()))!.AsObject();
+        Assert.True(cleared.ContainsKey("publicUrl"));
+        Assert.Null(cleared["publicUrl"]);
+
+        // A new server sends it only when there is one.
+        var fresh = new ArrServerDraft(ArrProvider.Sonarr) { BaseUrl = "http://s", ApiKey = "k", PublicUrl = "https://tv.example.com/" };
+        Assert.Equal("https://tv.example.com", (string?)JsonNode.Parse(Json.EncodeBodyToString(fresh.CreateRequest()))!["publicUrl"]);
+        fresh.PublicUrl = "";
+        Assert.False(JsonNode.Parse(Json.EncodeBodyToString(fresh.CreateRequest()))!.AsObject().ContainsKey("publicUrl"));
     }
 
     [Fact]

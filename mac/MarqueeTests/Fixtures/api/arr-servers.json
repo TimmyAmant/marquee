@@ -5,6 +5,7 @@
       "kind": "sonarr",
       "name": "Sonarr",
       "baseUrl": "http://192.168.1.10:8989",
+      "publicUrl": null,
       "hasApiKey": true,
       "is4k": false,
       "isDefault": true,

@@ -797,6 +797,20 @@
                                     PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.BaseUrlPlaceholder, Mode=OneWay}"
                                     Text="{x:Bind ViewModel.ArrServers.Editor.BaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </controls:SettingsRow>
+                            <!-- 0.63+: where Open in Radarr/Sonarr on a title page goes. -->
+                            <StackPanel Spacing="4">
+                                <controls:SettingsRow>
+                                    <TextBox
+                                        x:Uid="Arr_EditorPublicUrl"
+                                        PlaceholderText="{x:Bind ViewModel.ArrServers.Editor.PublicUrlPlaceholder, Mode=OneWay}"
+                                        Text="{x:Bind ViewModel.ArrServers.Editor.PublicUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </controls:SettingsRow>
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.ArrServers.Editor.PublicUrlHelp, Mode=OneWay}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
                             <StackPanel Spacing="4">
                                 <controls:SettingsRow>
                                     <PasswordBox

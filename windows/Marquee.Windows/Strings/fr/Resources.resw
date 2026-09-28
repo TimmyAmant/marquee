@@ -781,6 +781,12 @@
   <data name="Arr_EditorName.PlaceholderText" xml:space="preserve">
     <value>Laissez vide pour le nommer d’après son type, comme « Radarr 2 »</value>
   </data>
+  <data name="Arr_EditorPublicUrl.Header" xml:space="preserve">
+    <value>URL publique (pour les liens)</value>
+  </data>
+  <data name="Arr_EditorPublicUrlHelp" xml:space="preserve">
+    <value>Là où mène « Ouvrir dans {0} » sur la page d’un titre, quand l’adresse ci-dessus ne fonctionne que pour Marquee. Laissez vide pour utiliser celle-ci.</value>
+  </data>
   <data name="Arr_EditorQualityProfile.Header" xml:space="preserve">
     <value>Profil de qualité</value>
   </data>
@@ -4455,6 +4461,9 @@
   </data>
   <data name="Title_Ok" xml:space="preserve">
     <value>OK</value>
+  </data>
+  <data name="Title_OpenIn" xml:space="preserve">
+    <value>Ouvrir dans {0}</value>
   </data>
   <data name="Title_OpenInBrowser.Content" xml:space="preserve">
     <value>Ouvrir dans le navigateur</value>
