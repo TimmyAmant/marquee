@@ -239,6 +239,112 @@ private struct RowThread: View {
     }
 }
 
+/// A request at phone width: the poster, then the title, what was asked
+/// for, who asked and when, and its status across the card; `actions` (the
+/// conversation toggle, Edit, the reviewer's buttons) along the bottom at
+/// the card's full width. The Mac's table columns would be squeezed into a
+/// narrow stack under the title.
+private struct PhoneRequestCard<Status: View, Actions: View>: View {
+    let title: String
+    let posterPath: API.ImageRef?
+    let mediaType: API.MediaType?
+    let detail: String?
+    /// Who asked; nil on your own requests.
+    let requester: String?
+    let date: Date
+    let open: () -> Void
+    @ViewBuilder let status: () -> Status
+    @ViewBuilder let actions: () -> Actions
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Button(action: open) {
+                    RemoteImage(posterPath, size: .w154, showsShimmer: false)
+                        .frame(width: 64, height: 96)
+                        .background(Theme.bg2)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Button(action: open) {
+                        Text(title)
+                            .font(.system(size: Metrics.text(15), weight: .semibold))
+                            .multilineTextAlignment(.leading)
+                            .lineLimit(2)
+                    }
+                    .buttonStyle(QuietButtonStyle(color: Theme.textPrimary))
+
+                    if mediaType != nil || detail != nil {
+                        HStack(spacing: 6) {
+                            if let mediaType {
+                                Text(mediaType.typeLabel)
+                                    .font(.system(size: Metrics.text(9.5), weight: .bold))
+                                    .tracking(0.4)
+                                    .foregroundStyle(Theme.textMuted)
+                            }
+                            if let detail {
+                                Text(detail)
+                                    .font(.system(size: Metrics.text(12)))
+                                    .foregroundStyle(Theme.textSecondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+
+                    HStack(spacing: 6) {
+                        if let requester {
+                            UserAvatarView(label: requester, avatarUrl: nil, size: 18)
+                            Text(requester)
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(1)
+                            Text(verbatim: "·")
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                        Text(Format.shortDate(date))
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
+                    .font(.system(size: Metrics.text(12.5)))
+
+                    status()
+                        .padding(.top, 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            actions()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// A reviewer's two buttons at phone width: each half the row, easy to hit.
+private struct PhoneDecisionButtons: View {
+    let declineTitle: String
+    let approveTitle: String
+    let onDecline: () -> Void
+    let onApprove: () -> Void
+    var approveDisabled = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Button(action: onDecline) {
+                Text(declineTitle).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(OutlineButtonStyle(pill: PillSize(height: 38, fontSize: 14, leading: 12, trailing: 12, iconGap: 5)))
+            Button(action: onApprove) {
+                Text(approveTitle).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(AccentButtonStyle(height: 38))
+            .disabled(approveDisabled)
+        }
+    }
+}
+
 // MARK: - Member view
 
 private struct MemberRequestsList: View {
@@ -311,7 +417,61 @@ private struct MyRequestRow: View {
     @State private var showsComments = false
     @State private var shownCount: Int?
 
+    @Environment(\.stacksTableColumns) private var stacked
+
     var body: some View {
+        if stacked {
+            phoneCard
+        } else {
+            tableRow
+        }
+    }
+
+    private var phoneCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            PhoneRequestCard(
+                title: row.title, posterPath: row.posterPath, mediaType: row.mediaType, detail: row.detailLine,
+                requester: nil, date: row.createdAt, open: { model.openTitle(row.titleID) }
+            ) {
+                VStack(alignment: .leading, spacing: 4) {
+                    TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
+                    if let reason = row.rejectionReason {
+                        RejectionReasonLine(reason: reason)
+                    }
+                    if row.showsAskInCommentsHint {
+                        Text("Need a change? Ask in its comments.")
+                            .font(.system(size: Metrics.text(11)))
+                            .foregroundStyle(Theme.textMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            } actions: {
+                if row.commentCount != nil || row.offersEdit || row.offersCancel {
+                    HStack(spacing: 16) {
+                        if let count = row.commentCount {
+                            CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                        }
+                        if row.offersEdit {
+                            EditRequestButton(requestId: row.id)
+                        }
+                        if row.offersCancel {
+                            CancelRequestControl(requestId: row.id)
+                        }
+                    }
+                }
+            }
+            if showsComments {
+                CommentThreadPanel(parent: .request(row.id)) { shownCount = $0 }
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 14)
+            }
+        }
+        .font(.system(size: Metrics.text(13)))
+        .requestBackdrop(row.backdropPath)
+        .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+    }
+
+    private var tableRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             TableRowStack {
                 titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
@@ -388,10 +548,15 @@ private struct AdminRequestsList: View {
         reviewed.filter { !$0.couldntAdd }
     }
 
+    @Environment(\.stacksTableColumns) private var stacked
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if queue != nil, stacked {
+                phonePendingHeader
+            }
             if queue != nil {
-                if pending.count > 1 || approvingAll || approveAllMessage != nil {
+                if !stacked, pending.count > 1 || approvingAll || approveAllMessage != nil {
                     HStack {
                         if let approveAllMessage {
                             InlineMessage(text: approveAllMessage.0, isError: approveAllMessage.1)
@@ -403,7 +568,20 @@ private struct AdminRequestsList: View {
                     }
                 }
 
-                if pending.isEmpty {
+                if pending.isEmpty, stacked {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Theme.owned)
+                        Text("No pending requests.")
+                            .font(.system(size: Metrics.text(13.5)))
+                            .foregroundStyle(Theme.textSecondary)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(14)
+                    .background(Theme.bg1, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+                } else if pending.isEmpty {
                     Text("No pending requests.")
                         .font(.system(size: Metrics.text(13)))
                         .foregroundStyle(Theme.textMuted)
@@ -462,6 +640,30 @@ private struct AdminRequestsList: View {
         }
     }
 
+    /// At phone width: "Waiting for review (3)", with Approve all beside it.
+    private var phonePendingHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 10) {
+                SectionTitle(text: String(localized: "Waiting for review"))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                if !pending.isEmpty {
+                    TonePill(text: "\(pending.count)", tone: .accent)
+                }
+                Spacer(minLength: 8)
+                if pending.count > 1 || approvingAll {
+                    Button(approvingAll ? "Approving…" : "Approve all") { approveAll() }
+                        .buttonStyle(AccentButtonStyle(compact: true))
+                        .disabled(approvingAll)
+                        .fixedSize()
+                }
+            }
+            if let approveAllMessage {
+                InlineMessage(text: approveAllMessage.0, isError: approveAllMessage.1)
+            }
+        }
+    }
+
     private func load() async {
         let api = model.api
         do {
@@ -517,7 +719,59 @@ private struct PastRequestRow: View {
     @State private var showsComments = false
     @State private var shownCount: Int?
 
+    @Environment(\.stacksTableColumns) private var stacked
+
     var body: some View {
+        if stacked {
+            phoneCard
+        } else {
+            tableRow
+        }
+    }
+
+    private var phoneCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            PhoneRequestCard(
+                title: row.title, posterPath: row.posterPath, mediaType: row.mediaType, detail: row.detailLine,
+                requester: row.requestedBy.label, date: row.createdAt, open: { model.openTitle(row.titleID) }
+            ) {
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 8) {
+                        TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                        if row.isNotFound {
+                            TonePill(text: String(localized: "Can't find"), tone: .missing)
+                        }
+                        if let addedTo = row.addedToLine {
+                            Text(addedTo)
+                                .font(.system(size: Metrics.text(11.5)))
+                                .foregroundStyle(Theme.textMuted)
+                                .lineLimit(1)
+                        }
+                    }
+                    if let reason = row.rejectionReason {
+                        RejectionReasonLine(reason: reason)
+                    }
+                    if let reviewer = row.reviewedBy {
+                        ReviewerLine(person: reviewer)
+                    }
+                }
+            } actions: {
+                if let count = row.commentCount {
+                    CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                }
+            }
+            if showsComments {
+                CommentThreadPanel(parent: .request(row.id)) { shownCount = $0 }
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 14)
+            }
+        }
+        .font(.system(size: Metrics.text(13)))
+        .requestBackdrop(row.backdropPath)
+        .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+    }
+
+    private var tableRow: some View {
         VStack(alignment: .leading, spacing: 0) {
             TableRowStack {
                 titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) }) {
@@ -576,6 +830,7 @@ private struct PastRequestRow: View {
 /// someone who may see them but not review them. To look at, no buttons.
 private struct EveryonesRequestsList: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.stacksTableColumns) private var stacked
     @State private var rows: [EveryoneRequestRow]?
     @State private var error: String?
 
@@ -591,6 +846,16 @@ private struct EveryonesRequestsList: View {
                     TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Status")]) {
                         ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                             if index > 0 { Divider().overlay(Theme.border) }
+                            if stacked {
+                                PhoneRequestCard(
+                                    title: row.title, posterPath: row.posterPath, mediaType: row.titleID.mediaType, detail: row.detailLine,
+                                    requester: row.requestedBy, date: row.createdAt, open: { model.openTitle(row.titleID) }
+                                ) {
+                                    TonePill(text: row.statusLabel, tone: row.tone)
+                                } actions: {
+                                    EmptyView()
+                                }
+                            } else {
                             TableRowStack {
                                 titleCell(row.title, row.posterPath, detail: row.detailLine, action: { model.openTitle(row.titleID) })
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -606,6 +871,7 @@ private struct EveryonesRequestsList: View {
                             .font(.system(size: Metrics.text(13)))
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
+                            }
                         }
                     }
                 }
@@ -1255,21 +1521,35 @@ private struct RequestReviewRow: View {
     @State private var showsComments = false
     @State private var shownCount: Int?
 
+    @Environment(\.stacksTableColumns) private var stacked
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            mainRow
+            if stacked {
+                phoneCard
+            } else {
+                mainRow
+            }
             if advanced.isExpanded && offersAdvanced && !showManualApprove {
+<<<<<<< HEAD
                 AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true, requestId: row.id.uuidString.lowercased())
                     .padding(.leading, 52)
+=======
+                AddOptionsPanel(advanced: $advanced, mediaType: row.mediaType, tmdbId: row.tmdbId, is4k: row.is4k == true)
+                    .padding(.leading, stacked ? 14 : 52)
+                    .padding(.trailing, stacked ? 14 : 0)
+>>>>>>> 2c95bb7 (iPhone: request cards, Library rebuilt for phone width, person/studio headers, sheets fit the screen)
             }
             if showsComments {
                 CommentThreadPanel(parent: .request(row.id)) { shownCount = $0 }
-                    .padding(.leading, 52)
+                    .padding(.leading, stacked ? 14 : 52)
+                    .padding(.trailing, stacked ? 14 : 0)
             }
         }
         .font(.system(size: Metrics.text(13)))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, stacked ? 0 : 16)
+        .padding(.vertical, stacked ? 0 : 10)
+        .padding(.bottom, stacked && (showsComments || advanced.isExpanded) ? 14 : 0)
         .requestBackdrop(row.backdropPath)
         .onChange(of: row.commentCount) { _, _ in shownCount = nil }
         // Edited to or from 4K: the Advanced picks were for the other servers.
@@ -1277,6 +1557,66 @@ private struct RequestReviewRow: View {
         .sheet(isPresented: $choosingReason) {
             DeclineRequestSheet(title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) { reason in
                 reject(reason: reason)
+            }
+        }
+    }
+
+    /// At phone width: the card, then Decline | Approve across it.
+    private var phoneCard: some View {
+        PhoneRequestCard(
+            title: row.title, posterPath: row.posterPath, mediaType: row.mediaType, detail: row.detailLine,
+            requester: row.requestedBy.label, date: row.createdAt, open: { model.openTitle(row.titleID) }
+        ) {
+            if row.wasChanged {
+                Text("Changed since asking")
+                    .font(.system(size: Metrics.text(11)))
+                    .foregroundStyle(Theme.textMuted)
+            }
+        } actions: {
+            VStack(alignment: .leading, spacing: 10) {
+                if showManualApprove {
+                    PhoneDecisionButtons(
+                        declineTitle: busy == "reject" ? String(localized: "Declining…") : String(localized: "Decline"),
+                        approveTitle: busy == "manual" ? String(localized: "Approving…") : String(localized: "Manually approve"),
+                        onDecline: { choosingReason = true },
+                        onApprove: { manuallyApprove() }
+                    )
+                    .disabled(busy != nil)
+                } else {
+                    PhoneDecisionButtons(
+                        declineTitle: busy == "reject" ? String(localized: "Declining…") : String(localized: "Decline"),
+                        approveTitle: busy == "approve" ? String(localized: "Approving…") : String(localized: "Approve"),
+                        onDecline: { choosingReason = true },
+                        onApprove: { approve() },
+                        approveDisabled: advanced.isLoading
+                    )
+                    .disabled(busy != nil)
+                }
+                HStack(spacing: 16) {
+                    if let count = row.commentCount {
+                        CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                        EditRequestButton(requestId: row.id)
+                            .disabled(busy != nil)
+                    }
+                    Spacer(minLength: 0)
+                    if offersAdvanced && !showManualApprove {
+                        AdvancedAddToggle(advanced: $advanced)
+                            .disabled(busy != nil)
+                    }
+                }
+                if let error = approveError ?? otherError {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(error)
+                            .font(.system(size: Metrics.text(11)))
+                            .foregroundStyle(Theme.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if sonarrUnresolved, let manualSonarrURL {
+                            Button("Add manually in Sonarr") { openURL(manualSonarrURL) }
+                                .buttonStyle(QuietButtonStyle(color: Theme.accent))
+                                .font(.system(size: Metrics.text(11)))
+                        }
+                    }
+                }
             }
         }
     }
@@ -1469,7 +1809,12 @@ private struct DeclineRequestSheet: View {
             }
         }
         .padding(24)
+        #if os(macOS)
         .frame(width: 460)
+        #else
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .presentationDetents([.medium, .large])
+        #endif
         .background(Theme.bg1)
     }
 

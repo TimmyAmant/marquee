@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.58.1",
+    date: "2026-09-27",
+    changes: [
+      "iPhone app: no more big gap at the top; page titles sit in the bar with the bell or the Back button.",
+      "iPhone app: requests are full-width cards with Approve and Decline buttons; the calendar has Day, Week and Month views; the Library, Releases, person and studio pages are rebuilt to fit the phone; sheets fill the screen.",
+    ],
+  },
+  {
     version: "0.58.0",
     date: "2026-09-27",
     changes: [
