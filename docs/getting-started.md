@@ -1,7 +1,8 @@
 # Getting started
 
 Everything you need to install, update and run Marquee. The short version is in
-the [README](../README.md#getting-started).
+the [README](../README.md#getting-started), and what Marquee can do once it's
+running is in [every feature, explained](features.md).
 
 ## Download
 

@@ -107,6 +107,9 @@ struct MarqueeCommands: Commands {
         }
 
         CommandGroup(replacing: .help) {
+            Button("All Features") {
+                openURL(AppInfo.featuresURL)
+            }
             Button("What the Colors Mean") {
                 openWindow(id: "status-colors")
             }
