@@ -244,6 +244,9 @@ extension API {
     struct RemoveFromArrBody: Encodable, Sendable {
         let deleteFiles: Bool
         let is4k: Bool?
+        /// 0.68+: why, for whoever requested it; nil sends no key (an older
+        /// server ignores it anyway).
+        var reason: String? = nil
     }
 
     struct RemoveFromArrResult: Codable, Hashable, Sendable {

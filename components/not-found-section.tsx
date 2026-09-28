@@ -11,6 +11,7 @@ import { formatDate } from "@/lib/i18n/format";
 import type { Translator } from "@/lib/i18n/translator";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { NotFoundRequest } from "@/lib/api/types";
+import { CantGetItButton, DeclineReasonForm, useCantGetIt } from "@/components/decline-reason-chooser";
 
 const smallButton =
   "rounded-full border border-border-strong px-3 py-1 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
@@ -33,6 +34,10 @@ function NotFoundCard({ request }: { request: NotFoundRequest }) {
   const kind = kindLabel(request.server.kind);
   const since = new Date(request.notFoundSince);
   const extra = [request.seasonsLabel, request.is4k ? t("requests.in4k") : null].filter(Boolean).join(" · ");
+  // "Can't get it": nothing good is ever turning up, so decline it after all.
+  const decline = useCantGetIt(request.id);
+  const choosing = decline.choosing && !decline.done;
+  const anyBusy = busy !== null || decline.declining || decline.done;
 
   async function run(name: "search" | "dismiss") {
     setBusy(name);
@@ -74,11 +79,22 @@ function NotFoundCard({ request }: { request: NotFoundRequest }) {
             {t(request.mediaType === "movie" ? "requests.notFoundHintMovie" : "requests.notFoundHintTv")}
           </p>
           {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
+          {decline.error && <p className="mt-1 text-xs text-red-400">{decline.error}</p>}
           {info && <p className="mt-1 text-xs text-owned">{info}</p>}
+          {choosing && (
+            <DeclineReasonForm
+              requesterName={request.requestedBy.label}
+              busy={anyBusy}
+              declining={decline.declining}
+              onDecline={decline.decline}
+              onCancel={decline.close}
+              className="mt-2"
+            />
+          )}
         </div>
       </div>
       <div className="flex shrink-0 flex-wrap items-start gap-1.5 sm:flex-col sm:items-end">
-        <button type="button" disabled={busy !== null} onClick={() => run("search")} className={smallButton}>
+        <button type="button" disabled={anyBusy} onClick={() => run("search")} className={smallButton}>
           {busy === "search" ? t("requests.searching") : t("requests.searchAgain")}
         </button>
         {request.arrUrl && (
@@ -86,9 +102,10 @@ function NotFoundCard({ request }: { request: NotFoundRequest }) {
             {t("requests.openIn", { app: kind })}
           </a>
         )}
+        <CantGetItButton requesterName={request.requestedBy.label} disabled={anyBusy || choosing} onClick={decline.open} compact />
         <button
           type="button"
-          disabled={busy !== null}
+          disabled={anyBusy}
           onClick={() => run("dismiss")}
           className="px-1 py-1 text-xs text-text-muted hover:text-accent disabled:opacity-60"
         >

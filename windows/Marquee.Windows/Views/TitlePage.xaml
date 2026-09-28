@@ -624,6 +624,12 @@
                                                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                                                     <StackPanel Spacing="2">
                                                         <TextBlock Text="{x:Bind Line}" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+                                                        <TextBlock
+                                                            Text="{x:Bind ReasonLine}"
+                                                            Visibility="{x:Bind ReasonLine, Converter={StaticResource StringToVisibility}}"
+                                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            TextWrapping="Wrap" />
                                                         <controls:RequestActionsView Actions="{x:Bind Actions}" Margin="-4,0,0,0" />
                                                     </StackPanel>
                                                 </Border>

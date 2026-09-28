@@ -181,5 +181,8 @@ public sealed class TitleRequestItem(TitleRequestSummary request, RequestActions
     /// <summary>"Your request (Season 2) is waiting for review".</summary>
     public string Line { get; } = request.Line;
 
+    /// <summary>"Reason: …" under a removed one's line (0.68+); empty otherwise.</summary>
+    public string ReasonLine { get; } = request.ReasonLine;
+
     public RequestActionsViewModel Actions { get; } = actions;
 }

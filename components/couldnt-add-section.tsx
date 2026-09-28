@@ -4,12 +4,6 @@ import Image from "next/image";
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { manuallyApproveRequestAction, rejectRequestAction, retryRequestAction } from "@/lib/requests/actions";
-import {
-  CUSTOM_REJECTION_REASON,
-  REJECTION_REASON_CODES,
-  REJECTION_REASON_MAX_LENGTH,
-  rejectionReasonText,
-} from "@/lib/requests/rejection-reasons";
 import { useT } from "@/lib/i18n/client";
 import { formatDate } from "@/lib/i18n/format";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
@@ -18,6 +12,7 @@ import { AddAdvancedOptions } from "@/components/add-advanced-options";
 import { CommentSection } from "@/components/comment-thread";
 import type { ReviewedRequest } from "@/lib/api/types";
 import { TONE_CLASS } from "@/lib/library/status-tone";
+import { DeclineReasonForm } from "@/components/decline-reason-chooser";
 
 function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedRequest; isAdmin: boolean; advanced: boolean }) {
   const t = useT();
@@ -30,9 +25,6 @@ function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedReques
   const [rejectState, rejectAction, rejecting] = useActionState(rejectRequestAction.bind(null, request.id), undefined);
   // Decline is the review queue's two-step: pick why, then "Decline request".
   const [choosingReason, setChoosingReason] = useState(false);
-  const [reason, setReason] = useState("");
-  const [customReason, setCustomReason] = useState("");
-  const canDecline = reason === CUSTOM_REJECTION_REASON ? customReason.trim().length > 0 : reason.length > 0;
   const done = Boolean(retryState?.success || manualState?.success || rejectState?.success);
   useEffect(() => {
     if (done) router.refresh();
@@ -43,11 +35,8 @@ function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedReques
   const busy = retrying || markingManual || rejecting;
   const error = retryState?.error ?? manualState?.error ?? rejectState?.error ?? request.addFailed.error;
 
-  // Submitted by hand (as in the review queue's row) so a failed decline
-  // doesn't reset the chosen reason.
-  function submitReject(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+  // In our own transition rather than the form's `action` (see DeclineReasonForm).
+  function submitReject(formData: FormData) {
     startTransition(() => rejectAction(formData));
   }
   return (
@@ -90,58 +79,14 @@ function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedReques
         </div>
         )}
         {choosingReason && (
-          <form
-            onSubmit={submitReject}
-            className="mt-2 flex max-w-xs flex-col gap-2 rounded-xl border border-border bg-bg-1 p-3 text-xs"
-          >
-            <p className="text-text-secondary">{t("requests.letThemKnowWhy", { name: request.requestedBy.label })}</p>
-            {([...REJECTION_REASON_CODES, CUSTOM_REJECTION_REASON] as const).map((preset) => (
-              <label key={preset} className="flex items-center gap-2 text-text-primary">
-                <input
-                  type="radio"
-                  name="reason"
-                  value={preset}
-                  checked={reason === preset}
-                  onChange={() => setReason(preset)}
-                  className="h-4 w-4 border-border accent-accent"
-                />
-                {preset === CUSTOM_REJECTION_REASON ? t("requests.reasonOther") : rejectionReasonText(t, preset)}
-              </label>
-            ))}
-            {reason === CUSTOM_REJECTION_REASON && (
-              <input
-                type="text"
-                name="customReason"
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                maxLength={REJECTION_REASON_MAX_LENGTH}
-                placeholder={t("requests.tellThemWhy")}
-                autoFocus
-                className="rounded-lg border border-border bg-bg-0 px-2.5 py-1.5 text-text-primary outline-none focus:border-accent"
-              />
-            )}
-            <div className="mt-1 flex gap-2">
-              <button
-                type="submit"
-                disabled={busy || !canDecline}
-                className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-red-400 hover:text-red-400 disabled:opacity-60"
-              >
-                {rejecting ? t("requests.declining") : t("requests.declineRequest")}
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setChoosingReason(false);
-                  setReason("");
-                  setCustomReason("");
-                }}
-                className="rounded-full border border-border-strong px-3 py-1.5 text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
-              >
-                {t("common.cancel")}
-              </button>
-            </div>
-          </form>
+          <DeclineReasonForm
+            requesterName={request.requestedBy.label}
+            busy={busy}
+            declining={rejecting}
+            onDecline={submitReject}
+            onCancel={() => setChoosingReason(false)}
+            className="mt-2"
+          />
         )}
         <CommentSection kind="request" id={request.id} count={request.commentCount} />
       </div>

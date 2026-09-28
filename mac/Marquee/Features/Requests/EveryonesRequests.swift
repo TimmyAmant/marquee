@@ -38,7 +38,7 @@ struct EveryoneRequestRow: Hashable, Sendable, Identifiable {
         requestedBy = request.requestedBy.label
         createdAt = request.createdAt
         statusLabel = request.status == .pending ? String(localized: "Waiting for review") : request.statusLabel
-        tone = request.status == .approved ? .owned : request.status == .pending ? .info : .neutral
+        tone = request.status == .pending ? .info : request.statusTone
     }
 
     /// Everyone else's requests, pending and reviewed, newest first. Your

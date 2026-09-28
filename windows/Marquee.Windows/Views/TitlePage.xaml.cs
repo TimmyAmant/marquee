@@ -174,8 +174,9 @@ public sealed partial class TitlePage : Page
 
     /// <summary>
     /// "Remove from Radarr/Sonarr" (components/remove-from-arr-button.tsx,
-    /// 0.58+): asks first, with "Also delete the files" off, then takes the
-    /// title off every server that has it.
+    /// 0.58+): asks first, with "Also delete the files" off and (0.68+) an
+    /// optional reason for whoever requested it, then takes the title off
+    /// every server that has it.
     /// </summary>
     private void OnRemoveFromArrClick(object sender, RoutedEventArgs e) => ConfirmRemoveFromArr(fourK: false);
 
@@ -199,6 +200,10 @@ public sealed partial class TitlePage : Page
             TextWrapping = TextWrapping.Wrap,
             Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
         });
+        // The decline chooser's presets, with "No reason" first.
+        var reasons = new ReasonChooser(ReasonChooser.DefaultReasons, optional: true);
+        body.Children.Add(new TextBlock { Text = Loc.Get("Title_RemoveReasonIntro"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+        body.Children.Add(reasons);
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
@@ -210,11 +215,13 @@ public sealed partial class TitlePage : Page
         };
         deleteFiles.Checked += (_, _) => dialog.PrimaryButtonText = Loc.Get("Title_RemoveAndDelete");
         deleteFiles.Unchecked += (_, _) => dialog.PrimaryButtonText = Loc.Get("Title_RemoveConfirm");
+        // "Other" waits for its words.
+        reasons.Changed += (_, _) => dialog.IsPrimaryButtonEnabled = reasons.IsValid;
         if (await dialog.TryShowAsync() != ContentDialogResult.Primary)
         {
             return;
         }
-        await ViewModel.RemoveFromArrAsync(deleteFiles.IsChecked == true, fourK);
+        await ViewModel.RemoveFromArrAsync(deleteFiles.IsChecked == true, fourK, reasons.Reason);
     }
 
     /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>

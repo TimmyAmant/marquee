@@ -240,6 +240,18 @@ public sealed record TitleRequestSummary
     public int CommentCount { get; init; }
     public DateTimeOffset? CreatedAt { get; init; }
 
+    /// <summary>0.68+: approved, then the admin removed the title from Sonarr/Radarr; null otherwise.</summary>
+    public DateTimeOffset? RemovedAt { get; init; }
+
+    /// <summary>0.68+: why it was removed, when the admin said.</summary>
+    public string? RemovedReason { get; init; }
+
+    /// <summary>Taken off Sonarr/Radarr again since it was approved.</summary>
+    public bool IsRemoved => Status == RequestStatus.Approved && RemovedAt != null;
+
+    /// <summary>"Reason: …" under a removed one's line; empty otherwise.</summary>
+    public string ReasonLine => IsRemoved && RemovedReason.NonBlank() is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
+
     /// <summary>"Season 2 · In 4K", "In 4K", "Season 2", or empty.</summary>
     public string DetailText => SeasonLabels.RequestLine(SeasonsLabel.NonBlank() ?? SeasonLabels.SeasonsLabel(Seasons), Is4k);
 
@@ -255,12 +267,16 @@ public sealed record TitleRequestSummary
         }
     }
 
-    /// <summary>"Your request (Season 2) is waiting for review", "Your request is approved".</summary>
+    /// <summary>"Your request (Season 2) is waiting for review", "Your request is approved", "Your request was removed from the server".</summary>
     public string Line
     {
         get
         {
             var detail = DetailText;
+            if (IsRemoved)
+            {
+                return detail.Length > 0 ? Loc.Format("Lifecycle_LineDetailRemoved", detail) : Loc.Get("Lifecycle_LineRemoved");
+            }
             if (detail.Length > 0)
             {
                 if (Status == RequestStatus.Pending) return Loc.Format("Lifecycle_LineDetailWaiting", detail);
@@ -276,7 +292,7 @@ public sealed record TitleRequestSummary
     }
 
     /// <summary>The "Approved" hint applies (it can't be changed now).</summary>
-    public string? ChangeHint => Status == RequestStatus.Approved ? RequestLifecycle.AskInCommentsHint : null;
+    public string? ChangeHint => Status == RequestStatus.Approved && !IsRemoved ? RequestLifecycle.AskInCommentsHint : null;
 }
 
 // MARK: Conversations

@@ -121,6 +121,12 @@ final class RequestLifecycleTests: XCTestCase {
                 "id": "9a7d2c11-5e3b-4f0a-8c6d-2b1e0f9a8d77", "status": "rejected", "seasons": NSNull(), "seasonsLabel": NSNull(),
                 "is4k": false, "canEdit": false, "canCancel": false, "commentCount": 1, "createdAt": "2026-09-15T17:10:02.001Z",
             ],
+            // 0.68+: approved, then removed from the server.
+            [
+                "id": "4c2e8f10-1a3b-4d5e-9f60-7a8b9c0d1e2f", "status": "approved", "seasons": NSNull(), "seasonsLabel": NSNull(),
+                "is4k": false, "canEdit": false, "canCancel": false, "commentCount": 0, "createdAt": "2026-09-14T17:10:02.001Z",
+                "removedAt": "2026-09-20T10:00:00.000Z", "removedReason": "Couldn't find a good copy of it",
+            ],
         ]
         title["viewer"] = viewer
         let requests = try decode(API.TitleDetail.self, title).viewer.ownRequests
@@ -128,10 +134,57 @@ final class RequestLifecycleTests: XCTestCase {
             "Your request (Season 2) is waiting for review",
             "Your request (In 4K) is approved",
             "Your request is declined",
+            "Your request was removed from the server",
         ])
+        XCTAssertEqual(requests.map(\.isRemoved), [false, false, false, true])
+        XCTAssertEqual(requests[3].removedReason, "Couldn't find a good copy of it")
         XCTAssertEqual(requests.first?.id, Self.requestId)
         XCTAssertEqual(requests.first?.canEdit, true)
         XCTAssertEqual(requests[1].commentCount, 2)
+    }
+
+    /// 0.68+: an approved request removed from the server reads "Removed"
+    /// with its reason; one still there offers "Can't get it".
+    func testRemovedRequests() throws {
+        var history = try fixture("requests-history")
+        var rows = try XCTUnwrap(history["results"] as? [[String: Any]])
+        let approvedIndex = try XCTUnwrap(rows.firstIndex { $0["status"] as? String == "approved" && $0["addFailed"] is NSNull })
+        var removed = rows[approvedIndex]
+        removed["id"] = "4c2e8f10-1a3b-4d5e-9f60-7a8b9c0d1e2f"
+        removed["statusLabel"] = "Removed"
+        removed["notFoundSince"] = "2026-09-18T10:00:00.000Z"
+        removed["removedAt"] = "2026-09-20T10:00:00.000Z"
+        removed["removedReason"] = "Couldn't find a good copy of it"
+        rows.append(removed)
+        history["results"] = rows
+        let decoded = try decode(API.ListResponse<API.ReviewedRequest>.self, history).results
+        let still = decoded[approvedIndex]
+        XCTAssertFalse(still.isRemoved)
+        XCTAssertTrue(still.offersCantGetIt)
+        XCTAssertEqual(still.statusTone, .owned)
+        let gone = try XCTUnwrap(decoded.last)
+        XCTAssertTrue(gone.isRemoved)
+        XCTAssertFalse(gone.offersCantGetIt)
+        XCTAssertFalse(gone.isNotFound)
+        XCTAssertNil(gone.addedToLine)
+        XCTAssertEqual(gone.statusTone, .neutral)
+        XCTAssertEqual(gone.reason, "Couldn't find a good copy of it")
+        // Under "Couldn't add", Decline is that section's own.
+        XCTAssertFalse(decoded.first { $0.couldntAdd }?.offersCantGetIt ?? true)
+
+        var mine = try fixture("requests-mine")
+        var own = try XCTUnwrap(mine["results"] as? [[String: Any]])
+        own[0]["status"] = "approved"
+        own[0]["statusLabel"] = "Removed"
+        own[0]["statusTone"] = "declined"
+        own[0]["removedAt"] = "2026-09-20T10:00:00.000Z"
+        own[0]["removedReason"] = NSNull()
+        mine["results"] = own
+        let request = try XCTUnwrap(decode(API.ListResponse<API.MyRequest>.self, mine).results.first)
+        XCTAssertTrue(request.isRemoved)
+        // Removed before reasons could be given: no reason line.
+        XCTAssertNil(request.reason)
+        XCTAssertFalse(request.showsAskInCommentsHint)
     }
 
     func testCommentHeaders() throws {

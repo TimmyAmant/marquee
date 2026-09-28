@@ -18,10 +18,15 @@ export function myRequestBadge(
   /** Approved, but Sonarr/Radarr couldn't be reached to add it yet
    * ("Couldn't add" on the reviewers' side, waiting for a Retry). */
   waitingToBeAdded = false,
+  /** Approved, but the admin took the title off Sonarr/Radarr again since
+   * (requests.removed_at, lib/arr/remove.ts). */
+  removed = false,
 ): { label: string; tone: MyRequestBadgeTone } {
   if (status === "pending") return { label: t("requests.statusPendingReview"), tone: "pending" };
   if (status === "rejected") return { label: t("requests.statusDeclined"), tone: "declined" };
-  // approved
+  // approved. Removed wins over whatever's left on disk: it isn't coming.
+  // The declined tone keeps it neutral, and older apps know that tone.
+  if (removed) return { label: t("requests.statusRemoved"), tone: "declined" };
   if (libraryStatus === "owned") return { label: t("requests.statusInLibrary"), tone: "owned" };
   if (libraryStatus === "tracked_downloading") return { label: t("requests.statusDownloading"), tone: "downloading" };
   if (libraryStatus === "coming_soon") return { label: t("requests.statusComingSoon"), tone: "coming_soon" };
@@ -33,7 +38,14 @@ export function myRequestBadge(
 }
 
 /** An already-reviewed request in the admin's "Past requests" table. */
-export function reviewedRequestLabel(t: Translator, status: RequestStatus, manuallyApproved: boolean): string {
+export function reviewedRequestLabel(
+  t: Translator,
+  status: RequestStatus,
+  manuallyApproved: boolean,
+  /** Approved, then removed from Sonarr/Radarr (requests.removed_at). */
+  removed = false,
+): string {
+  if (status === "approved" && removed) return t("requests.statusRemoved");
   if (status === "approved") return t(manuallyApproved ? "requests.statusManuallyApproved" : "requests.statusApproved");
   return t("requests.statusRejected");
 }
@@ -89,4 +101,11 @@ export function quotedRequestTitle(t: Translator, title: string, seasons: number
 export function activityRequestTitle(t: Translator, title: string, seasons: number[] | null): string {
   const label = seasonsLabel(t, seasons);
   return label ? t("requests.titleWithSeasons", { title, seasons: label }) : title;
+}
+
+/** How a request is named in notifications (quoted, in the reader's
+ * language) and the activity feed (which keeps English, as stored text). */
+export function requestName(t: Translator, request: { title: string; seasons: number[] | null; is4k: boolean }, quoted: boolean): string {
+  const name = quoted ? quotedRequestTitle(t, request.title, request.seasons) : activityRequestTitle(t, request.title, request.seasons);
+  return request.is4k ? t("notify.requestIn4k", { request: name }) : name;
 }

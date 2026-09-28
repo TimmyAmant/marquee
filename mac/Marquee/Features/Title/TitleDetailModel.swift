@@ -249,16 +249,17 @@ final class TitleDetailModel {
 
     /// "Remove from Radarr/Sonarr" (admin, 0.58+): off every server that has
     /// it, with its files when `deleteFiles`; its approved requests are
-    /// marked removed, so it can be requested again. With `fourK`, "Remove
-    /// from Radarr 4K": the same, for the 4K servers.
-    func removeFromArr(deleteFiles: Bool, fourK: Bool = false) {
+    /// marked removed, so it can be requested again, and their requesters
+    /// are told — with `reason` when the admin gave one (0.68+). With
+    /// `fourK`, "Remove from Radarr 4K": the same, for the 4K servers.
+    func removeFromArr(deleteFiles: Bool, fourK: Bool = false, reason: String? = nil) {
         guard let api, !isRemovingFromArr else { return }
         isRemovingFromArr = true
         trackingMessage = nil
         let arrName = fourK ? "\(id.mediaType.arrName) 4K" : id.mediaType.arrName
         Task {
             do {
-                try await api.titles.removeFromArr(id.mediaType, id: id.tmdbId, deleteFiles: deleteFiles, is4k: fourK)
+                try await api.titles.removeFromArr(id.mediaType, id: id.tmdbId, deleteFiles: deleteFiles, is4k: fourK, reason: reason)
                 trackingMessage = (String(localized: "Removed from \(arrName)"), false)
                 await refreshStatus()
             } catch {

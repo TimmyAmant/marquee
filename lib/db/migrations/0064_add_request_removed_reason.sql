@@ -1,0 +1,3 @@
+ALTER TABLE "notifications" DROP CONSTRAINT "notifications_event_type_check";--> statement-breakpoint
+ALTER TABLE "requests" ADD COLUMN "removed_reason" text;--> statement-breakpoint
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_event_type_check" CHECK ("notifications"."event_type" in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found','request_comment','issue_comment','request_removed'));

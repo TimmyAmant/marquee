@@ -1115,10 +1115,10 @@ private struct TitleActionRow: View {
             }
         }
         // components/remove-from-arr-button.tsx: one Remove button, with
-        // "Also delete the files" as a checkbox.
+        // "Also delete the files" as a checkbox and an optional reason.
         .sheet(isPresented: $confirmingRemove) {
-            RemoveFromArrSheet(name: detail.name, arrName: removeArrName) { deleteFiles in
-                screen.removeFromArr(deleteFiles: deleteFiles, fourK: removingFourK)
+            RemoveFromArrSheet(name: detail.name, arrName: removeArrName) { deleteFiles, reason in
+                screen.removeFromArr(deleteFiles: deleteFiles, fourK: removingFourK, reason: reason)
             }
         }
     }

@@ -8647,6 +8647,34 @@
         }
       }
     },
+    "Can't get it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht zu bekommen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se puede conseguir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible à obtenir"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não dá para conseguir"
+          }
+        }
+      }
+    },
     "Can't reach your server" : {
       "localizations" : {
         "de" : {
@@ -12654,6 +12682,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Recusar"
+          }
+        }
+      }
+    },
+    "Decline it after all — %@ hears it couldn't be added." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doch ablehnen — %@ erfährt, dass sie nicht hinzugefügt werden konnte."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechazarla al final: %@ sabrá que no se pudo añadir."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La refuser finalement — %@ saura qu’elle n’a pas pu être ajoutée."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recusar afinal — %@ fica sabendo que não deu para adicionar."
           }
         }
       }
@@ -19554,6 +19610,34 @@
         }
       }
     },
+    "Let %@ know why you can't get \"%@\" after all. They'll hear it couldn't be added, and see it under Declined on their Requests page." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sag %1$@, warum „%2$@“ doch nicht zu bekommen ist. Die Person erfährt, dass es nicht hinzugefügt werden konnte, und sieht es unter „Abgelehnt“ auf ihrer Anfragen-Seite."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuéntale a %1$@ por qué al final no puedes conseguir «%2$@». Sabrá que no se pudo añadir y lo verá en Rechazadas en su página de Solicitudes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expliquez à %1$@ pourquoi « %2$@ » est finalement impossible à obtenir. Cette personne saura qu’il n’a pas pu être ajouté et le verra sous Refusées dans sa page Demandes."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diga a %1$@ por que não dá para conseguir “%2$@” afinal. A pessoa vai saber que não deu para adicionar e vai ver isso em Recusados na página Pedidos."
+          }
+        }
+      }
+    },
     "Let dashboards like Homepage or Homarr, scripts and other apps use Marquee. A key works like signing in, so keep it secret." : {
       "localizations" : {
         "de" : {
@@ -19578,6 +19662,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deixe painéis como Homepage ou Homarr, scripts e outros apps usarem o Marquee. Uma chave funciona como entrar na conta, então mantenha-a em segredo."
+          }
+        }
+      }
+    },
+    "Let whoever asked for it know why (optional):" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sag den Anfragenden, warum (optional):"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explica el motivo a quien lo pidió (opcional):"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dites pourquoi à qui l’a demandé (facultatif) :"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diga a quem pediu o motivo (opcional):"
           }
         }
       }
@@ -23518,6 +23630,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nenhuma filmografia processada para esta pessoa ainda."
+          }
+        }
+      }
+    },
+    "No reason" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Grund"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin motivo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans raison"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem motivo"
           }
         }
       }
@@ -42054,6 +42194,34 @@
         }
       }
     },
+    "Your request (%@) was removed from the server" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Anfrage (%@) wurde vom Server entfernt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu solicitud (%@) se retiró del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre demande (%@) a été retirée du serveur"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu pedido (%@) foi removido do servidor"
+          }
+        }
+      }
+    },
     "Your request is %@" : {
       "localizations" : {
         "de" : {
@@ -42162,6 +42330,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seu pedido está aguardando análise"
+          }
+        }
+      }
+    },
+    "Your request was removed from the server" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Anfrage wurde vom Server entfernt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu solicitud se retiró del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre demande a été retirée du serveur"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu pedido foi removido do servidor"
           }
         }
       }

@@ -73,6 +73,13 @@ describe("myRequestBadge", () => {
     expect(myRequestBadge(t, "approved", "untracked", false, true)).toEqual({ label: "Approved — waiting to be added", tone: "approved" });
     expect(myRequestBadge(t, "approved", "owned", false, true).label).toBe("In your library");
   });
+
+  it("says Removed for an approved request taken off the server, whatever's left on disk", () => {
+    expect(myRequestBadge(t, "approved", "owned", false, false, true)).toEqual({ label: "Removed", tone: "declined" });
+    expect(myRequestBadge(t, "approved", null, true, false, true)).toEqual({ label: "Removed", tone: "declined" });
+    // Only an approved request can have been removed.
+    expect(myRequestBadge(t, "rejected", null, false, false, true).label).toBe("Declined");
+  });
 });
 
 describe("reviewedRequestLabel", () => {
@@ -80,6 +87,8 @@ describe("reviewedRequestLabel", () => {
     expect(reviewedRequestLabel(t, "approved", false)).toBe("Approved");
     expect(reviewedRequestLabel(t, "approved", true)).toBe("Manually approved");
     expect(reviewedRequestLabel(t, "rejected", false)).toBe("Rejected");
+    expect(reviewedRequestLabel(t, "approved", false, true)).toBe("Removed");
+    expect(reviewedRequestLabel(t, "approved", true, true)).toBe("Removed");
   });
 });
 

@@ -8,11 +8,14 @@ import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
 import { MENU_ITEM } from "@/components/pill-styles";
 import { showToast } from "@/components/toast";
+import { ReasonChoices } from "@/components/decline-reason-chooser";
+import { CUSTOM_REJECTION_REASON } from "@/lib/requests/rejection-reasons";
 
 /** "Remove from Radarr/Sonarr" in the title page's "…" menu (admin): asks
- * first, with "Also delete the files" off, then takes the title off every
- * server that has it (lib/arr/remove.ts). With `fourK`, "Remove from Radarr
- * 4K": the same, for the 4K servers. */
+ * first, with "Also delete the files" off and an optional reason for whoever
+ * requested it (the decline chooser's presets), then takes the title off
+ * every server that has it (lib/arr/remove.ts). With `fourK`, "Remove from
+ * Radarr 4K": the same, for the 4K servers. */
 export function RemoveFromArrButton({
   mediaType,
   tmdbId,
@@ -30,6 +33,8 @@ export function RemoveFromArrButton({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [deleteFiles, setDeleteFiles] = useState(false);
+  const [reason, setReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const titleId = useId();
@@ -49,7 +54,10 @@ export function RemoveFromArrButton({
   function remove() {
     setError(null);
     startTransition(async () => {
-      const result = await removeFromArrAction(mediaType, tmdbId, tvdbId, deleteFiles, fourK).catch(() => ({
+      const result = await removeFromArrAction(mediaType, tmdbId, tvdbId, deleteFiles, fourK, {
+        preset: reason,
+        custom: customReason,
+      }).catch(() => ({
         error: t("common.somethingWentWrong"),
         removedFrom: undefined,
       }));
@@ -72,6 +80,8 @@ export function RemoveFromArrButton({
           // so the dialog isn't drawn over it.
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
           setDeleteFiles(false);
+          setReason("");
+          setCustomReason("");
           setError(null);
           setOpen(true);
         }}
@@ -110,6 +120,16 @@ export function RemoveFromArrButton({
                   <span className="mt-0.5 block text-xs text-text-muted">{t("title.removeFromArrDeleteFilesHelp")}</span>
                 </span>
               </label>
+              <fieldset className="flex flex-col gap-2 text-[13px]">
+                <legend className="mb-2 text-text-secondary">{t("title.removeFromArrReason")}</legend>
+                <ReasonChoices
+                  reason={reason}
+                  onReasonChange={setReason}
+                  customReason={customReason}
+                  onCustomReasonChange={setCustomReason}
+                  optional
+                />
+              </fieldset>
               {error && <p className="text-xs text-red-400">{error}</p>}
               <div className="flex justify-end gap-2">
                 <button
@@ -123,7 +143,7 @@ export function RemoveFromArrButton({
                 <button
                   type="button"
                   onClick={remove}
-                  disabled={isPending}
+                  disabled={isPending || (reason === CUSTOM_REJECTION_REASON && !customReason.trim())}
                   className="rounded-full bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-60"
                 >
                   {isPending

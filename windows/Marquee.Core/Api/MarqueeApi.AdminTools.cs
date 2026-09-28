@@ -69,12 +69,14 @@ public sealed class AdminToolsEndpoints(MarqueeApi.Transport transport)
     /// <c>POST /titles/{type}/{tmdbId}/remove-from-arr</c> (admin, 0.58+):
     /// "Remove from Radarr/Sonarr", with its files when
     /// <paramref name="deleteFiles"/>; with <paramref name="is4k"/> the 4K
-    /// servers instead. Conflict "Not tracked in Radarr/Sonarr.".
+    /// servers instead. <paramref name="reason"/> (0.68+) is told to whoever
+    /// requested it. Conflict "Not tracked in Radarr/Sonarr.".
     /// </summary>
-    public Task<RemoveFromArrResult> RemoveFromArrAsync(MediaType type, int tmdbId, bool deleteFiles, bool is4k = false, CancellationToken ct = default) =>
+    public Task<RemoveFromArrResult> RemoveFromArrAsync(
+        MediaType type, int tmdbId, bool deleteFiles, bool is4k = false, string? reason = null, CancellationToken ct = default) =>
         transport.MutateAsync<RemoveFromArrResult>(
             HttpMethod.Post, $"{TitlesEndpoints.Path(type, tmdbId)}/remove-from-arr",
-            body: new RemoveFromArrBody { DeleteFiles = deleteFiles, Is4k = is4k ? true : null },
+            body: new RemoveFromArrBody { DeleteFiles = deleteFiles, Is4k = is4k ? true : null, Reason = reason },
             timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library | ServerChange.Requests, ct: ct);
 
     /// <summary><c>GET /titles/{type}/{tmdbId}/add-options</c> for a request being reviewed: the override rule that applies comes first.</summary>

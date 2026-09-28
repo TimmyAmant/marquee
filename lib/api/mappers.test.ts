@@ -276,6 +276,48 @@ describe("request mapping", () => {
       reviewedAt: "2026-09-02T00:00:00.000Z",
     });
   });
+
+  it("says Removed, with the reason, for an approved request taken off the server", () => {
+    const base = {
+      id: "11111111-1111-1111-1111-111111111111",
+      mediaType: "movie" as const,
+      tmdbId: 603,
+      title: "The Matrix",
+      posterPath: null,
+      seasons: null,
+      status: "approved" as const,
+      manuallyApproved: false,
+      rejectionReason: null,
+      arrServerName: "Radarr",
+      createdAt: new Date("2026-09-01T00:00:00Z"),
+      reviewedAt: new Date("2026-09-02T00:00:00Z"),
+      removedAt: new Date("2026-09-10T00:00:00Z"),
+      removedReason: "Couldn't find a good copy of it",
+    };
+    expect(myRequest(englishT(), { ...base, libraryStatus: "owned" })).toMatchObject({
+      statusLabel: "Removed",
+      statusTone: "declined",
+      addedToServer: null,
+      removedAt: "2026-09-10T00:00:00.000Z",
+      removedReason: "Couldn't find a good copy of it",
+    });
+    expect(reviewedRequest(englishT(), { ...base, requestedByName: null, requestedByUsername: "member1" })).toMatchObject({
+      statusLabel: "Removed",
+      removedAt: "2026-09-10T00:00:00.000Z",
+      removedReason: "Couldn't find a good copy of it",
+    });
+    // Removed before reasons could be given: still Removed, no reason.
+    expect(myRequest(englishT(), { ...base, removedReason: null, libraryStatus: null })).toMatchObject({
+      statusLabel: "Removed",
+      removedReason: null,
+    });
+    // Not removed: both null.
+    expect(myRequest(englishT(), { ...base, removedAt: null, libraryStatus: null })).toMatchObject({
+      statusLabel: "Approved",
+      removedAt: null,
+      removedReason: null,
+    });
+  });
 });
 
 describe("fourKViewerState", () => {

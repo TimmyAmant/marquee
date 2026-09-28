@@ -1401,6 +1401,14 @@
     <value>Let {0} know why "{1}" isn't being added. They'll see it under Declined on their Requests page and in the notification.</value>
     <comment>{0} is who asked, {1} the requested title.</comment>
   </data>
+  <data name="Decline_ExplanationApproved" xml:space="preserve">
+    <value>Let {0} know why you can't get "{1}" after all. They'll hear it couldn't be added, and see it under Declined on their Requests page.</value>
+    <comment>{0} is who asked, {1} the requested title. "Can't get it": the request was already approved.</comment>
+  </data>
+  <data name="Decline_NoReason" xml:space="preserve">
+    <value>No reason</value>
+    <comment>The first choice of the reasons when giving one is optional (Remove from Radarr/Sonarr).</comment>
+  </data>
   <data name="Decline_OtherChoice" xml:space="preserve">
     <value>Other</value>
     <comment>The last choice of the decline reasons, which opens a free-text field.</comment>
@@ -2589,11 +2597,18 @@
   <data name="Lifecycle_LineDeclined" xml:space="preserve">
     <value>Your request is declined</value>
   </data>
+  <data name="Lifecycle_LineRemoved" xml:space="preserve">
+    <value>Your request was removed from the server</value>
+  </data>
   <data name="Lifecycle_LineDetailApproved" xml:space="preserve">
     <value>Your request ({0}) is approved</value>
   </data>
   <data name="Lifecycle_LineDetailDeclined" xml:space="preserve">
     <value>Your request ({0}) is declined</value>
+  </data>
+  <data name="Lifecycle_LineDetailRemoved" xml:space="preserve">
+    <value>Your request ({0}) was removed from the server</value>
+    <comment>{0} is what was asked for, e.g. "Season 2 · In 4K".</comment>
   </data>
   <data name="Lifecycle_LineDetailOther" xml:space="preserve">
     <value>Your request ({0}) is {1}</value>
@@ -3913,6 +3928,17 @@
   </data>
   <data name="Requests_Rejecting" xml:space="preserve">
     <value>Rejecting…</value>
+  </data>
+  <data name="Requests_CantGetIt" xml:space="preserve">
+    <value>Can't get it</value>
+    <comment>Declines an approved request after all.</comment>
+  </data>
+  <data name="Requests_CantGetItHint" xml:space="preserve">
+    <value>Decline it after all — {0} hears it couldn't be added.</value>
+    <comment>{0} is who asked.</comment>
+  </data>
+  <data name="Requests_Declining" xml:space="preserve">
+    <value>Declining…</value>
   </data>
   <data name="Requests_Saving" xml:space="preserve">
     <value>Saving…</value>
@@ -5766,6 +5792,9 @@
   </data>
   <data name="Title_RemoveDeleteFilesHelp" xml:space="preserve">
     <value>Gone from the disk for good — Plex and Jellyfin lose it too.</value>
+  </data>
+  <data name="Title_RemoveReasonIntro" xml:space="preserve">
+    <value>Let whoever asked for it know why (optional):</value>
   </data>
   <data name="Title_RemoveConfirm" xml:space="preserve">
     <value>Remove</value>

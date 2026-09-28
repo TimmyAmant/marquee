@@ -169,6 +169,54 @@ public sealed class RequestsFixtureTests
     }
 
     [Fact]
+    public void RemovedRequestsDecodeAndReadAsRemoved()
+    {
+        // What a 0.68 server adds: an approved request whose title the admin
+        // removed from Sonarr/Radarr since, with (or without) their reason.
+        var reviewed = Json.Decode<ReviewedRequest>("""
+            {"id":"c4d8e2a1-7b3f-4e6a-9d0c-5f1b2a8e7c90","mediaType":"movie","tmdbId":78,"title":"Blade Runner","status":"approved",
+             "manuallyApproved":false,"rejectionReason":null,"statusLabel":"Removed","createdAt":"2026-09-17T16:40:00.000Z",
+             "requestedBy":{"userId":null,"displayName":null,"username":"member1","label":"member1"},
+             "addedTo":{"serverId":"s","serverName":"Radarr","qualityProfileId":4,"rootFolderPath":"/movies","tags":[],"seriesType":null},
+             "notFoundSince":"2026-09-18T16:40:00.000Z","addFailed":null,
+             "removedAt":"2026-09-20T10:00:00.000Z","removedReason":"Couldn't find a good copy of it"}
+            """);
+        Assert.True(reviewed.IsRemoved);
+        Assert.Equal("Couldn't find a good copy of it", reviewed.Reason);
+        Assert.False(reviewed.ShowsApprovedTone);
+        Assert.False(reviewed.OffersCantGetIt);
+        Assert.False(reviewed.IsNotFound);
+        Assert.Null(reviewed.AddedToLine);
+
+        // Still on the server: "Can't get it" is offered; once under
+        // "Couldn't add" it isn't (that section has its own Decline).
+        var approved = reviewed with { RemovedAt = null, RemovedReason = null };
+        Assert.False(approved.IsRemoved);
+        Assert.Null(approved.Reason);
+        Assert.True(approved.ShowsApprovedTone);
+        Assert.True(approved.OffersCantGetIt);
+        Assert.False((approved with { AddFailed = new AddFailed { Error = "Down.", Since = DateTimeOffset.UnixEpoch } }).OffersCantGetIt);
+
+        // Removed before reasons could be given: Removed, no reason line.
+        var mine = Json.Decode<MyRequest>("""
+            {"id":"c4d8e2a1-7b3f-4e6a-9d0c-5f1b2a8e7c90","mediaType":"movie","tmdbId":78,"title":"Blade Runner","status":"approved",
+             "manuallyApproved":false,"rejectionReason":null,"statusLabel":"Removed","statusTone":"declined",
+             "createdAt":"2026-09-17T16:40:00.000Z","commentCount":0,"removedAt":"2026-09-20T10:00:00.000Z","removedReason":null}
+            """);
+        Assert.True(mine.IsRemoved);
+        Assert.Null(mine.Reason);
+        Assert.Null(mine.ChangeHint);
+
+        var summary = Json.Decode<TitleRequestSummary>("""
+            {"id":"c4d8e2a1-7b3f-4e6a-9d0c-5f1b2a8e7c90","status":"approved","seasons":null,"seasonsLabel":null,"is4k":false,
+             "canEdit":false,"canCancel":false,"commentCount":0,"createdAt":"2026-09-17T16:40:00.000Z",
+             "removedAt":"2026-09-20T10:00:00.000Z","removedReason":"Not enough space on the server right now"}
+            """);
+        Assert.Equal("Your request was removed from the server", summary.Line);
+        Assert.Equal("Reason: Not enough space on the server right now", summary.ReasonLine);
+    }
+
+    [Fact]
     public void ApproveAllDecodes()
     {
         var result = Fixtures.Decode<ApproveAllResult>("requests-approve-all");

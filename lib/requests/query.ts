@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { getFourKStatus } from "@/lib/arr/fourk";
 import { db } from "@/lib/db/client";
 import { requests, users, titles } from "@/lib/db/schema";
@@ -181,6 +181,8 @@ function reviewedQuery() {
       status: requests.status,
       manuallyApproved: requests.manuallyApproved,
       rejectionReason: requests.rejectionReason,
+      removedAt: requests.removedAt,
+      removedReason: requests.removedReason,
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
       editedAt: requests.editedAt,
@@ -225,6 +227,8 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
       status: requests.status,
       manuallyApproved: requests.manuallyApproved,
       rejectionReason: requests.rejectionReason,
+      removedAt: requests.removedAt,
+      removedReason: requests.removedReason,
       createdAt: requests.createdAt,
       reviewedAt: requests.reviewedAt,
       editedAt: requests.editedAt,
@@ -243,7 +247,8 @@ export async function getMyRequests(userId: string, libraryOwnerId: string) {
     .orderBy(desc(requests.createdAt));
 
   const libraryStatuses = await mapWithLimit(rows, STATUS_LOOKUP_CONCURRENCY, (r) => {
-    if (r.status !== "approved") return Promise.resolve(null);
+    // Removed from Sonarr/Radarr since: it reads "Removed" whatever's there.
+    if (r.status !== "approved" || r.removedAt) return Promise.resolve(null);
     if (r.is4k) {
       return getFourKStatus(libraryOwnerId, r.mediaType, r.tmdbId, r.tvdbId)
         .then((s) => s?.status ?? null)
@@ -366,6 +371,8 @@ export async function getViewerTitleRequests(
         eq(requests.mediaType, mediaType),
         eq(requests.tmdbId, tmdbId),
         ne(requests.status, "rejected"),
+        // Removed from Sonarr/Radarr since: its seasons may be asked for again.
+        isNull(requests.removedAt),
         eq(requests.is4k, false),
       ),
     )
@@ -386,6 +393,8 @@ export async function getViewerRequestsForTitle(userId: string, mediaType: Media
       seasons: requests.seasons,
       is4k: requests.is4k,
       createdAt: requests.createdAt,
+      removedAt: requests.removedAt,
+      removedReason: requests.removedReason,
     })
     .from(requests)
     .where(and(eq(requests.requestedByUserId, userId), eq(requests.mediaType, mediaType), eq(requests.tmdbId, tmdbId)))

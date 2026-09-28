@@ -1351,6 +1351,12 @@
   <data name="Decline_Explanation" xml:space="preserve">
     <value>Indiquez à {0} pourquoi « {1} » n’est pas ajouté. Cette personne le verra sous Refusées sur sa page Demandes et dans la notification.</value>
   </data>
+  <data name="Decline_ExplanationApproved" xml:space="preserve">
+    <value>Expliquez à {0} pourquoi « {1} » est finalement impossible à obtenir. Cette personne saura qu’il n’a pas pu être ajouté et le verra sous Refusées dans sa page Demandes.</value>
+  </data>
+  <data name="Decline_NoReason" xml:space="preserve">
+    <value>Sans raison</value>
+  </data>
   <data name="Decline_OtherChoice" xml:space="preserve">
     <value>Autre</value>
   </data>
@@ -2497,11 +2503,17 @@
   <data name="Lifecycle_LineDeclined" xml:space="preserve">
     <value>Votre demande a été refusée</value>
   </data>
+  <data name="Lifecycle_LineRemoved" xml:space="preserve">
+    <value>Votre demande a été retirée du serveur</value>
+  </data>
   <data name="Lifecycle_LineDetailApproved" xml:space="preserve">
     <value>Votre demande ({0}) est approuvée</value>
   </data>
   <data name="Lifecycle_LineDetailDeclined" xml:space="preserve">
     <value>Votre demande ({0}) a été refusée</value>
+  </data>
+  <data name="Lifecycle_LineDetailRemoved" xml:space="preserve">
+    <value>Votre demande ({0}) a été retirée du serveur</value>
   </data>
   <data name="Lifecycle_LineDetailOther" xml:space="preserve">
     <value>Votre demande ({0}) : {1}</value>
@@ -3749,6 +3761,15 @@
     <value>Refuser</value>
   </data>
   <data name="Requests_Rejecting" xml:space="preserve">
+    <value>Refus…</value>
+  </data>
+  <data name="Requests_CantGetIt" xml:space="preserve">
+    <value>Impossible à obtenir</value>
+  </data>
+  <data name="Requests_CantGetItHint" xml:space="preserve">
+    <value>La refuser finalement — {0} saura qu’elle n’a pas pu être ajoutée.</value>
+  </data>
+  <data name="Requests_Declining" xml:space="preserve">
     <value>Refus…</value>
   </data>
   <data name="Requests_Saving" xml:space="preserve">
@@ -5568,6 +5589,9 @@
   </data>
   <data name="Title_RemoveDeleteFilesHelp" xml:space="preserve">
     <value>Définitivement supprimé du disque — Plex et Jellyfin le perdent aussi.</value>
+  </data>
+  <data name="Title_RemoveReasonIntro" xml:space="preserve">
+    <value>Dites pourquoi à qui l’a demandé (facultatif) :</value>
   </data>
   <data name="Title_RemoveConfirm" xml:space="preserve">
     <value>Retirer</value>

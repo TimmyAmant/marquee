@@ -435,7 +435,7 @@ private struct MyRequestRow: View {
             ) {
                 VStack(alignment: .leading, spacing: 4) {
                     TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
-                    if let reason = row.rejectionReason {
+                    if let reason = row.reason {
                         RejectionReasonLine(reason: reason)
                     }
                     if row.showsAskInCommentsHint {
@@ -486,8 +486,8 @@ private struct MyRequestRow: View {
                     .tableColumn(top: 18)
                 VStack(alignment: .leading, spacing: 4) {
                     TonePill(text: row.statusLabel, tone: row.statusTone.badgeTone)
-                    // The admin's reason, under "Declined" like the web page.
-                    if let reason = row.rejectionReason {
+                    // The admin's reason, under "Declined" (or "Removed") like the web page.
+                    if let reason = row.reason {
                         RejectionReasonLine(reason: reason)
                     }
                     if row.offersEdit {
@@ -615,7 +615,10 @@ private struct AdminRequestsList: View {
                 )
                 .padding(.top, 28)
             }
-            NotFoundSection(topPadding: 28)
+            NotFoundSection(
+                rejectionReasons: queue?.rejectionReasonChoices ?? API.PendingRequests.defaultRejectionReasons,
+                topPadding: 28
+            )
             IssuesSection(isAdmin: model.viewer?.can(.manageIssues) == true, topPadding: 28)
 
             if past.isEmpty, let historyError {
@@ -630,7 +633,10 @@ private struct AdminRequestsList: View {
                 TableCard(columns: [String(localized: "Title"), String(localized: "Requested by"), String(localized: "Requested"), String(localized: "Status")]) {
                     ForEach(Array(past.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { Divider().overlay(Theme.border) }
-                        PastRequestRow(row: row)
+                        PastRequestRow(
+                            row: row,
+                            rejectionReasons: queue?.rejectionReasonChoices ?? API.PendingRequests.defaultRejectionReasons
+                        )
                     }
                 }
             }
@@ -711,13 +717,19 @@ private struct AdminRequestsList: View {
 }
 
 /// One "Past requests" row: its status, the reason or where it was added,
-/// and (0.46+) its conversation.
+/// (0.68+) "Can't get it" while it's approved and still on the server, and
+/// (0.46+) its conversation.
 private struct PastRequestRow: View {
     let row: API.ReviewedRequest
+    /// What the Decline sheet lists, as in the queue.
+    let rejectionReasons: [String]
 
     @Environment(AppModel.self) private var model
     @State private var showsComments = false
     @State private var shownCount: Int?
+    @State private var choosingReason = false
+    @State private var declining = false
+    @State private var error: String?
 
     @Environment(\.stacksTableColumns) private var stacked
 
@@ -737,7 +749,7 @@ private struct PastRequestRow: View {
             ) {
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(spacing: 8) {
-                        TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                        TonePill(text: row.statusLabel, tone: row.statusTone)
                         if row.isNotFound {
                             TonePill(text: String(localized: "Can't find"), tone: .missing)
                         }
@@ -748,16 +760,26 @@ private struct PastRequestRow: View {
                                 .lineLimit(1)
                         }
                     }
-                    if let reason = row.rejectionReason {
+                    if let reason = row.reason {
                         RejectionReasonLine(reason: reason)
                     }
                     if let reviewer = row.reviewedBy {
                         ReviewerLine(person: reviewer)
                     }
+                    if let error {
+                        InlineMessage(text: error)
+                    }
                 }
             } actions: {
-                if let count = row.commentCount {
-                    CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                if row.commentCount != nil || row.offersCantGetIt {
+                    HStack(spacing: 16) {
+                        if let count = row.commentCount {
+                            CommentsToggle(count: shownCount ?? count, isOpen: $showsComments)
+                        }
+                        if row.offersCantGetIt {
+                            cantGetItButton
+                        }
+                    }
                 }
             }
             if showsComments {
@@ -789,14 +811,14 @@ private struct PastRequestRow: View {
                     .tableColumn(top: 18)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        TonePill(text: row.statusLabel, tone: row.status == .approved ? .owned : .neutral)
+                        TonePill(text: row.statusLabel, tone: row.statusTone)
                         // 0.46+: Sonarr/Radarr hasn't found it (listed under "Can't find").
                         if row.isNotFound, let since = row.notFoundSince {
                             TonePill(text: String(localized: "Can't find"), tone: .missing)
                                 .help("Sonarr/Radarr hasn't found it since \(Format.shortDate(since))")
                         }
                     }
-                    if let reason = row.rejectionReason {
+                    if let reason = row.reason {
                         RejectionReasonLine(reason: reason)
                     }
                     // 0.43+: "Added to Radarr 2", like the web page.
@@ -808,6 +830,13 @@ private struct PastRequestRow: View {
                     // 0.53+: who reviewed it, as on the website's cards.
                     if let reviewer = row.reviewedBy {
                         ReviewerLine(person: reviewer)
+                    }
+                    if row.offersCantGetIt {
+                        cantGetItButton
+                            .padding(.top, 2)
+                    }
+                    if let error {
+                        InlineMessage(text: error)
                     }
                 }
                 .tableColumn(top: 16)
@@ -821,6 +850,56 @@ private struct PastRequestRow: View {
         .padding(.vertical, 10)
         .requestBackdrop(row.backdropPath)
         .onChange(of: row.commentCount) { _, _ in shownCount = nil }
+        .cantGetItSheet(isPresented: $choosingReason, title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) {
+            decline(reason: $0)
+        }
+    }
+
+    private var cantGetItButton: some View {
+        CantGetItButton(requester: row.requestedBy.label, declining: declining) { choosingReason = true }
+    }
+
+    private func decline(reason: String) {
+        declining = true
+        error = nil
+        let api = model.api
+        let id = row.id
+        Task {
+            do {
+                // Recorded as a requests change: the list reloads with it Declined.
+                try await api.requests.reject(id, reason: reason)
+            } catch {
+                self.error = error.localizedDescription
+            }
+            declining = false
+        }
+    }
+}
+
+/// "Can't get it" (0.68+, components/decline-reason-chooser.tsx): declines
+/// an approved request after all — on Past requests and Can't find.
+private struct CantGetItButton: View {
+    let requester: String
+    let declining: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(declining ? String(localized: "Declining…") : String(localized: "Can't get it"), action: action)
+            .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
+            .font(.system(size: Metrics.text(11.5)))
+            .disabled(declining)
+            .help("Decline it after all — \(requester) hears it couldn't be added.")
+    }
+}
+
+private extension View {
+    /// The Decline sheet, worded for an approved request.
+    func cantGetItSheet(
+        isPresented: Binding<Bool>, title: String, requester: String, reasons: [String], onDecline: @escaping (String) -> Void
+    ) -> some View {
+        sheet(isPresented: isPresented) {
+            DeclineRequestSheet(title: title, requester: requester, reasons: reasons, approved: true, onDecline: onDecline)
+        }
     }
 }
 
@@ -1308,6 +1387,8 @@ private struct IssueRow: View {
 /// Sonarr/Radarr still has nothing for, for whoever reviews. Nothing at all
 /// when none are listed, or when the server predates it (a 404).
 private struct NotFoundSection: View {
+    /// What "Can't get it"'s Decline sheet lists, as in the queue.
+    let rejectionReasons: [String]
     /// Space above the section, only while it shows anything.
     var topPadding: CGFloat = 0
 
@@ -1336,7 +1417,7 @@ private struct NotFoundSection: View {
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                         if index > 0 { Divider().overlay(Theme.border) }
-                        NotFoundRow(row: row, onSettled: { settled.insert(row.id) })
+                        NotFoundRow(row: row, rejectionReasons: rejectionReasons, onSettled: { settled.insert(row.id) })
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -1374,6 +1455,7 @@ private struct NotFoundSection: View {
 /// components/not-found-section.tsx `NotFoundCard`.
 private struct NotFoundRow: View {
     let row: API.NotFoundRequest
+    let rejectionReasons: [String]
     let onSettled: () -> Void
 
     @Environment(AppModel.self) private var model
@@ -1381,6 +1463,8 @@ private struct NotFoundRow: View {
     @State private var busy: String?
     @State private var error: String?
     @State private var info: String?
+    /// "Can't get it" opens the Decline sheet.
+    @State private var choosingReason = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -1433,6 +1517,8 @@ private struct NotFoundRow: View {
                         .buttonStyle(OutlineButtonStyle(compact: true))
                         .help(url.absoluteString)
                 }
+                CantGetItButton(requester: row.requestedBy.label, declining: busy == "reject") { choosingReason = true }
+                    .disabled(busy != nil)
                 Button(busy == "dismiss" ? "Saving…" : "Mark as found") { dismiss() }
                     .buttonStyle(QuietButtonStyle(color: Theme.textMuted))
                     .font(.system(size: Metrics.text(11.5)))
@@ -1443,6 +1529,26 @@ private struct NotFoundRow: View {
         .font(.system(size: Metrics.text(13)))
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .cantGetItSheet(isPresented: $choosingReason, title: row.title, requester: row.requestedBy.label, reasons: rejectionReasons) {
+            decline(reason: $0)
+        }
+    }
+
+    private func decline(reason: String) {
+        busy = "reject"
+        error = nil
+        info = nil
+        let api = model.api
+        let id = row.id
+        Task {
+            do {
+                try await api.requests.reject(id, reason: reason)
+                onSettled()
+            } catch {
+                self.error = error.localizedDescription
+            }
+            busy = nil
+        }
     }
 
     private func searchAgain() {
@@ -1731,99 +1837,41 @@ private struct RequestReviewRow: View {
 }
 
 /// The web row's Reject chooser as a sheet: the server's preset reasons plus
-/// "Other" with a free-text field. Decline stays disabled until there's a
-/// reason to send (the server checks again either way).
+/// "Other" with a free-text field (ReasonChooser). Decline stays disabled
+/// until there's a reason to send (the server checks again either way).
 private struct DeclineRequestSheet: View {
     let title: String
     let requester: String
     let reasons: [String]
+    /// "Can't get it" on an approved request: its requester already heard
+    /// it was approved, and now hears it couldn't be added.
+    var approved = false
     /// Runs the reject with the chosen reason, after the sheet has closed.
     let onDecline: (String) -> Void
-
-    /// The free-text choice. Only the chooser's label: what gets sent is the
-    /// admin's own words, never this word itself.
-    static let other = String(localized: "Other")
-    /// The server's cap, counted in Unicode scalars the way the server counts
-    /// code points (not Characters, which would let a run of emoji through
-    /// that the server then shortens), so what's typed is what's stored.
-    static let maxReasonLength = 200
 
     @Environment(\.dismiss) private var dismiss
     @State private var choice: String?
     @State private var customReason = ""
 
-    private var options: [String] { reasons + [Self.other] }
-
     /// What Decline would send: the preset, or the trimmed custom text.
-    private var reason: String? {
-        guard let choice else { return nil }
-        guard choice == Self.other else { return choice }
-        let trimmed = customReason.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
-    }
+    private var reason: String? { ReasonChooser.reason(choice: choice, customReason: customReason) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Decline request")
                 .font(.marqueeDisplay(22))
-            Text("Let \(requester) know why \"\(title)\" isn't being added. They'll see it under Declined on their Requests page and in the notification.")
-                .font(.system(size: Metrics.text(12.5)))
-                .foregroundStyle(Theme.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            #if os(iOS)
-            // A menu with nothing chosen yet shows no label on iOS: the
-            // reasons are listed as rows to tap instead.
-            VStack(spacing: 0) {
-                ForEach(Array(options.enumerated()), id: \.element) { index, option in
-                    if index > 0 { Divider().overlay(Theme.border) }
-                    Button {
-                        choice = option
-                    } label: {
-                        HStack {
-                            Text(option)
-                                .foregroundStyle(Theme.textPrimary)
-                                .multilineTextAlignment(.leading)
-                            Spacer(minLength: 8)
-                            if choice == option {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Theme.accent)
-                            }
-                        }
-                        .font(.system(size: Metrics.text(14)))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(choice == option ? .isSelected : [])
+            Group {
+                if approved {
+                    Text("Let \(requester) know why you can't get \"\(title)\" after all. They'll hear it couldn't be added, and see it under Declined on their Requests page.")
+                } else {
+                    Text("Let \(requester) know why \"\(title)\" isn't being added. They'll see it under Declined on their Requests page and in the notification.")
                 }
             }
-            .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
-            #else
-            Picker("Reason", selection: $choice) {
-                ForEach(options, id: \.self) { option in
-                    Text(option).tag(Optional(option))
-                }
-            }
-            .choicePickerStyle()
-            .labelsHidden()
-            .font(.system(size: Metrics.text(13)))
-            #endif
+            .font(.system(size: Metrics.text(12.5)))
+            .foregroundStyle(Theme.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
 
-            if choice == Self.other {
-                TextField("Tell them why", text: $customReason)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(size: Metrics.text(13)))
-                    .onChange(of: customReason) { _, value in
-                        let scalars = value.unicodeScalars
-                        if scalars.count > Self.maxReasonLength {
-                            customReason = String(scalars.prefix(Self.maxReasonLength))
-                        }
-                    }
-            }
+            ReasonChooser(reasons: reasons, choice: $choice, customReason: $customReason)
 
             HStack {
                 Spacer()

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   components/request-review-row.tsx's Reject chooser: the server's preset
-  reasons plus "Other" with a free-text field. Decline stays disabled until
-  there is a reason to send; the server trims and caps it again either way.
+  reasons plus "Other" with a free-text field (ReasonChooser). Decline stays
+  disabled until there is a reason to send; the server trims and caps it
+  again either way.
 -->
 <ContentDialog
     x:Class="Marquee.Windows.Controls.DeclineRequestDialog"
@@ -15,20 +16,11 @@
     DefaultButton="Primary"
     IsPrimaryButtonEnabled="False">
 
-    <StackPanel Spacing="14" MinWidth="380">
+    <StackPanel x:Name="Body" Spacing="14" MinWidth="380">
         <TextBlock
             x:Name="ExplanationText"
             Style="{StaticResource BodyTextBlockStyle}"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
             TextWrapping="Wrap" />
-        <RadioButtons
-            x:Name="ReasonButtons"
-            x:Uid="Decline_ReasonButtons"
-            SelectionChanged="OnReasonChanged" />
-        <TextBox
-            x:Name="CustomReasonBox"
-            x:Uid="Decline_CustomReasonBox"
-            Visibility="Collapsed"
-            TextChanged="OnCustomReasonChanged" />
     </StackPanel>
 </ContentDialog>

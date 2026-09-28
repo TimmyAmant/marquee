@@ -1,11 +1,11 @@
 import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
 import { isUnwanted } from "@/lib/library/status-tone";
-import { and, eq, isNotNull, or } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { requests, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { getActiveRequestStatus, getViewerTitleRequests } from "@/lib/requests/query";
-import { activityRequestTitle, quotedRequestTitle, seasonsLabel } from "@/lib/requests/labels";
+import { activityRequestTitle, requestName, seasonsLabel } from "@/lib/requests/labels";
 import { addComment } from "@/lib/comments";
 import { parseSeasonsInput, seasonsStillNeeded, unlistedSeasonError } from "@/lib/requests/seasons";
 import { addMovieToRadarrForUser, addSeriesToSonarrForUser, type AddPlacement } from "@/lib/arr/title-actions";
@@ -18,6 +18,7 @@ import { logActivityEvent } from "@/lib/activity/query";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 import { insertWithinQuota } from "@/lib/requests/quota";
 import { clearRequestAlerts, notifyReviewersOfRequest, refreshRequestAlerts } from "@/lib/requests/alerts";
+import { clearNotFoundAlerts } from "@/lib/requests/not-found";
 import { blockedMessage, findBlock } from "@/lib/requests/blocklist";
 import { getFourKStatus, isFourKReady } from "@/lib/arr/fourk";
 import { hasOverrides, type AddOverrides } from "@/lib/arr/add-options";
@@ -292,13 +293,6 @@ function requestRefusal(
 async function credentialOwnerFor(reviewerUserId: string): Promise<string | null> {
   const [reviewer] = await db.select({ role: users.role }).from(users).where(eq(users.id, reviewerUserId)).limit(1);
   return reviewer?.role === "admin" ? reviewerUserId : getAdminUserId();
-}
-
-/** How a request is named in notifications (quoted, in the reader's
- * language) and the activity feed (which keeps English, as stored text). */
-function requestName(t: Translator, request: { title: string; seasons: number[] | null; is4k: boolean }, quoted: boolean): string {
-  const name = quoted ? quotedRequestTitle(t, request.title, request.seasons) : activityRequestTitle(t, request.title, request.seasons);
-  return request.is4k ? t("notify.requestIn4k", { request: name }) : name;
 }
 
 
@@ -586,6 +580,12 @@ const reviewable = or(
   and(eq(requests.status, "approved"), isNotNull(requests.addFailedAt)),
 );
 
+/** What Decline may act on: anything reviewable, and also an approved
+ * request that's still on the server — "Can't get it", when the admin
+ * approved it but no good copy ever turns up. Approve stays with
+ * `reviewable`. */
+const declinable = or(reviewable, and(eq(requests.status, "approved"), isNull(requests.removedAt)));
+
 /** For requests Sonarr/Radarr can't add automatically (e.g. no TVDB id to
  * resolve) but the admin is downloading by hand anyway. Marks the request
  * approved without touching Sonarr/Radarr, and flags it so the requester
@@ -638,7 +638,10 @@ export async function manuallyApproveRequest(requestId: string, adminUserId: str
 
 /** `reason` is already normalized by the caller (lib/requests/rejection-reasons.ts)
  * and optional: the web form always sends one, but an older API client may
- * not, and a plain "was declined." is still better than refusing the reject. */
+ * not, and a plain "was declined." is still better than refusing the reject.
+ * Also takes back an approved request that's still on the server (see
+ * `declinable`): its requester was told it was on its way, so they hear it
+ * couldn't be added instead, and it leaves Can't find. */
 export async function rejectRequest(
   requestId: string,
   adminUserId: string,
@@ -648,24 +651,31 @@ export async function rejectRequest(
   const [request] = await db
     .select()
     .from(requests)
-    .where(and(eq(requests.id, requestId), reviewable));
+    .where(and(eq(requests.id, requestId), declinable));
   if (!request) return fail("not_found", t("notify.requestNotFoundOrReviewed"));
+  // Approved and actually added (not waiting under "Couldn't add"): the
+  // requester already heard it was approved.
+  const wasApproved = request.status === "approved" && !request.addFailedAt;
 
   // Same atomic re-guard as approveRequest — see comment there.
+  const now = new Date();
   const [updated] = await db
     .update(requests)
     .set({
       status: "rejected",
       rejectionReason: reason,
       reviewedByUserId: adminUserId,
-      reviewedAt: new Date(),
+      reviewedAt: now,
       addFailedAt: null,
       addError: null,
+      notFoundSince: null,
+      notFoundDismissedAt: now,
     })
-    .where(and(eq(requests.id, requestId), reviewable))
+    .where(and(eq(requests.id, requestId), declinable))
     .returning({ id: requests.id });
   if (!updated) return fail("conflict", t("notify.requestAlreadyReviewed"));
   await clearRequestAlerts(requestId).catch(() => undefined);
+  await clearNotFoundAlerts(requestId).catch(() => undefined);
 
   await Promise.all([
     createNotification({
@@ -676,10 +686,17 @@ export async function rejectRequest(
       eventType: "request_rejected",
       // The reason rides along in the notification too, so the requester
       // hears why without having to open their Requests page.
-      message: (rt) =>
-        reason
-          ? rt("notify.requestDeclinedWithReason", { request: requestName(rt, request, true), reason })
-          : rt("notify.requestDeclined", { request: requestName(rt, request, true) }),
+      message: (rt) => {
+        const name = requestName(rt, request, true);
+        if (wasApproved) {
+          return reason
+            ? rt("notify.requestCouldntBeAddedWithReason", { request: name, reason })
+            : rt("notify.requestCouldntBeAdded", { request: name });
+        }
+        return reason
+          ? rt("notify.requestDeclinedWithReason", { request: name, reason })
+          : rt("notify.requestDeclined", { request: name });
+      },
     }).catch(() => undefined),
     logActivityEvent({
       actorUserId: adminUserId,
@@ -690,6 +707,7 @@ export async function rejectRequest(
     }).catch(() => undefined),
   ]);
 
+  if (wasApproved) revalidatePath(`/title/${request.mediaType}/${request.tmdbId}`);
   revalidatePath("/requests");
   return { ok: true };
 }

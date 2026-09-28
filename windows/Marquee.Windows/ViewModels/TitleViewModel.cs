@@ -520,14 +520,15 @@ public sealed partial class TitleViewModel : ObservableObject
     /// <c>POST /titles/{type}/{id}/remove-from-arr</c> (admin, 0.58+): off every
     /// server that has it (the 4K ones with <paramref name="fourK"/>), with its
     /// files when <paramref name="deleteFiles"/>. Its approved requests are
-    /// marked removed, so it can be requested again.
+    /// marked removed, so it can be requested again, and their requesters
+    /// are told, with <paramref name="reason"/> when given (0.68+).
     /// </summary>
-    public async Task RemoveFromArrAsync(bool deleteFiles, bool fourK = false)
+    public async Task RemoveFromArrAsync(bool deleteFiles, bool fourK = false, string? reason = null)
     {
         TrackingMessage = null;
         try
         {
-            await model.Api.AdminTools.RemoveFromArrAsync(Id.MediaType, Id.TmdbId, deleteFiles, is4k: fourK);
+            await model.Api.AdminTools.RemoveFromArrAsync(Id.MediaType, Id.TmdbId, deleteFiles, is4k: fourK, reason: reason);
             TrackingIsError = false;
             TrackingMessage = Loc.Format("Title_RemovedFromArr", fourK ? FourKArrName : Id.MediaType.ArrName);
             await RefreshStatusAsync();

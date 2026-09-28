@@ -35,9 +35,9 @@ public sealed partial class RequestsPage : Page
     }
 
     /// <summary>The chooser: the server's presets (or the built-in list) plus "Other". Null means the admin cancelled.</summary>
-    private async Task<string?> ChooseReasonAsync(PendingRow row)
+    private async Task<string?> ChooseReasonAsync(string title, string requester, bool approved)
     {
-        var dialog = new DeclineRequestDialog(row.Title, row.RequesterLabel, ViewModel.RejectionReasons) { XamlRoot = XamlRoot };
+        var dialog = new DeclineRequestDialog(title, requester, ViewModel.RejectionReasons, approved) { XamlRoot = XamlRoot };
         var result = await dialog.TryShowAsync();
         return result == ContentDialogResult.Primary ? dialog.Reason : null;
     }
