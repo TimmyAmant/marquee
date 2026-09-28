@@ -1,19 +1,43 @@
 import SwiftUI
 
 /// "Remove from Radarr/Sonarr"'s confirmation (components/remove-from-arr-button.tsx):
-/// one Remove button, and "Also delete the files" as a checkbox that's off
-/// each time it opens, so deleting is always a deliberate second choice.
+/// one Remove button, "Also delete the files" as a checkbox that's off
+/// each time it opens, so deleting is always a deliberate second choice,
+/// and (0.68+) an optional reason for whoever requested it — the decline
+/// chooser's presets, with "No reason" first.
 struct RemoveFromArrSheet: View {
     let name: String
     /// "Radarr", "Sonarr 4K"…
     let arrName: String
     /// Runs the removal, after the sheet has closed.
-    let onRemove: (_ deleteFiles: Bool) -> Void
+    let onRemove: (_ deleteFiles: Bool, _ reason: String?) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var deleteFiles = false
+    @State private var reasonChoice: String?
+    @State private var customReason = ""
+
+    /// "Other" with nothing typed: Remove waits for the words.
+    private var missingCustomReason: Bool {
+        reasonChoice == ReasonChooser.other && ReasonChooser.reason(choice: reasonChoice, customReason: customReason) == nil
+    }
 
     var body: some View {
+        #if os(iOS)
+        // The reasons make it taller than a small phone's sheet.
+        ScrollView { content }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .background(Theme.bg1)
+        #else
+        content
+            .frame(width: 440)
+            .background(Theme.bg1)
+        #endif
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Remove \(name) from \(arrName)?")
                 .font(.marqueeDisplay(20))
@@ -40,6 +64,19 @@ struct RemoveFromArrSheet: View {
             .tint(Theme.danger)
             #endif
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Let whoever asked for it know why (optional):")
+                    .font(.system(size: Metrics.text(12.5)))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ReasonChooser(
+                    reasons: API.PendingRequests.defaultRejectionReasons,
+                    choice: $reasonChoice,
+                    customReason: $customReason,
+                    optional: true
+                )
+            }
+
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
@@ -47,20 +84,13 @@ struct RemoveFromArrSheet: View {
                     .keyboardShortcut(.cancelAction)
                 Button(deleteFiles ? String(localized: "Remove and delete files") : String(localized: "Remove")) {
                     dismiss()
-                    onRemove(deleteFiles)
+                    onRemove(deleteFiles, ReasonChooser.reason(choice: reasonChoice, customReason: customReason))
                 }
                 .buttonStyle(DangerButtonStyle())
+                .disabled(missingCustomReason)
             }
         }
         .padding(24)
-        #if os(macOS)
-        .frame(width: 440)
-        #else
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
-        #endif
-        .background(Theme.bg1)
     }
 }
 

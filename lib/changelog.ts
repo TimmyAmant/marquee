@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.68.0",
+    date: "2026-09-28",
+    changes: [
+      "Requests: approved requests you can't get hold of now have a \"Can't get it\" button (on Past requests and the Can't find list), with the same reasons as Decline. Whoever asked is told it couldn't be added, and why.",
+      "Remove from Radarr/Sonarr can say why, and whoever asked for it is told. Removed requests now show as Removed, with the reason, instead of Approved — so the title can be asked for again.",
+      "On the website and the Mac, iPhone, iPad and Windows apps.",
+    ],
+  },
+  {
     version: "0.67.0",
     date: "2026-09-28",
     changes: [

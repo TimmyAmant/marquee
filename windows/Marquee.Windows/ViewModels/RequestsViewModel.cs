@@ -48,7 +48,7 @@ public sealed class MyRequestRow : RequestRowBase
     {
         StatusLabel = request.StatusLabel;
         Tone = request.StatusTone.ToBadgeTone();
-        ReasonLine = request.RejectionReason.NonBlank() is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
+        ReasonLine = request.Reason is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
         SeasonsLine = request.DetailText;
         Actions = actions;
     }
@@ -62,7 +62,7 @@ public sealed class MyRequestRow : RequestRowBase
     public string StatusLabel { get; }
     public BadgeTone Tone { get; }
 
-    /// <summary>"Reason: …" under a Declined badge (server 0.28.0 and later), else empty.</summary>
+    /// <summary>"Reason: …" under a Declined (server 0.28.0 and later) or Removed (0.68+) badge, else empty.</summary>
     public string ReasonLine { get; }
 }
 
@@ -70,14 +70,16 @@ public sealed class MyRequestRow : RequestRowBase
 public sealed class ReviewedRow : RequestRowBase
 {
     /// <param name="thread">Its conversation (0.46+); null from an older server.</param>
-    public ReviewedRow(ReviewedRequest request, ICommand openTitle, CommentThreadViewModel? thread)
+    /// <param name="cantGetIt">"Can't get it" (0.68+), for an approved request still on the server; null otherwise.</param>
+    public ReviewedRow(ReviewedRequest request, ICommand openTitle, CommentThreadViewModel? thread, CantGetItViewModel? cantGetIt)
         : base(request.Title, request.PosterPath, request.CreatedAt, request.TitleId, openTitle)
     {
         Thread = thread;
+        CantGetIt = cantGetIt;
         RequesterLabel = request.RequestedBy.Label;
         StatusLabel = request.StatusLabel;
-        Tone = request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
-        ReasonLine = request.RejectionReason.NonBlank() is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
+        Tone = request.ShowsApprovedTone ? BadgeTone.Owned : BadgeTone.Neutral;
+        ReasonLine = request.Reason is { } reason ? Loc.Format("Requests_ReasonLine", reason) : "";
         SeasonsLine = request.DetailText;
         AddedToLine = request.AddedToLine ?? "";
         ReviewerLine = request.ReviewedBy is { } reviewer ? Loc.Format("Requests_ModifiedBy", reviewer.Label) : "";
@@ -103,6 +105,83 @@ public sealed class ReviewedRow : RequestRowBase
 
     /// <summary>"Comments (N)" (0.46+); null hides it.</summary>
     public CommentThreadViewModel? Thread { get; }
+
+    /// <summary>"Can't get it" under the status (0.68+); null hides it.</summary>
+    public CantGetItViewModel? CantGetIt { get; }
+
+    public bool ShowsCantGetIt => CantGetIt != null;
+}
+
+/// <summary>
+/// "Can't get it" (0.68+, components/decline-reason-chooser.tsx): declines an
+/// approved request after all, on "Past requests" and "Can't find" — the
+/// Decline dialog first, worded for an approved request, and only its
+/// Decline sends anything. The requester hears it couldn't be added.
+/// </summary>
+public sealed partial class CantGetItViewModel : ObservableObject
+{
+    private readonly RequestsViewModel owner;
+    private readonly Guid id;
+    private readonly string title;
+    private readonly string requester;
+    private readonly Action? onDeclined;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Label))]
+    [NotifyPropertyChangedFor(nameof(CanAct))]
+    private bool declining;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
+    private string? error;
+
+    /// <param name="onDeclined">Runs after the decline went through (the row drops out); the reload the mutation triggers does the rest.</param>
+    public CantGetItViewModel(RequestsViewModel owner, Guid id, string title, string requester, Action? onDeclined = null)
+    {
+        this.owner = owner;
+        this.id = id;
+        this.title = title;
+        this.requester = requester;
+        this.onDeclined = onDeclined;
+        Hint = Loc.Format("Requests_CantGetItHint", requester);
+    }
+
+    public string Label => Declining ? Loc.Get("Requests_Declining") : Loc.Get("Requests_CantGetIt");
+
+    /// <summary>"Decline it after all — Susan hears it couldn't be added."</summary>
+    public string Hint { get; }
+
+    public bool CanAct => !Declining;
+    public bool HasError => Error != null;
+
+    [RelayCommand]
+    private async Task DeclineAsync()
+    {
+        if (Declining)
+        {
+            return;
+        }
+        var reason = await owner.ChooseReasonAsync(title, requester, approved: true);
+        if (reason == null)
+        {
+            return;
+        }
+        Declining = true;
+        Error = null;
+        try
+        {
+            await owner.Api.Requests.RejectAsync(id, reason);
+            onDeclined?.Invoke();
+        }
+        catch (ApiException failure)
+        {
+            Error = failure.Message;
+        }
+        finally
+        {
+            Declining = false;
+        }
+    }
 }
 
 /// <summary>A row of "Everyone's requests" (0.48+): someone else's request, to look at.</summary>
@@ -115,7 +194,7 @@ public sealed class EveryoneRow : RequestRowBase
         StatusLabel = request.StatusLabel;
         Tone = request.Status == RequestStatus.Pending
             ? BadgeTone.Info
-            : request.Status == RequestStatus.Approved ? BadgeTone.Owned : BadgeTone.Neutral;
+            : request.Status == RequestStatus.Approved && !request.IsRemoved ? BadgeTone.Owned : BadgeTone.Neutral;
         SeasonsLine = request.DetailText;
     }
 
@@ -124,7 +203,7 @@ public sealed class EveryoneRow : RequestRowBase
 
     public string RequesterLabel { get; }
 
-    /// <summary>"Waiting for review", "Approved", "Manually approved" or "Rejected".</summary>
+    /// <summary>"Waiting for review", "Approved", "Manually approved", "Removed" or "Rejected".</summary>
     public string StatusLabel { get; }
 
     public BadgeTone Tone { get; }
@@ -518,11 +597,15 @@ public sealed partial class NotFoundRow : ObservableObject
         arrKindName = request.ArrKindName;
         posterUrl = request.PosterPath.Url(ImageSize.W92);
         Open = openTitle;
+        CantGetIt = new CantGetItViewModel(owner, request.Id, request.Title, request.RequestedBy.Label, () => owner.Settle(this));
     }
 
     public Guid Id { get; }
     public string Title { get; }
     public TitleId TitleId { get; }
+
+    /// <summary>"Can't get it" (0.68+): nothing good is ever turning up, so decline it after all.</summary>
+    public CantGetItViewModel CantGetIt { get; }
 
     /// <summary>"Seasons 1–3" and/or "In 4K" (joined with " · ") next to the title; empty for neither.</summary>
     public string SeasonsLine { get; }
@@ -757,11 +840,13 @@ public sealed partial class RequestsViewModel : ObservableObject
     private bool active;
 
     /// <summary>
-    /// Set by the page: shows the "Decline request" dialog for a row and
-    /// returns the chosen reason, or null when the admin cancelled. A
-    /// ContentDialog needs the page's XamlRoot, which is why it isn't here.
+    /// Set by the page: shows the "Decline request" dialog for a request
+    /// (its title, who asked, and whether it was already approved — "Can't
+    /// get it") and returns the chosen reason, or null when the admin
+    /// cancelled. A ContentDialog needs the page's XamlRoot, which is why it
+    /// isn't here.
     /// </summary>
-    public Func<PendingRow, Task<string?>>? ReasonChooser { get; set; }
+    public Func<string, string, bool, Task<string?>>? ReasonChooser { get; set; }
 
     /// <summary>
     /// The review queue, "Can't find", "Couldn't add" and history: whoever
@@ -1344,7 +1429,8 @@ public sealed partial class RequestsViewModel : ObservableObject
                 .ToList();
             History = RequestHistory.Past(fresh)
                 .Select(request => new ReviewedRow(request, OpenTitleCommand,
-                    ThreadFor(CommentSubject.Request, request.Id, request.HasConversation, request.CommentCount)))
+                    ThreadFor(CommentSubject.Request, request.Id, request.HasConversation, request.CommentCount),
+                    request.OffersCantGetIt ? new CantGetItViewModel(this, request.Id, request.Title, request.RequestedBy.Label) : null))
                 .ToList();
             HistoryError = null;
         }
@@ -1512,8 +1598,11 @@ public sealed partial class RequestsViewModel : ObservableObject
     }
 
     /// <summary>The page's dialog, or nothing (no reason, no reject) when the page hasn't wired one.</summary>
-    internal Task<string?> ChooseReasonAsync(PendingRow row) =>
-        ReasonChooser is { } chooser ? chooser(row) : Task.FromResult<string?>(null);
+    internal Task<string?> ChooseReasonAsync(PendingRow row) => ChooseReasonAsync(row.Title, row.RequesterLabel);
+
+    /// <summary>The same for any request; <paramref name="approved"/> words it for "Can't get it".</summary>
+    internal Task<string?> ChooseReasonAsync(string title, string requester, bool approved = false) =>
+        ReasonChooser is { } chooser ? chooser(title, requester, approved) : Task.FromResult<string?>(null);
 
     // MARK: Reload triggers
 

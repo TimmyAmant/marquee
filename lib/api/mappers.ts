@@ -164,6 +164,8 @@ export function titleViewerState(input: {
     is4k: boolean;
     createdAt: Date;
     commentCount: number;
+    removedAt?: Date | null;
+    removedReason?: string | null;
   }[];
 }): Dto.TitleViewerState {
   const blocked = input.blocked ?? null;
@@ -205,6 +207,7 @@ export function titleViewerState(input: {
       canCancel: r.status === "pending",
       commentCount: r.commentCount,
       createdAt: isoRequired(r.createdAt),
+      ...removal(r),
     })),
     arrLinks: input.arrLinks ?? [],
   };
@@ -242,6 +245,8 @@ export function myRequest(t: Translator, row: {
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
+  removedAt?: Date | null;
+  removedReason?: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
   libraryStatus: LibraryStatus | null;
@@ -252,7 +257,8 @@ export function myRequest(t: Translator, row: {
   reviewedByName?: string | null;
   reviewedByUsername?: string | null;
 }, commentCount = 0): Dto.MyRequest {
-  const badge = myRequestBadge(t, row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt));
+  const removed = removal(row);
+  const badge = myRequestBadge(t, row.status, row.libraryStatus, row.manuallyApproved, Boolean(row.addFailedAt), Boolean(removed.removedAt));
   return {
     id: row.id,
     mediaType: row.mediaType,
@@ -275,8 +281,19 @@ export function myRequest(t: Translator, row: {
     commentCount,
     backdropPath: row.backdropPath ?? null,
     reviewedBy: reviewer(row),
-    addedToServer: row.status === "approved" && !row.manuallyApproved ? (row.arrServerName ?? null) : null,
+    addedToServer: row.status === "approved" && !row.manuallyApproved && !removed.removedAt ? (row.arrServerName ?? null) : null,
+    ...removed,
   };
+}
+
+/** When an approved request's title was removed from Sonarr/Radarr since,
+ * and the admin's reason (0.68+). Only ever set on an approved request. */
+function removal(row: { status: RequestStatus; removedAt?: Date | null; removedReason?: string | null }): {
+  removedAt: string | null;
+  removedReason: string | null;
+} {
+  if (row.status !== "approved" || !row.removedAt) return { removedAt: null, removedReason: null };
+  return { removedAt: row.removedAt.toISOString(), removedReason: row.removedReason ?? null };
 }
 
 /** Who reviewed a request, when someone did (lib/requests/query.ts joins
@@ -321,6 +338,8 @@ export function reviewedRequest(t: Translator, row: {
   status: RequestStatus;
   manuallyApproved: boolean;
   rejectionReason: string | null;
+  removedAt?: Date | null;
+  removedReason?: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
   requestedByName: string | null;
@@ -340,6 +359,7 @@ export function reviewedRequest(t: Translator, row: {
   reviewedByName?: string | null;
   reviewedByUsername?: string | null;
 }, commentCount = 0): Dto.ReviewedRequest {
+  const removed = removal(row);
   return {
     id: row.id,
     mediaType: row.mediaType,
@@ -351,7 +371,7 @@ export function reviewedRequest(t: Translator, row: {
     status: row.status,
     manuallyApproved: row.manuallyApproved,
     rejectionReason: row.rejectionReason,
-    statusLabel: reviewedRequestLabel(t, row.status, row.manuallyApproved),
+    statusLabel: reviewedRequestLabel(t, row.status, row.manuallyApproved, Boolean(removed.removedAt)),
     requestedBy: requestPerson({ displayName: row.requestedByName, username: row.requestedByUsername }),
     createdAt: isoRequired(row.createdAt),
     reviewedAt: iso(row.reviewedAt),
@@ -365,6 +385,7 @@ export function reviewedRequest(t: Translator, row: {
     backdropPath: row.backdropPath ?? null,
     reviewedBy: reviewer(row),
     editedAt: iso(row.editedAt ?? null),
+    ...removed,
   };
 }
 

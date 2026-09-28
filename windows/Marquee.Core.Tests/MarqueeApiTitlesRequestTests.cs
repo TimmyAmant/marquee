@@ -49,8 +49,9 @@ public sealed class MarqueeApiTitlesRequestTests
         new("GET", "/titles/tv/95396/add-options", null, "add-options", ServerChange.None, api => api.Titles.AddOptionsAsync(MediaType.Tv, 95396)),
         new("POST", "/titles/movie/603/remove-from-arr", """{"deleteFiles":false}""", "title-remove-from-arr", ServerChange.Library | ServerChange.Requests,
             api => api.AdminTools.RemoveFromArrAsync(MediaType.Movie, 603, deleteFiles: false)),
-        new("POST", "/titles/tv/1399/remove-from-arr", """{"deleteFiles":true,"is4k":true}""", "title-remove-from-arr", ServerChange.Library | ServerChange.Requests,
-            api => api.AdminTools.RemoveFromArrAsync(MediaType.Tv, 1399, deleteFiles: true, is4k: true)),
+        new("POST", "/titles/tv/1399/remove-from-arr", """{"deleteFiles":true,"is4k":true,"reason":"Couldn't find a good copy of it"}""", "title-remove-from-arr",
+            ServerChange.Library | ServerChange.Requests,
+            api => api.AdminTools.RemoveFromArrAsync(MediaType.Tv, 1399, deleteFiles: true, is4k: true, reason: "Couldn't find a good copy of it")),
     ];
 
     public static TheoryData<string> CaseNames

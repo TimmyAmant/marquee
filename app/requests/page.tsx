@@ -8,6 +8,7 @@ import type { LibraryStatus } from "@/components/status-badge";
 import type { RequestStatus } from "@/lib/db/schema";
 import { myRequestBadge as badgeFor, reviewedRequestLabel, type MyRequestBadgeTone } from "@/lib/requests/labels";
 import { RequestCard } from "@/components/request-card";
+import { CantGetItRequestCard } from "@/components/decline-reason-chooser";
 import { IssuesSection } from "@/components/issues-section";
 import { getQuotas, type QuotaState } from "@/lib/requests/quota";
 import { listIssues } from "@/lib/issues";
@@ -39,12 +40,13 @@ function myRequestBadge(
   libraryStatus: LibraryStatus | null,
   manuallyApproved: boolean,
   waitingToBeAdded: boolean,
+  removed: boolean,
 ): {
   label: string;
   className: string;
 } {
   // Label wording shared with GET /api/v1/requests/mine.
-  const { label, tone } = badgeFor(t, status, libraryStatus, manuallyApproved, waitingToBeAdded);
+  const { label, tone } = badgeFor(t, status, libraryStatus, manuallyApproved, waitingToBeAdded, removed);
   return { label, className: BADGE_CLASS[tone] };
 }
 
@@ -69,11 +71,30 @@ function quotaLine(t: Translator, kind: "movie" | "tv", quota: QuotaState): stri
   return t("requests.quotaNoneLeftUntil", { kind, when: untilText(t, quota.nextSlotAt, new Date()) });
 }
 
-/** A declined request's reason, a preset in the viewer's language. */
+/** A declined or removed request's reason, a preset in the viewer's language. */
 function reasonText(t: Translator, reason: string): string {
   return t("requests.reasonLine", {
     reason: localizeRejectionReason(t, reason, LOCALES.map((locale) => translatorFor(locale))),
   });
+}
+
+/** Why a reviewed request ended where it did, when someone said: the
+ * decline's reason, or the reason it was removed from Sonarr/Radarr. */
+function reviewedReason(r: {
+  status: RequestStatus;
+  rejectionReason: string | null;
+  removedAt: Date | null;
+  removedReason: string | null;
+}): string | null {
+  if (r.status === "rejected") return r.rejectionReason;
+  if (r.status === "approved" && r.removedAt) return r.removedReason;
+  return null;
+}
+
+/** The Past requests / Everyone's requests pill: approved in the owned
+ * tone, anything else (declined, removed) neutral. */
+function reviewedPillClass(status: RequestStatus, removed: boolean): string {
+  return status === "approved" && !removed ? "bg-owned-bg text-owned" : "bg-untracked-bg text-text-secondary";
 }
 
 export default async function RequestsPage() {
@@ -129,8 +150,10 @@ export default async function RequestsPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {myRequests.map((r) => {
-              const badge = myRequestBadge(t, r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null);
+              const removed = r.status === "approved" && r.removedAt !== null;
+              const badge = myRequestBadge(t, r.status, r.libraryStatus, r.manuallyApproved, r.addFailedAt !== null, removed);
               const reviewer = r.reviewedByName || r.reviewedByUsername;
+              const reason = reviewedReason(r);
               return (
                 <RequestCard
                   key={r.id}
@@ -147,14 +170,14 @@ export default async function RequestsPage() {
                   requestedAt={r.createdAt}
                   modifiedAt={r.reviewedAt ?? r.editedAt}
                   modifiedBy={reviewer ? { name: reviewer } : null}
-                  addedTo={r.status === "approved" && !r.manuallyApproved ? r.arrServerName : null}
+                  addedTo={r.status === "approved" && !r.manuallyApproved && !removed ? r.arrServerName : null}
                   commentCount={myComments.get(r.id) ?? 0}
                   notes={
                     <>
-                      {r.status === "rejected" && r.rejectionReason && (
-                        <p className="text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
+                      {reason && <p className="text-xs text-text-muted">{reasonText(t, reason)}</p>}
+                      {r.status === "approved" && !removed && (
+                        <p className="text-xs text-text-muted">{t("requests.askInComments")}</p>
                       )}
-                      {r.status === "approved" && <p className="text-xs text-text-muted">{t("requests.askInComments")}</p>}
                     </>
                   }
                   actions={
@@ -247,40 +270,43 @@ export default async function RequestsPage() {
           <div className="mt-4 flex flex-col gap-3">
             {pastRequests.map((r) => {
               const reviewer = r.reviewedByName || r.reviewedByUsername;
-              return (
-                <RequestCard
-                  key={r.id}
-                  id={r.id}
-                  mediaType={r.mediaType}
-                  tmdbId={r.tmdbId}
-                  title={r.title}
-                  posterPath={r.posterPath}
-                  backdropPath={r.backdropPath}
-                  seasons={r.seasons}
-                  is4k={r.is4k}
-                  status={{
-                    label: reviewedRequestLabel(t, r.status, r.manuallyApproved),
-                    className: r.status === "approved" ? "bg-owned-bg text-owned" : "bg-untracked-bg text-text-secondary",
-                  }}
-                  requestedBy={{ name: r.requestedByName || r.requestedByUsername }}
-                  requestedAt={r.createdAt}
-                  modifiedAt={r.reviewedAt}
-                  modifiedBy={reviewer ? { name: reviewer } : null}
-                  addedTo={r.status === "approved" && !r.manuallyApproved ? r.arrServerName : null}
-                  commentCount={requestComments.get(r.id) ?? 0}
-                  notes={
-                    <>
-                      {r.status === "rejected" && r.rejectionReason && (
-                        <p className="text-xs text-text-muted">{reasonText(t, r.rejectionReason)}</p>
-                      )}
-                      {r.status === "approved" && r.notFoundSince && (
-                        <a href="#cant-find" className="inline-flex w-fit rounded-full bg-missing-bg px-2.5 py-0.5 text-[11.5px] font-medium text-missing">
-                          {t("requests.cantFind")}
-                        </a>
-                      )}
-                    </>
-                  }
-                />
+              const removed = r.status === "approved" && r.removedAt !== null;
+              const reason = reviewedReason(r);
+              const card = {
+                id: r.id,
+                mediaType: r.mediaType,
+                tmdbId: r.tmdbId,
+                title: r.title,
+                posterPath: r.posterPath,
+                backdropPath: r.backdropPath,
+                seasons: r.seasons,
+                is4k: r.is4k,
+                status: {
+                  label: reviewedRequestLabel(t, r.status, r.manuallyApproved, removed),
+                  className: reviewedPillClass(r.status, removed),
+                },
+                requestedBy: { name: r.requestedByName || r.requestedByUsername },
+                requestedAt: r.createdAt,
+                modifiedAt: r.reviewedAt,
+                modifiedBy: reviewer ? { name: reviewer } : null,
+                addedTo: r.status === "approved" && !r.manuallyApproved && !removed ? r.arrServerName : null,
+                commentCount: requestComments.get(r.id) ?? 0,
+                notes: (
+                  <>
+                    {reason && <p className="text-xs text-text-muted">{reasonText(t, reason)}</p>}
+                    {r.status === "approved" && r.notFoundSince && (
+                      <a href="#cant-find" className="inline-flex w-fit rounded-full bg-missing-bg px-2.5 py-0.5 text-[11.5px] font-medium text-missing">
+                        {t("requests.cantFind")}
+                      </a>
+                    )}
+                  </>
+                ),
+              };
+              // Approved and still on the server: "Can't get it" declines it after all.
+              return r.status === "approved" && !removed ? (
+                <CantGetItRequestCard key={r.id} {...card} requesterName={card.requestedBy.name} />
+              ) : (
+                <RequestCard key={r.id} {...card} />
               );
             })}
           </div>
@@ -301,6 +327,8 @@ type EveryoneRow = {
   is4k: boolean;
   status: RequestStatus;
   manuallyApproved: boolean;
+  /** Approved, then removed from Sonarr/Radarr (null for pending ones). */
+  removedAt?: Date | null;
   createdAt: Date;
   requestedByName: string | null;
   requestedByUsername: string;
@@ -329,13 +357,10 @@ function EveryonesRequests({ t, requests }: { t: Translator; requests: EveryoneR
               is4k={r.is4k}
               status={{
                 label:
-                  r.status === "pending" ? t("requests.waitingForReview") : reviewedRequestLabel(t, r.status, r.manuallyApproved),
-                className:
                   r.status === "pending"
-                    ? "bg-info-bg text-info"
-                    : r.status === "approved"
-                      ? "bg-owned-bg text-owned"
-                      : "bg-untracked-bg text-text-secondary",
+                    ? t("requests.waitingForReview")
+                    : reviewedRequestLabel(t, r.status, r.manuallyApproved, Boolean(r.removedAt)),
+                className: r.status === "pending" ? "bg-info-bg text-info" : reviewedPillClass(r.status, Boolean(r.removedAt)),
               }}
               requestedBy={{ name: r.requestedByName || r.requestedByUsername }}
               requestedAt={r.createdAt}

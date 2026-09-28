@@ -110,6 +110,7 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], MessageKey> = {
   title_shared: "notify.pushSharedWithYou",
   request_comment: "notify.pushNewComment",
   issue_comment: "notify.pushNewComment",
+  request_removed: "notify.pushRequestRemoved",
 };
 
 /** What the service worker (public/sw.js) shows. `requestId`: a new

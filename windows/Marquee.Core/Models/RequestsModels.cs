@@ -145,6 +145,21 @@ public sealed record MyRequest
     /// <summary>0.53+: who approved or declined it by hand.</summary>
     public RequestPerson? ReviewedBy { get; init; }
 
+    /// <summary>
+    /// 0.68+: approved, then the admin removed the title from Sonarr/Radarr
+    /// ("Removed", in the declined tone); null otherwise, and from an older server.
+    /// </summary>
+    public DateTimeOffset? RemovedAt { get; init; }
+
+    /// <summary>0.68+: why it was removed, when the admin said.</summary>
+    public string? RemovedReason { get; init; }
+
+    /// <summary>Taken off Sonarr/Radarr again since it was approved.</summary>
+    public bool IsRemoved => Status == RequestStatus.Approved && RemovedAt != null;
+
+    /// <summary>What "Reason: …" under the badge says: why it was declined, or removed; null for neither.</summary>
+    public string? Reason => IsRemoved ? RemovedReason.NonBlank() : RejectionReason.NonBlank();
+
     /// <summary>Comments in its conversation (0.46+; 0 from an older server). Sending it at all is what <see cref="HasConversation"/> reads.</summary>
     public int CommentCount
     {
@@ -166,7 +181,7 @@ public sealed record MyRequest
     /// "Need a change? Ask in its comments." under an approved request, which
     /// can no longer be edited or cancelled (0.46+ only); null otherwise.
     /// </summary>
-    public string? ChangeHint => HasConversation && Status == RequestStatus.Approved ? RequestLifecycle.AskInCommentsHint : null;
+    public string? ChangeHint => HasConversation && Status == RequestStatus.Approved && !IsRemoved ? RequestLifecycle.AskInCommentsHint : null;
 
     public TitleId TitleId => new(MediaType, TmdbId);
 }
@@ -278,7 +293,7 @@ public sealed record ReviewedRequest
     public required RequestStatus Status { get; init; }
     public required bool ManuallyApproved { get; init; }
 
-    /// <summary>"Approved", "Manually approved" or "Rejected".</summary>
+    /// <summary>"Approved", "Manually approved", "Removed" (0.68+) or "Rejected".</summary>
     public required string StatusLabel { get; init; }
 
     /// <summary><c>UserId</c> is always null here.</summary>
@@ -312,8 +327,8 @@ public sealed record ReviewedRequest
     /// </summary>
     public AddedTo? AddedTo { get; init; }
 
-    /// <summary>"Added to Radarr 2" under the badge; null when unknown or that server was removed.</summary>
-    public string? AddedToLine => AddedTo?.ServerName.NonBlank() is { } name ? Loc.Format("RequestModel_AddedTo", name) : null;
+    /// <summary>"Added to Radarr 2" under the badge; null when unknown, that server was removed, or the title was since.</summary>
+    public string? AddedToLine => !IsRemoved && AddedTo?.ServerName.NonBlank() is { } name ? Loc.Format("RequestModel_AddedTo", name) : null;
 
     /// <summary>
     /// When Sonarr/Radarr's failure to find it put it under "Can't find"
@@ -322,7 +337,7 @@ public sealed record ReviewedRequest
     public DateTimeOffset? NotFoundSince { get; init; }
 
     /// <summary>The red "Can't find" badge next to "Approved".</summary>
-    public bool IsNotFound => Status == RequestStatus.Approved && NotFoundSince != null;
+    public bool IsNotFound => Status == RequestStatus.Approved && NotFoundSince != null && !IsRemoved;
 
     /// <summary>
     /// Approved, but Sonarr/Radarr couldn't be reached or errored when adding
@@ -339,6 +354,30 @@ public sealed record ReviewedRequest
 
     /// <summary>0.53+: who approved or declined it by hand; null when it was approved automatically.</summary>
     public RequestPerson? ReviewedBy { get; init; }
+
+    /// <summary>
+    /// 0.68+: approved, then the admin removed the title from Sonarr/Radarr
+    /// ("Removed", neutral like Rejected); null otherwise, and from an older server.
+    /// </summary>
+    public DateTimeOffset? RemovedAt { get; init; }
+
+    /// <summary>0.68+: why it was removed, when the admin said.</summary>
+    public string? RemovedReason { get; init; }
+
+    /// <summary>Taken off Sonarr/Radarr again since it was approved.</summary>
+    public bool IsRemoved => Status == RequestStatus.Approved && RemovedAt != null;
+
+    /// <summary>What "Reason: …" under the badge says: why it was declined, or removed; null for neither.</summary>
+    public string? Reason => IsRemoved ? RemovedReason.NonBlank() : RejectionReason.NonBlank();
+
+    /// <summary>The badge's green "approved" tone: approved and still on the server. Rejected and removed ones are neutral.</summary>
+    public bool ShowsApprovedTone => Status == RequestStatus.Approved && !IsRemoved;
+
+    /// <summary>
+    /// 0.68+ "Can't get it": approved and still on the server (not under
+    /// "Couldn't add"), so a reviewer may decline it after all.
+    /// </summary>
+    public bool OffersCantGetIt => Status == RequestStatus.Approved && !IsRemoved && !IsAddFailed;
 
     /// <summary>Comments in its conversation (0.46+; 0 from an older server).</summary>
     public int CommentCount
@@ -412,7 +451,10 @@ public sealed record EveryoneRequest
     public required DateTimeOffset CreatedAt { get; init; }
     public required RequestStatus Status { get; init; }
 
-    /// <summary>"Waiting for review", or the reviewed request's own label ("Approved", "Manually approved", "Rejected").</summary>
+    /// <summary>Approved, then removed from Sonarr/Radarr (0.68+): "Removed", neutral.</summary>
+    public bool IsRemoved { get; init; }
+
+    /// <summary>"Waiting for review", or the reviewed request's own label ("Approved", "Manually approved", "Removed", "Rejected").</summary>
     public required string StatusLabel { get; init; }
 
     /// <summary>"Seasons 1–3" and/or "In 4K" under the title; empty for a regular whole series or movie.</summary>
@@ -463,6 +505,7 @@ public static class EveryonesRequests
             RequesterLabel = request.RequestedBy.Label,
             CreatedAt = request.CreatedAt,
             Status = request.Status,
+            IsRemoved = request.IsRemoved,
             StatusLabel = request.StatusLabel,
             DetailText = request.DetailText,
             Username = request.RequestedBy.Username,

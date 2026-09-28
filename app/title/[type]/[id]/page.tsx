@@ -13,7 +13,12 @@ import { seasonsNewestFirst } from "@/lib/title-meta";
 import { seasonPickerState } from "@/lib/requests/seasons";
 import { seasonsLabel } from "@/lib/requests/labels";
 import { getT } from "@/lib/i18n/server";
+import { translatorFor } from "@/lib/i18n/catalog";
+import { LOCALES } from "@/lib/i18n/locales";
+import { localizeRejectionReason } from "@/lib/requests/rejection-reasons";
 import { pickTitleLogo } from "@/lib/tmdb/logo";
+
+const allTranslators = LOCALES.map((locale) => translatorFor(locale));
 
 /** The 4K row, with no "Request in 4K" while the title is blocked. */
 function fourKFor(
@@ -165,7 +170,10 @@ export default async function TitlePage({
             otherRequesters: [],
             arrTracking: null,
             myRequests,
-          }).myRequests
+          }).myRequests.map((r) =>
+            // A removed one's reason, a preset in the viewer's language.
+            r.removedReason ? { ...r, removedReason: localizeRejectionReason(t, r.removedReason, allTranslators) } : r,
+          )
         }
         may={
           viewer.session

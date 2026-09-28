@@ -306,7 +306,7 @@ async function notifyNotFound(row: Candidate, seasons: number[] | null, year: nu
 }
 
 /** Once it's found or dismissed, its alerts have done their job. */
-async function clearNotFoundAlerts(requestId: string): Promise<void> {
+export async function clearNotFoundAlerts(requestId: string): Promise<void> {
   await db
     .update(notifications)
     .set({ read: true })

@@ -7,6 +7,7 @@ import { addTitleToLibrary, relinkTitle, searchTitle, setTitleMonitored } from "
 import { parseAddOverrides, parseAddOverridesForm } from "@/lib/arr/add-options";
 import { getT } from "@/lib/i18n/server";
 import { removeTitleFromArr } from "@/lib/arr/remove";
+import { resolveRejectionReason } from "@/lib/requests/rejection-reasons";
 
 // Thin form/session wrappers — the logic lives in lib/arr/title-actions.ts,
 // shared with /api/v1/titles/*.
@@ -96,22 +97,29 @@ export async function searchTitleAction(
   return result.ok ? { success: true } : { error: result.error };
 }
 
-/** "Remove from Radarr/Sonarr" (or, with `fourK`, the 4K servers) — see removeTitleFromArr. */
+/** "Remove from Radarr/Sonarr" (or, with `fourK`, the 4K servers) — see
+ * removeTitleFromArr. `reason` is the dialog's optional word to the
+ * requesters, the decline chooser's two inputs (a preset code, or "other"
+ * and the admin's own words); none means no reason. */
 export async function removeFromArrAction(
   mediaType: MediaType,
   tmdbId: number,
   tvdbId: number | null,
   deleteFiles: boolean,
   fourK = false,
+  reason?: { preset?: unknown; custom?: unknown },
 ): Promise<ArrCommandState & { removedFrom?: string[] }> {
   const admin = await requireAdmin((await getT())("title.onlyAdminRemoveFromArr"));
   if (!admin.ok) return { error: admin.error };
   if ((mediaType !== "movie" && mediaType !== "tv") || !Number.isSafeInteger(tmdbId) || tmdbId <= 0) {
     return { error: (await getT())("notify.titleNotFound") };
   }
+  const resolved = resolveRejectionReason(await getT(), reason && typeof reason === "object" ? reason : {});
+  if (!resolved.ok) return { error: resolved.error };
   const result = await removeTitleFromArr(admin.userId, mediaType, tmdbId, tvdbId, {
     deleteFiles: deleteFiles === true,
     fourK: fourK === true,
+    reason: resolved.reason,
   });
   return result.ok ? { success: true, removedFrom: result.removedFrom } : { error: result.error };
 }

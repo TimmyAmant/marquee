@@ -311,6 +311,13 @@ private struct MyTitleRequestRow: View {
                     CancelRequestControl(requestId: request.id, onCancelled: onChanged)
                 }
             }
+            // 0.68+: why it was removed from the server, when the admin said.
+            if request.isRemoved, let reason = request.removedReason.nonBlank {
+                Text("Reason: \(reason)")
+                    .font(.system(size: Metrics.text(11.5)))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             CommentsToggle(count: shownCount ?? request.commentCount, isOpen: $showsComments)
             if showsComments {
                 CommentThreadPanel(parent: .request(request.id)) { shownCount = $0 }

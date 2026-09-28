@@ -1814,6 +1814,12 @@ takes the title off every standard server that has it (or, with `is4k`, the
 "deleteFiles": false, "is4k"?: false }`. The approved requests for it (of
 that 4K-ness) get marked removed: they no longer count as open (so it can be
 requested again), and the can't-find and ready-to-watch checks leave them.
+0.68+: an optional `"reason"` (string) for the requesters — one of the
+`rejectionReasons` from `/requests/pending` or the admin's own words,
+normalized like a decline's. It's stored as the requests' `removedReason`,
+and each requester (not the admin, for their own) gets a `request_removed`
+notification: `"Dune" was removed from the server: Couldn't find a good
+copy of it` (without a reason, `"Dune" was removed from the server.`).
 
 ```json
 { "ok": true, "removedFrom": ["Radarr"], "failed": [], "requestsMarked": 1 }
@@ -1821,7 +1827,8 @@ requested again), and the can't-find and ready-to-watch checks leave them.
 
 `failed`: servers that had it but didn't take the delete (it still counts
 as done when any server did). Website: a dialog "Remove Dune from Radarr?"
-with "Also delete the files" (off by default) and Cancel / Remove (or
+with "Also delete the files" (off by default), "Let whoever asked for it
+know why (optional):" (No reason, the presets, Other) and Cancel / Remove (or
 "Remove and delete files"); a toast "Removed from Radarr" afterwards.
 Errors: `409 conflict` "Not tracked in Radarr/Sonarr.", `502 upstream`
 "Radarr didn't remove it. Check that it's reachable and try again.", `403`
@@ -2133,6 +2140,14 @@ null unless `status` is `rejected` and a reason was given; the website shows
 it as a second line under the "Declined" badge ("Reason: …"). Empty → "You
 haven't requested anything yet — find a title and hit Request."
 
+`removedAt` / `removedReason` (0.68+; an older server omits them — null):
+approved, then the admin removed the title from Sonarr/Radarr (`POST
+/titles/{type}/{tmdbId}/remove-from-arr`), and why when they said. Such a
+request keeps `status` `approved` but reads `statusLabel` "Removed" with
+`statusTone` `declined`; the website shows `removedReason` as "Reason: …"
+under it, like a declined one's. Both are null on any other request, and
+`removedReason` is null for one removed without a reason (or before 0.68).
+
 0.46+ (an older server omits these — treat as false/null/0): `canEdit` and
 `canCancel` are true while it's pending — the website shows "Edit" and
 "Cancel request" under the badge (see `PATCH` / `DELETE /requests/{id}`);
@@ -2303,8 +2318,12 @@ under "Couldn't add" (0.46+), however old, which come first.
 }
 ```
 
-`statusLabel`: "Approved", "Manually approved" or "Rejected". `rejectionReason`
-as in `/requests/mine`: the website shows it under the "Rejected" badge.
+`statusLabel`: "Approved", "Manually approved", "Removed" (0.68+) or
+"Rejected". `rejectionReason` as in `/requests/mine`: the website shows it
+under the "Rejected" badge; `removedAt` / `removedReason` as in
+`/requests/mine`. 0.68+: an approved request that isn't removed carries
+"Can't get it" on the website — the reason chooser, then `POST
+/requests/{id}/reject`.
 `addedTo` (0.43+): where an approved request was added and with what —
 `serverId` is null once that server has been removed (`serverName` keeps
 the name it had). Null for rejected and
@@ -2468,6 +2487,14 @@ requires one; the API doesn't, so older clients keep working). It's stored as
 `rejectionReason` and appended to the requester's notification: `"The Matrix"
 was declined: Not enough space on the server right now` (with no reason the
 message stays `"The Matrix" was declined.`).
+
+0.68+: also takes an approved request that hasn't been removed from
+Sonarr/Radarr ("Can't get it" on the website's Past requests and Can't
+find): it's declined the same way and leaves Can't find, and since its
+requester already heard it was approved, the notification reads `"The
+Matrix" couldn't be added: Couldn't find a good copy of it` (or `"The
+Matrix" couldn't be added.`). Approving still takes pending (and "Couldn't
+add") requests only.
 
 `{ "ok": true }`. Errors as for manual approval, plus `400 invalid`
 `"reason" must be a string.`
@@ -2654,6 +2681,10 @@ regular and 4K, newest first (at most five; empty when there are none):
 `{ "id": "5b0f…", "status": "pending", "seasons": [2], "seasonsLabel":
 "Season 2", "is4k": false, "canEdit": true, "canCancel": true,
 "commentCount": 0, "createdAt": "…" }`
+
+0.68+: `removedAt` / `removedReason` as in `/requests/mine`; the website
+then says "Your request was removed from the server" with "Reason: …"
+under it.
 
 The website shows each under the hero's buttons: "Your request (Season 2)
 is waiting for review" (or "approved" / "declined"), "Edit" and "Cancel
@@ -2933,7 +2964,11 @@ website leads with the sender's round photo (initials when there's none) and
 shows the note in quotes under the message. The website shows relative
 times ("just now", "5m ago", "3h ago", "2d ago") and a "9+" badge cap. A
 `request_rejected` message carries the admin's reason after a colon when one
-was given; without one it's just `"The Matrix" was declined.`
+was given; without one it's just `"The Matrix" was declined.` (0.68+: for a
+request that had been approved, `"The Matrix" couldn't be added: …`). From
+0.68 `request_removed` (🗑️, "Request removed"): your approved request's
+title was removed from Sonarr/Radarr, with the admin's reason after a colon
+when given; it follows your "declined" notification choices.
 
 ### `GET /notifications/unread-count` — user
 

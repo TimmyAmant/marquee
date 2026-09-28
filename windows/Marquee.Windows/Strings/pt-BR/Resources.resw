@@ -1351,6 +1351,12 @@
   <data name="Decline_Explanation" xml:space="preserve">
     <value>Diga a {0} por que “{1}” não será adicionado. A pessoa verá isso em Recusados na página Pedidos e na notificação.</value>
   </data>
+  <data name="Decline_ExplanationApproved" xml:space="preserve">
+    <value>Diga a {0} por que não dá para conseguir “{1}” afinal. A pessoa vai saber que não deu para adicionar e vai ver isso em Recusados na página Pedidos.</value>
+  </data>
+  <data name="Decline_NoReason" xml:space="preserve">
+    <value>Sem motivo</value>
+  </data>
   <data name="Decline_OtherChoice" xml:space="preserve">
     <value>Outro</value>
   </data>
@@ -2497,11 +2503,17 @@
   <data name="Lifecycle_LineDeclined" xml:space="preserve">
     <value>Seu pedido foi recusado</value>
   </data>
+  <data name="Lifecycle_LineRemoved" xml:space="preserve">
+    <value>Seu pedido foi removido do servidor</value>
+  </data>
   <data name="Lifecycle_LineDetailApproved" xml:space="preserve">
     <value>Seu pedido ({0}) foi aprovado</value>
   </data>
   <data name="Lifecycle_LineDetailDeclined" xml:space="preserve">
     <value>Seu pedido ({0}) foi recusado</value>
+  </data>
+  <data name="Lifecycle_LineDetailRemoved" xml:space="preserve">
+    <value>Seu pedido ({0}) foi removido do servidor</value>
   </data>
   <data name="Lifecycle_LineDetailOther" xml:space="preserve">
     <value>Seu pedido ({0}): {1}</value>
@@ -3749,6 +3761,15 @@
     <value>Recusar</value>
   </data>
   <data name="Requests_Rejecting" xml:space="preserve">
+    <value>Recusando…</value>
+  </data>
+  <data name="Requests_CantGetIt" xml:space="preserve">
+    <value>Não dá para conseguir</value>
+  </data>
+  <data name="Requests_CantGetItHint" xml:space="preserve">
+    <value>Recusar afinal — {0} fica sabendo que não deu para adicionar.</value>
+  </data>
+  <data name="Requests_Declining" xml:space="preserve">
     <value>Recusando…</value>
   </data>
   <data name="Requests_Saving" xml:space="preserve">
@@ -5568,6 +5589,9 @@
   </data>
   <data name="Title_RemoveDeleteFilesHelp" xml:space="preserve">
     <value>Sai do disco de vez — o Plex e o Jellyfin também o perdem.</value>
+  </data>
+  <data name="Title_RemoveReasonIntro" xml:space="preserve">
+    <value>Diga a quem pediu o motivo (opcional):</value>
   </data>
   <data name="Title_RemoveConfirm" xml:space="preserve">
     <value>Remover</value>

@@ -238,6 +238,9 @@ public sealed record RemoveFromArrBody
 {
     public required bool DeleteFiles { get; init; }
     public bool? Is4k { get; init; }
+
+    /// <summary>0.68+: why, for whoever requested it; null sends no key.</summary>
+    public string? Reason { get; init; }
 }
 
 public sealed record RemoveFromArrResult

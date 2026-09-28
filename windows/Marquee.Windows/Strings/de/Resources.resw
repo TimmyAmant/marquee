@@ -1351,6 +1351,12 @@
   <data name="Decline_Explanation" xml:space="preserve">
     <value>Sag {0}, warum „{1}“ nicht hinzugefügt wird. Das steht dann unter Abgelehnt auf der Anfragen-Seite und in der Benachrichtigung.</value>
   </data>
+  <data name="Decline_ExplanationApproved" xml:space="preserve">
+    <value>Sag {0}, warum „{1}“ doch nicht zu bekommen ist. Die Person erfährt, dass es nicht hinzugefügt werden konnte, und sieht es unter „Abgelehnt“ auf ihrer Anfragen-Seite.</value>
+  </data>
+  <data name="Decline_NoReason" xml:space="preserve">
+    <value>Ohne Grund</value>
+  </data>
   <data name="Decline_OtherChoice" xml:space="preserve">
     <value>Anderer Grund</value>
   </data>
@@ -2497,11 +2503,17 @@
   <data name="Lifecycle_LineDeclined" xml:space="preserve">
     <value>Deine Anfrage wurde abgelehnt</value>
   </data>
+  <data name="Lifecycle_LineRemoved" xml:space="preserve">
+    <value>Deine Anfrage wurde vom Server entfernt</value>
+  </data>
   <data name="Lifecycle_LineDetailApproved" xml:space="preserve">
     <value>Deine Anfrage ({0}) ist genehmigt</value>
   </data>
   <data name="Lifecycle_LineDetailDeclined" xml:space="preserve">
     <value>Deine Anfrage ({0}) wurde abgelehnt</value>
+  </data>
+  <data name="Lifecycle_LineDetailRemoved" xml:space="preserve">
+    <value>Deine Anfrage ({0}) wurde vom Server entfernt</value>
   </data>
   <data name="Lifecycle_LineDetailOther" xml:space="preserve">
     <value>Deine Anfrage ({0}): {1}</value>
@@ -3749,6 +3761,15 @@
     <value>Ablehnen</value>
   </data>
   <data name="Requests_Rejecting" xml:space="preserve">
+    <value>Wird abgelehnt …</value>
+  </data>
+  <data name="Requests_CantGetIt" xml:space="preserve">
+    <value>Nicht zu bekommen</value>
+  </data>
+  <data name="Requests_CantGetItHint" xml:space="preserve">
+    <value>Doch ablehnen — {0} erfährt, dass sie nicht hinzugefügt werden konnte.</value>
+  </data>
+  <data name="Requests_Declining" xml:space="preserve">
     <value>Wird abgelehnt …</value>
   </data>
   <data name="Requests_Saving" xml:space="preserve">
@@ -5568,6 +5589,9 @@
   </data>
   <data name="Title_RemoveDeleteFilesHelp" xml:space="preserve">
     <value>Endgültig von der Festplatte weg – auch Plex und Jellyfin verlieren ihn.</value>
+  </data>
+  <data name="Title_RemoveReasonIntro" xml:space="preserve">
+    <value>Sag den Anfragenden, warum (optional):</value>
   </data>
   <data name="Title_RemoveConfirm" xml:space="preserve">
     <value>Entfernen</value>

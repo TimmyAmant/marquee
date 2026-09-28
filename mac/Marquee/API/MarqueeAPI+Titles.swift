@@ -64,10 +64,12 @@ extension MarqueeAPI {
         /// approved requests for it are marked removed. `.notFound` from an
         /// older server; `.conflict("Not tracked in Radarr/Sonarr.")`.
         @discardableResult
-        func removeFromArr(_ type: API.MediaType, id tmdbId: Int, deleteFiles: Bool, is4k: Bool = false) async throws -> API.RemoveFromArrResult {
+        func removeFromArr(
+            _ type: API.MediaType, id tmdbId: Int, deleteFiles: Bool, is4k: Bool = false, reason: String? = nil
+        ) async throws -> API.RemoveFromArrResult {
             try await transport.mutate(
                 .post, Self.path(type, tmdbId) + "/remove-from-arr",
-                body: API.RemoveFromArrBody(deleteFiles: deleteFiles, is4k: is4k ? true : nil),
+                body: API.RemoveFromArrBody(deleteFiles: deleteFiles, is4k: is4k ? true : nil, reason: reason),
                 timeout: Timeout.integrations, changes: [.library, .requests]
             )
         }

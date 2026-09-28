@@ -125,6 +125,14 @@ extension API {
         let canCancel: Bool
         let commentCount: Int
         let createdAt: Date
+        /// 0.68+: approved, then the admin removed the title from
+        /// Sonarr/Radarr; nil otherwise.
+        var removedAt: Date? = nil
+        /// 0.68+: why it was removed, when the admin said.
+        var removedReason: String? = nil
+
+        /// Taken off Sonarr/Radarr again since it was approved.
+        var isRemoved: Bool { status == .approved && removedAt != nil }
 
         /// "Season 2 · In 4K", "In 4K", or nil.
         var detailLine: String? {
@@ -132,8 +140,13 @@ extension API {
         }
 
         /// components/my-title-requests.tsx: "Your request (Season 2) is
-        /// waiting for review" / "is approved" / "is declined".
+        /// waiting for review" / "is approved" / "is declined" / "was removed
+        /// from the server".
         var sentence: String {
+            if isRemoved {
+                if let detail = detailLine { return String(localized: "Your request (\(detail)) was removed from the server") }
+                return String(localized: "Your request was removed from the server")
+            }
             if let detail = detailLine {
                 switch status {
                 case .pending: return String(localized: "Your request (\(detail)) is waiting for review")

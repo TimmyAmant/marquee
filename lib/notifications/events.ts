@@ -107,7 +107,9 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
   switch (eventType) {
     case "request_approved":
       return "request_approved";
+    // Taken off the server again: for the requester, as good as declined.
     case "request_rejected":
+    case "request_removed":
       return "request_declined";
     case "downloaded":
       return "request_available";

@@ -576,6 +576,9 @@ export const notificationEventTypeValues = [
   // (lib/comments): the requester or reporter, and the reviewers.
   "request_comment",
   "issue_comment",
+  // Your approved request's title was taken off Sonarr/Radarr again
+  // (lib/arr/remove.ts), with the admin's reason when they gave one.
+  "request_removed",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -617,7 +620,7 @@ export const notifications = pgTable(
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found','request_comment','issue_comment')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found','request_comment','issue_comment','request_removed')`,
     ),
   ],
 );
@@ -711,6 +714,10 @@ export const requests = pgTable(
     // again. It no longer counts as an open request, so the title can be
     // asked for again, and the can't-find and ready-to-watch checks leave it.
     removedAt: timestamp("removed_at", { withTimezone: true }),
+    // Why, for the requester: a preset of the decline chooser or the admin's
+    // own words (lib/requests/rejection-reasons.ts). Null when none was
+    // given, and for everything removed before reasons could be.
+    removedReason: text("removed_reason"),
   },
   (table) => [
     index("requests_status_idx").on(table.status, table.createdAt),

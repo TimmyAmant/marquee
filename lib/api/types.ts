@@ -42,7 +42,10 @@ export type NotificationEventType =
   /** 0.46+: a new comment on a request (`requestId`) or problem report
    * (`issueId`) you're part of. */
   | "request_comment"
-  | "issue_comment";
+  | "issue_comment"
+  /** 0.68+: your approved request's title was removed from Sonarr/Radarr
+   * again; the message carries the admin's reason when they gave one. */
+  | "request_removed";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -658,6 +661,11 @@ export type TitleRequestSummary = {
   canCancel: boolean;
   commentCount: number;
   createdAt: string;
+  /** 0.68+: approved, then the admin removed the title from Sonarr/Radarr;
+   * null otherwise. */
+  removedAt?: string | null;
+  /** 0.68+: why it was removed, when the admin said; null otherwise. */
+  removedReason?: string | null;
 };
 
 export type FourKViewerState = {
@@ -939,6 +947,11 @@ export type MyRequest = {
   reviewedBy?: RequestPerson | null;
   /** 0.53+: the Sonarr/Radarr server approving it added it to, if known. */
   addedToServer?: string | null;
+  /** 0.68+: approved, then the admin removed the title from Sonarr/Radarr
+   * ("Removed", `statusTone` "declined"); null otherwise. */
+  removedAt?: string | null;
+  /** 0.68+: why it was removed, when the admin said; null otherwise. */
+  removedReason?: string | null;
 };
 
 export type PendingRequest = {
@@ -1008,6 +1021,11 @@ export type ReviewedRequest = {
   reviewedBy?: RequestPerson | null;
   /** 0.53+: when its seasons or 4K were last changed; null if never. */
   editedAt?: string | null;
+  /** 0.68+: approved, then the admin removed the title from Sonarr/Radarr
+   * (`statusLabel` "Removed"); null otherwise. */
+  removedAt?: string | null;
+  /** 0.68+: why it was removed, when the admin said; null otherwise. */
+  removedReason?: string | null;
 };
 
 /** 0.46+: an approved request Sonarr/Radarr hasn't found (GET /requests/not-found). */

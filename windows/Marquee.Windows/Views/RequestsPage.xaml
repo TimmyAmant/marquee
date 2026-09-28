@@ -241,6 +241,13 @@
                         Margin="4,2,0,0"
                         TextWrapping="Wrap" />
                     <TextBlock
+                        Text="{x:Bind CantGetIt.Error, Mode=OneWay}"
+                        Visibility="{x:Bind CantGetIt.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                        Margin="4,2,0,0"
+                        TextWrapping="Wrap" />
+                    <TextBlock
                         Text="{x:Bind Info, Mode=OneWay}"
                         Visibility="{x:Bind HasInfo, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -259,6 +266,14 @@
                         Command="{x:Bind OpenInArrCommand}"
                         Visibility="{x:Bind CanOpenInArr, Converter={StaticResource BoolToVisibility}}"
                         HorizontalAlignment="Stretch" />
+                    <!-- 0.68+: "Can't get it", the Decline dialog for an approved request. -->
+                    <HyperlinkButton
+                        Content="{x:Bind CantGetIt.Label, Mode=OneWay}"
+                        Command="{x:Bind CantGetIt.DeclineCommand}"
+                        IsEnabled="{x:Bind CantGetIt.CanAct, Mode=OneWay}"
+                        ToolTipService.ToolTip="{x:Bind CantGetIt.Hint}"
+                        HorizontalAlignment="Right"
+                        Padding="4,2" />
                     <HyperlinkButton
                         Content="{x:Bind DismissLabel, Mode=OneWay}"
                         Command="{x:Bind DismissCommand}"
@@ -822,6 +837,21 @@
                                                 Style="{StaticResource CaptionTextBlockStyle}"
                                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                                 TextWrapping="Wrap" />
+                                            <!-- 0.68+: "Can't get it" while it's approved and still on the server. -->
+                                            <StackPanel Spacing="2" Visibility="{x:Bind ShowsCantGetIt, Converter={StaticResource BoolToVisibility}}">
+                                                <HyperlinkButton
+                                                    Content="{x:Bind CantGetIt.Label, Mode=OneWay}"
+                                                    Command="{x:Bind CantGetIt.DeclineCommand}"
+                                                    IsEnabled="{x:Bind CantGetIt.CanAct, Mode=OneWay}"
+                                                    ToolTipService.ToolTip="{x:Bind CantGetIt.Hint}"
+                                                    Padding="0,2" />
+                                                <TextBlock
+                                                    Text="{x:Bind CantGetIt.Error, Mode=OneWay}"
+                                                    Visibility="{x:Bind CantGetIt.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
                                         </StackPanel>
                                     </Grid>
                                 </DataTemplate>

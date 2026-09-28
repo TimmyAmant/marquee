@@ -295,6 +295,11 @@ describe("an approval Sonarr/Radarr can't take", () => {
     expect(await requestRow(movie.id)).toMatchObject({ status: "rejected", addFailedAt: null });
   });
 
+  it("never approves one that's already approved", async () => {
+    const movie = await pendingRequest(anna, { status: "approved" });
+    expect(await approveRequest(movie.id, admin)).toMatchObject({ ok: false, code: "not_found" });
+  });
+
   it("tells the reviewers when an automatic approval couldn't be added", async () => {
     const auto = await addUser("carl", "member", { permissions: [...MEMBER_PRESET, "autoApproveMovies", "autoApprove4kMovies"] });
     arr.addMovieToRadarrForUser.mockResolvedValueOnce({ ok: false, code: "upstream", error: "Couldn't add this movie to Radarr." });
@@ -303,5 +308,48 @@ describe("an approval Sonarr/Radarr can't take", () => {
     const alerts = await (await db()).select().from(notifications).where(eq(notifications.eventType, "request_created"));
     expect(alerts.map((a) => a.userId).sort()).toEqual([admin, trusted].sort());
     expect(alerts[0].message).toContain("couldn't be added: Couldn't add this movie to Radarr.");
+  });
+});
+
+describe("declining an approved request (\"Can't get it\")", () => {
+  it("declines it, takes it out of Can't find, and tells the requester it couldn't be added", async () => {
+    const since = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const movie = await pendingRequest(anna, { status: "approved", reviewedByUserId: admin, reviewedAt: since, notFoundSince: since });
+    await (await db()).insert(notifications).values({
+      userId: admin,
+      mediaType: "movie",
+      tmdbId: 438631,
+      title: "Dune",
+      eventType: "request_not_found",
+      message: "Couldn't find \"Dune\".",
+      requestId: movie.id,
+    });
+
+    expect(await rejectRequest(movie.id, trusted, "Couldn't find a good copy of it")).toEqual({ ok: true });
+    const row = await requestRow(movie.id);
+    expect(row).toMatchObject({ status: "rejected", rejectionReason: "Couldn't find a good copy of it", reviewedByUserId: trusted, notFoundSince: null });
+    expect(row.notFoundDismissedAt).not.toBeNull();
+    const [told] = await (await db()).select().from(notifications).where(eq(notifications.userId, anna));
+    expect(told).toMatchObject({ eventType: "request_rejected", message: "\"Dune\" couldn't be added: Couldn't find a good copy of it" });
+    // The reviewers' "Can't find" alert has done its job.
+    const [alert] = await (await db()).select().from(notifications).where(eq(notifications.eventType, "request_not_found"));
+    expect(alert.read).toBe(true);
+  });
+
+  it("says so without a reason, and a plain pending decline still reads as declined", async () => {
+    const approved = await pendingRequest(anna, { status: "approved" });
+    const pending = await pendingRequest(ben, { tmdbId: 27205, title: "Inception" });
+    expect(await rejectRequest(approved.id, admin)).toEqual({ ok: true });
+    expect(await rejectRequest(pending.id, admin)).toEqual({ ok: true });
+    const told = await (await db()).select().from(notifications);
+    expect(told.map((n) => n.message).sort()).toEqual(["\"Dune\" couldn't be added.", "\"Inception\" was declined."]);
+  });
+
+  it("leaves a removed or already declined request alone", async () => {
+    const removed = await pendingRequest(anna, { status: "approved", removedAt: new Date() });
+    const declined = await pendingRequest(ben, { status: "rejected" });
+    expect(await rejectRequest(removed.id, admin, "No")).toMatchObject({ ok: false, code: "not_found" });
+    expect(await rejectRequest(declined.id, admin, "No")).toMatchObject({ ok: false, code: "not_found" });
+    expect(await requestRow(removed.id)).toMatchObject({ status: "approved" });
   });
 });

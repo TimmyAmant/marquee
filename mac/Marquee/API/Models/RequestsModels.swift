@@ -119,6 +119,11 @@ extension API {
         var backdropPath: ImageRef? = nil
         /// 0.53+: who approved or declined it by hand.
         var reviewedBy: RequestPerson? = nil
+        /// 0.68+: approved, then the admin removed the title from
+        /// Sonarr/Radarr ("Removed", in the declined tone); nil otherwise.
+        var removedAt: Date? = nil
+        /// 0.68+: why it was removed, when the admin said.
+        var removedReason: String? = nil
 
         var titleID: TitleID { TitleID(mediaType, tmdbId) }
         /// The seasons in words, sent or computed locally.
@@ -132,8 +137,12 @@ extension API {
         var offersCancel: Bool { canCancel == true }
         /// The server has conversations (0.46+): show "Comments (N)".
         var hasConversation: Bool { commentCount != nil }
+        /// Taken off Sonarr/Radarr again since it was approved.
+        var isRemoved: Bool { status == .approved && removedAt != nil }
+        /// "Reason: …" under the pill: why it was declined, or removed.
+        var reason: String? { isRemoved ? removedReason.nonBlank : rejectionReason.nonBlank }
         /// An approved request on a 0.46+ server says "Need a change? Ask in its comments."
-        var showsAskInCommentsHint: Bool { hasConversation && status == .approved }
+        var showsAskInCommentsHint: Bool { hasConversation && status == .approved && !isRemoved }
     }
 
     /// `GET /requests/pending`: the admin's review queue.
@@ -245,7 +254,7 @@ extension API {
         /// Why it was declined; nil unless `status` is `.rejected` and the
         /// admin gave one. Shown under the "Rejected" pill.
         let rejectionReason: String?
-        /// "Approved", "Manually approved" or "Rejected".
+        /// "Approved", "Manually approved", "Removed" (0.68+) or "Rejected".
         let statusLabel: String
         /// `userId` is always nil here.
         let requestedBy: RequestPerson
@@ -276,6 +285,11 @@ extension API {
         /// 0.53+: who approved or declined it by hand; nil when it was
         /// approved automatically.
         var reviewedBy: RequestPerson? = nil
+        /// 0.68+: approved, then the admin removed the title from
+        /// Sonarr/Radarr ("Removed", neutral like Rejected); nil otherwise.
+        var removedAt: Date? = nil
+        /// 0.68+: why it was removed, when the admin said.
+        var removedReason: String? = nil
 
         /// `addFailed`: the error, and when adding it was last tried.
         struct AddFailure: Codable, Hashable, Sendable {
@@ -299,7 +313,17 @@ extension API {
             ].joined(separator: " · ")
         }
         /// Show the "Can't find" pill.
-        var isNotFound: Bool { status == .approved && notFoundSince != nil }
+        var isNotFound: Bool { status == .approved && notFoundSince != nil && !isRemoved }
+        /// Taken off Sonarr/Radarr again since it was approved.
+        var isRemoved: Bool { status == .approved && removedAt != nil }
+        /// "Reason: …" under the pill: why it was declined, or removed.
+        var reason: String? { isRemoved ? removedReason.nonBlank : rejectionReason.nonBlank }
+        /// The pill: approved (and still there) in the owned tone, anything
+        /// else — rejected, removed — neutral.
+        var statusTone: BadgeTone { status == .approved && !isRemoved ? .owned : .neutral }
+        /// 0.68+ "Can't get it": approved and still on the server (not under
+        /// "Couldn't add", which has its own Decline) — decline it after all.
+        var offersCantGetIt: Bool { status == .approved && !isRemoved && !couldntAdd }
         /// The seasons in words, sent or computed locally.
         var seasonsText: String? { seasonsLabel.nonBlank ?? API.seasonsLabel(seasons) }
         /// What the requests screens print under the title: "Season 2 · In 4K",
@@ -307,7 +331,10 @@ extension API {
         var detailLine: String? { API.requestDetailLine(seasonsText, is4k: is4k == true) }
         /// "Added to Radarr 2", under the Approved badge; nil when the server
         /// wasn't recorded or has since been removed.
-        var addedToLine: String? { addedTo?.serverName.nonBlank.map { String(localized: "Added to \($0)") } }
+        var addedToLine: String? {
+            guard !isRemoved else { return nil }
+            return addedTo?.serverName.nonBlank.map { String(localized: "Added to \($0)") }
+        }
     }
 
     /// `GET /requests/not-found` (reviewers, 0.46+): "Can't find", approved

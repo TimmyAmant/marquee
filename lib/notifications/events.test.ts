@@ -44,6 +44,7 @@ describe("notification events", () => {
   it("maps every notification type onto an event", () => {
     for (const type of notificationEventTypeValues) expect(preferenceEventFor(type)).toBeTruthy();
     expect(preferenceEventFor("request_rejected")).toBe("request_declined");
+    expect(preferenceEventFor("request_removed")).toBe("request_declined");
     expect(preferenceEventFor("downloaded")).toBe("request_available");
     expect(preferenceEventFor("grabbed")).toBe("request_downloading");
     expect(preferenceEventFor("issue_resolved")).toBe("issue_updated");
