@@ -38,6 +38,7 @@ struct SearchSectionView: View {
                             .font(.marqueeDisplay(30))
                             .foregroundStyle(Theme.textPrimary)
                             .accessibilityAddTraits(.isHeader)
+                            .macPageHeading()
                         if let total { SearchCount(total: total) }
                         Spacer(minLength: 0)
                         if section == .movies || section == .series { StatusColorKey() }

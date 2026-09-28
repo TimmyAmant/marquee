@@ -8500,6 +8500,35 @@
         }
       }
     },
+    "Calendar view" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kalenderansicht"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vista del calendario"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vue du calendrier"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visualização do calendário"
+          }
+        }
+      }
+    },
     "Can't find" : {
       "localizations" : {
         "de" : {
@@ -8944,6 +8973,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alterado desde o pedido"
+          }
+        }
+      }
+    },
+    "Changelog" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changements"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudanças"
           }
         }
       }
@@ -12534,6 +12592,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escuro"
+          }
+        }
+      }
+    },
+    "Day" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jour"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dia"
           }
         }
       }
@@ -19769,6 +19856,34 @@
         }
       }
     },
+    "List" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lista"
+          }
+        }
+      }
+    },
     "Listening" : {
       "localizations" : {
         "de" : {
@@ -21741,6 +21856,35 @@
         }
       }
     },
+    "Month" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mois"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mês"
+          }
+        }
+      }
+    },
     "More" : {
       "comment" : "Marquee for iPhone only.",
       "localizations" : {
@@ -22746,6 +22890,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mais novos primeiro"
+          }
+        }
+      }
+    },
+    "Next" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weiter"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próximo"
           }
         }
       }
@@ -24212,6 +24385,35 @@
         }
       }
     },
+    "Nothing scheduled" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts geplant"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada programado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de prévu"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada programado"
+          }
+        }
+      }
+    },
     "Nothing to show yet" : {
       "localizations" : {
         "de" : {
@@ -25218,6 +25420,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abrir este título no site do seu servidor do Marquee"
+          }
+        }
+      }
+    },
+    "Opens the changelog" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Änderungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre los cambios"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre les changements"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abre as mudanças"
           }
         }
       }
@@ -26506,6 +26737,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Prévia"
+          }
+        }
+      }
+    },
+    "Previous" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anterior"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Précédent"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anterior"
           }
         }
       }
@@ -34965,6 +35225,35 @@
         }
       }
     },
+    "Tap a day to see what's on." : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe auf einen Tag, um zu sehen, was kommt."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca un día para ver qué hay."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez un jour pour voir ce qui sort."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque em um dia para ver o que tem."
+          }
+        }
+      }
+    },
     "Telegram connected. A test message is on its way." : {
       "localizations" : {
         "de" : {
@@ -39417,6 +39706,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "URL do webhook — cole em %@ → Settings → Connect → Webhook (POST, em Grab e em Import)"
+          }
+        }
+      }
+    },
+    "Week" : {
+      "comment" : "Marquee for iPhone only.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Woche"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semaine"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semana"
           }
         }
       }

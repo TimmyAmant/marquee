@@ -33,19 +33,23 @@ export function LibraryTabs({
   const allHref = allParams.toString() ? `/library?${allParams}` : "/library";
 
   return (
-    <nav aria-label={t("library.sections")} className="flex flex-wrap gap-1 rounded-full border border-border p-1 text-sm">
-      {tabs.map((tab) => (
-        <Link
-          key={tab}
-          href={tab === "all" ? allHref : `/library?tab=${tab}`}
-          aria-current={current === tab ? "page" : undefined}
-          className={`rounded-full px-3.5 py-1.5 transition-colors ${
-            current === tab ? "bg-accent text-bg-0" : "text-text-secondary hover:bg-bg-1 hover:text-text-primary"
-          }`}
-        >
-          {t(LABELS[tab])}
-        </Link>
-      ))}
+    // Settings' tab row (components/settings-nav.tsx): one line of pills
+    // that scrolls sideways on a phone instead of wrapping inside a frame.
+    <nav aria-label={t("library.sections")} className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      <div className="flex w-max min-w-full gap-0.5 border-b border-border pb-3">
+        {tabs.map((tab) => (
+          <Link
+            key={tab}
+            href={tab === "all" ? allHref : `/library?tab=${tab}`}
+            aria-current={current === tab ? "page" : undefined}
+            className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-[13.5px] font-medium transition-colors ${
+              current === tab ? "bg-text-primary text-bg-0" : "text-text-secondary hover:bg-text-primary/10 hover:text-text-primary"
+            }`}
+          >
+            {t(LABELS[tab])}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 }

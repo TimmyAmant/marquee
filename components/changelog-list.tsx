@@ -23,22 +23,26 @@ export function ChangelogList({ entries }: { entries: ChangelogEntry[] }) {
     <>
       <div className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border bg-bg-1">
         {entries.map((entry, i) => (
-          <div key={entry.version} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-text-muted">{daysAgo(t, entry.date)}</span>
-              <span className="font-display text-base text-text-primary">
-                {t("nav.releaseVersion", { version: entry.version })}
-              </span>
-              {i === 0 && (
-                <span className="rounded-full bg-owned-bg px-2.5 py-0.5 text-[11px] font-medium text-owned">
-                  {t("nav.latest")}
+          // Never wraps: on a phone the date sits under the version (like the
+          // iPhone app's rows) so the button always stays on the right.
+          <div key={entry.version} className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-5 sm:py-4">
+            <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row-reverse sm:items-center sm:justify-end sm:gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate font-display text-base text-text-primary">
+                  {t("nav.releaseVersion", { version: entry.version })}
                 </span>
-              )}
+                {i === 0 && (
+                  <span className="shrink-0 rounded-full bg-owned-bg px-2.5 py-0.5 text-[11px] font-medium text-owned">
+                    {t("nav.latest")}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-text-muted">{daysAgo(t, entry.date)}</span>
             </div>
             <button
               type="button"
               onClick={() => setOpenVersion(entry.version)}
-              className="flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover"
+              className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-bg-0 transition-colors hover:bg-accent-hover"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
                 <path

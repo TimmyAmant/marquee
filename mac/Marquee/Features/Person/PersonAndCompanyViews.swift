@@ -7,12 +7,28 @@ struct PersonDetailView: View {
     @Environment(AppModel.self) private var model
     @State private var person: API.PersonDetail?
     @State private var error: String?
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// An iPhone: the photo beside the name, the rest under both.
+    private var isPhone: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 44) {
+            VStack(alignment: .leading, spacing: isPhone ? 28 : 44) {
                 if let person {
-                    header(person)
+                    if isPhone {
+                        phoneHeader(person)
+                    } else {
+                        header(person)
+                    }
                     MediaListView(
                         cards: person.credits,
                         subtitleLabel: String(localized: "Role"),
@@ -65,6 +81,68 @@ struct PersonDetailView: View {
         }
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
             await load()
+        }
+    }
+
+    private func photo(_ person: API.PersonDetail, width: CGFloat) -> some View {
+        ZStack {
+            Theme.bg2
+            if person.profilePath.url(.w342) != nil {
+                RemoteImage(person.profilePath, size: .w342)
+            } else {
+                Image(systemName: "person.fill")
+                    .font(.system(size: Metrics.text(width / 4)))
+                    .foregroundStyle(Theme.textMuted)
+            }
+        }
+        .frame(width: width, height: width * 1.5)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+    }
+
+    /// At phone width: the photo and the name, dates and Favorite side by
+    /// side, the biography across the page under them.
+    private func phoneHeader(_ person: API.PersonDetail) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 16) {
+                photo(person, width: 116)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(person.name)
+                        .font(.marqueeDisplay(28))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: 3) {
+                        if let born = person.birthday {
+                            Text("Born \(Text(born.longLabel).foregroundStyle(Theme.textSecondary))")
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                        if let died = person.deathday {
+                            Text("Died \(Text(died.longLabel).foregroundStyle(Theme.textSecondary))")
+                                .foregroundStyle(Theme.textMuted)
+                        }
+                        if let place = person.placeOfBirth.nonBlank {
+                            Text(place)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+                    .font(.system(size: Metrics.text(13)))
+                    .fixedSize(horizontal: false, vertical: true)
+                    FavoriteButton(target: FavoriteTarget(.person, person.tmdbId, favorited: person.favorited))
+                        .padding(.top, 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if let bio = person.biography.nonBlank {
+                Text(bio.truncated(to: 600))
+                    .font(.system(size: Metrics.text(13.5)))
+                    .lineSpacing(4)
+                    .foregroundStyle(Theme.textSecondary)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -141,12 +219,28 @@ struct CompanyDetailView: View {
     @Environment(AppModel.self) private var model
     @State private var company: API.CompanyDetail?
     @State private var error: String?
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
+
+    /// An iPhone: the logo beside the name, the description under both.
+    private var isPhone: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 44) {
+            VStack(alignment: .leading, spacing: isPhone ? 28 : 44) {
                 if let company {
-                    header(company)
+                    if isPhone {
+                        phoneHeader(company)
+                    } else {
+                        header(company)
+                    }
                     MediaListView(
                         cards: company.titles,
                         showTypeFilter: true,
@@ -174,6 +268,50 @@ struct CompanyDetailView: View {
         .navigationTitle(company?.name ?? "")
         .task(id: ReloadKey(token: model.reloadToken, remote: model.events.remoteRevision(of: [.library, .favorites]))) {
             await load()
+        }
+    }
+
+    /// At phone width: the logo beside the name and Favorite, the
+    /// description under both.
+    private func phoneHeader(_ company: API.CompanyDetail) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 14) {
+                ZStack {
+                    if company.logoPath.url(.w342) != nil {
+                        Color.white
+                        RemoteImage(company.logoPath, size: .w342, contentMode: .fit, showsShimmer: false)
+                            .padding(10)
+                    } else {
+                        Theme.bg1
+                        Image(systemName: "building.2")
+                            .font(.system(size: 24))
+                            .foregroundStyle(Theme.textMuted)
+                    }
+                }
+                .frame(width: 112, height: 70)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.border))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(company.name)
+                        .font(.marqueeDisplay(26))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("\(company.titleCount) titles in the catalog")
+                        .font(.system(size: Metrics.text(13)))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
+            if let summary = company.shortDescription {
+                Text(summary)
+                    .font(.system(size: Metrics.text(13.5)))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
