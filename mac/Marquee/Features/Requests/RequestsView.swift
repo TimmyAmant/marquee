@@ -77,7 +77,9 @@ private struct RequestBackdrop: ViewModifier {
 
 extension View {
     fileprivate func requestBackdrop(_ path: API.ImageRef?) -> some View {
-        modifier(RequestBackdrop(path: path))
+        // Clipped to the row, so artwork filled to a narrow row can't spill
+        // over the rows around it.
+        modifier(RequestBackdrop(path: path)).clipped()
     }
 }
 
@@ -131,10 +133,12 @@ private struct TableRowStack<Content: View>: View {
     @Environment(\.stacksTableColumns) private var stacked
 
     var body: some View {
-        let layout = stacked
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: 0))
-        layout { content() }
+        if stacked {
+            VStack(alignment: .leading, spacing: 6) { content() }
+                .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            HStack(alignment: .top, spacing: 0) { content() }
+        }
     }
 }
 
