@@ -51,6 +51,8 @@ export async function createPin(clientId: string): Promise<PlexPin> {
 }
 
 export async function checkPin(clientId: string, pinId: number): Promise<PlexPin> {
+  // Only ever a plex.tv pin number, never anything that could change the path.
+  if (!Number.isSafeInteger(pinId) || pinId <= 0) throw new Error("Invalid Plex pin id");
   const res = await fetch(`${PLEX_TV_BASE}/api/v2/pins/${pinId}`, {
     headers: plexHeaders(clientId),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

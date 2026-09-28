@@ -137,7 +137,7 @@ export async function runJob(jobId: JobId): Promise<CoreResult> {
     await runner();
     return { ok: true };
   } catch (err) {
-    console.error(`[jobs] manual run of ${jobId} failed:`, err);
+    console.error("[jobs] manual run of %s failed:", jobId, err);
     return fail("internal", t("admin.jobFailed"));
   }
 }

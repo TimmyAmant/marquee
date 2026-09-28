@@ -50,15 +50,24 @@ const INVISIBLE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B\u2
 // Markup-looking tags ("<b>", "</a>", "<img src=x>"), not a lone "<" or "a < b".
 const TAG = /<\/?[a-z][^<>]*>/gi;
 
+/** Tags out until none are left: removing one can join the pieces of
+ * another ("<<b>script>"), so a single pass isn't enough. */
+function stripTags(text: string): string {
+  let previous: string;
+  do {
+    previous = text;
+    text = text.replace(TAG, "");
+  } while (text !== previous);
+  return text;
+}
+
 /** The note as plain text on one line: tags and invisible characters out,
  * runs of whitespace (line breaks included) to one space. Null when that
  * leaves nothing; an error past MAX_SHARE_NOTE characters. */
 export function cleanShareNote(raw: unknown, t: Translator): Parsed<{ note: string | null }> {
   if (raw === undefined || raw === null) return { ok: true, note: null };
   if (typeof raw !== "string") return { ok: false, error: t("notify.shareNoteNotText") };
-  const note = raw
-    .normalize("NFC")
-    .replace(TAG, "")
+  const note = stripTags(raw.normalize("NFC"))
     .replace(/[\t\n\r\u2028\u2029]/g, " ")
     .replace(INVISIBLE, "")
     .replace(/\s+/g, " ")
