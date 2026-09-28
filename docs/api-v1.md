@@ -40,8 +40,11 @@ where the real server needed something the core contract didn't spell out.
    filtering.
 7. **TMDb not configured is reported as `502 upstream`.** The website renders
    TMDb-backed pages as empty shelves when no TMDb credential exists. The API
-   instead answers every TMDb-backed endpoint with
-   `502 {"code":"upstream","error":"TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → General."}`.
+   instead answers every TMDb-backed endpoint with `502 upstream` and
+   `"reason": "tmdb_not_configured"` (0.50+; the message names Settings →
+   General). A server older than 0.50 sends no reason, only this body, which
+   clients match word for word:
+   `502 {"code":"upstream","error":"TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations."}`.
 8. **`X-Marquee-API: 1` on everything under `/api/v1`**, including responses
    Next.js generates itself (`405 Method Not Allowed`, automatic `OPTIONS`).
    Those two have empty bodies rather than the `{error, code}` shape. Unknown
