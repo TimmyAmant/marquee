@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n/client";
+import { useViewportClamp } from "@/lib/ui/use-viewport-clamp";
 
 /**
  * The title page's "…" capsule: the rarely used tools (Search now, Stop
@@ -14,10 +15,14 @@ export function TitleMoreMenu({ children, className }: { children: React.ReactNo
   const t = useT();
   const [open, setOpen] = useState(false);
   // Which way the menu opens: from the button's left edge unless that would
-  // run past the window's right edge (the button ends a wrapped row).
+  // run past the window's right edge (the button ends a wrapped row). On a
+  // narrow phone neither side may fit, so useViewportClamp then slides it
+  // back inside the window.
   const [alignRight, setAlignRight] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useViewportClamp(open, panelRef);
 
   useEffect(() => {
     if (!open) return;
@@ -67,7 +72,8 @@ export function TitleMoreMenu({ children, className }: { children: React.ReactNo
         </svg>
       </button>
       <div
-        className={`nav-glass absolute top-full z-30 mt-1.5 w-[300px] max-w-[calc(100vw-2rem)] flex-col gap-0.5 rounded-xl p-1.5 ${
+        ref={panelRef}
+        className={`nav-glass absolute top-full z-30 mt-1.5 w-[300px] max-w-[calc(100vw-1rem)] flex-col gap-0.5 rounded-xl p-1.5 ${
           alignRight ? "right-0" : "left-0"
         } ${open ? "flex" : "hidden"}`}
       >

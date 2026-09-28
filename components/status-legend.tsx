@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { LIBRARY_STATUSES, statusColorsNote, statusText, statusClasses } from "@/lib/library/status-tone";
 import { useT } from "@/lib/i18n/client";
+import { useViewportClamp } from "@/lib/ui/use-viewport-clamp";
 
 /** The statuses that wear a color, for the pill's row of swatch dots. */
 const SWATCH_STATUSES = LIBRARY_STATUSES.filter((status) => statusClasses(status).strip);
@@ -53,6 +54,8 @@ export function StatusLegend({ className = "" }: { className?: string }) {
   // that would push the panel off-screen.
   const [alignLeft, setAlignLeft] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useViewportClamp(open, panelRef);
   const panelId = useId();
 
   useEffect(() => {
@@ -98,10 +101,11 @@ export function StatusLegend({ className = "" }: { className?: string }) {
 
       {open && (
         <div
+          ref={panelRef}
           id={panelId}
           role="dialog"
           aria-label={t("help.colorsDialogLabel")}
-          className={`absolute top-9 z-50 ${alignLeft ? "left-0" : "right-0"} w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-bg-1 p-3 shadow-xl`}
+          className={`absolute top-9 z-50 ${alignLeft ? "left-0" : "right-0"} w-72 max-w-[calc(100vw-1rem)] rounded-2xl border border-border bg-bg-1 p-3 shadow-xl`}
         >
           <p className="px-1 pb-2 text-xs font-medium text-text-primary">{t("help.colorsQuestion")}</p>
           <StatusColorList />
