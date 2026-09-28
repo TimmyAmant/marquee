@@ -331,7 +331,7 @@ struct TraktSyncsCard: View {
     private var addForm: some View {
         VStack(alignment: .leading, spacing: 10) {
             if !trakt.available {
-                InlineMessage(text: String(localized: "Trakt isn't connected. The admin can connect it in Settings → Integrations."))
+                InlineMessage(text: String(localized: "Trakt isn't connected. The admin can connect it in Settings → General."))
             }
             SettingsField(label: String(localized: "Trakt link"), text: $trakt.url, placeholder: "https://trakt.tv/users/someone/watchlist")
             HStack(spacing: 16) {

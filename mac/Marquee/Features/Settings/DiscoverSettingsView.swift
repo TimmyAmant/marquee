@@ -107,7 +107,7 @@ struct DiscoverSettingsView: View {
         let limit = settings.maxCustomShelves
         var sentences = [String(localized: "Your own rows: \(count) of \(limit). Drag a row, or use the arrows, to move it.")]
         if !settings.traktConfigured, settings.shelves.contains(where: { $0.rowKind == .traktList }) {
-            sentences.append(String(localized: "Trakt rows stay empty until Trakt is connected in Settings › Integrations."))
+            sentences.append(String(localized: "Trakt rows stay empty until Trakt is connected in Settings › General."))
         }
         return sentences.joined(separator: " ")
     }
@@ -321,7 +321,7 @@ struct AddDiscoverRowSheet: View {
                 SettingsField(label: String(localized: "Trakt link"), text: $draft.traktURL, placeholder: "https://trakt.tv/users/someone/lists/favourites")
                 hint(String(localized: "A public list or watchlist on trakt.tv."))
                 if !traktConfigured {
-                    InlineMessage(text: String(localized: "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › Integrations."))
+                    InlineMessage(text: String(localized: "Trakt isn't connected, so this row stays empty until the admin connects it in Settings › General."))
                 }
             }
         case .library:

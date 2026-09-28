@@ -3,7 +3,7 @@ using Marquee.Core.Models;
 namespace Marquee.Core.Api;
 
 // Single sign-on settings (admin, 0.44+): the "Single sign-on" card under
-// Settings > Integrations. Saving or turning it off changes which sign-in
+// Settings > Members. Saving or turning it off changes which sign-in
 // buttons server-info offers, which is sign-in setup like /settings/sign-in,
 // so these record ServerChange.Users.
 

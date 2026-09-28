@@ -584,6 +584,6 @@ extension APIError {
     }
 
     static var tmdbUnconfiguredFallback: String {
-        String(localized: "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.")
+        String(localized: "TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → General.")
     }
 }

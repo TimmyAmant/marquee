@@ -371,7 +371,7 @@
     <value>Leer lassen, um das aktuelle Passwort zu behalten</value>
   </data>
   <data name="Account_NoMediaServers" xml:space="preserve">
-    <value>Verbinde Plex oder {0} im Tab „Integrationen“, um Haushaltsmitglieder daraus zu importieren und sie sich mit diesen Konten anmelden zu lassen.</value>
+    <value>Verbinde Plex oder {0} im Tab „Medienserver“, um Haushaltsmitglieder daraus zu importieren und sie sich mit diesen Konten anmelden zu lassen.</value>
   </data>
   <data name="Account_NoPasswordNote.Text" xml:space="preserve">
     <value>Dein Konto hat kein Marquee-Passwort und meldet sich daher nur über ein verknüpftes Konto an. Leg oben eins fest, um dich auch mit Benutzername und Passwort anzumelden.</value>
@@ -1337,7 +1337,7 @@
     <value>Noch nichts anzuzeigen</value>
   </data>
   <data name="Discover_EmptyText.Text" xml:space="preserve">
-    <value>Dein Server hat von TMDb nichts zurückbekommen. Prüfe seine Internetverbindung oder die TMDb-Zugangsdaten in Einstellungen → Integrationen und lade dann neu (F5).</value>
+    <value>Dein Server hat von TMDb nichts zurückbekommen. Prüfe seine Internetverbindung oder die TMDb-Zugangsdaten in Einstellungen → Allgemein und lade dann neu (F5).</value>
   </data>
   <data name="Discover_ErrorHeading.Text" xml:space="preserve">
     <value>Entdecken konnte nicht geladen werden</value>
@@ -1388,7 +1388,7 @@
     <value>Entdecken</value>
   </data>
   <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
-    <value>Jedes Poster, jedes Suchergebnis und jede Titelseite kommt von TMDb. Füge in Einstellungen → Integrationen einen kostenlosen API-Schlüssel oder ein Lesezugriffstoken hinzu.</value>
+    <value>Jedes Poster, jedes Suchergebnis und jede Titelseite kommt von TMDb. Füge in Einstellungen → Allgemein einen kostenlosen API-Schlüssel oder ein Lesezugriffstoken hinzu.</value>
   </data>
   <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Verbinde TMDb, um mit dem Stöbern zu beginnen</value>
@@ -1520,7 +1520,7 @@
     <value>Link zu Trakt-Liste oder -Watchlist</value>
   </data>
   <data name="DiscoverSettings_TraktNote" xml:space="preserve">
-    <value>Trakt ist nicht verbunden, daher bleibt diese Reihe leer, bis der Admin es unter Einstellungen → Integrationen verbindet.</value>
+    <value>Trakt ist nicht verbunden, daher bleibt diese Reihe leer, bis der Admin es unter Einstellungen → Allgemein verbindet.</value>
   </data>
   <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
     <value>Erneut versuchen</value>
@@ -3008,7 +3008,7 @@
     <value>Auch anfragen, was schon darauf steht</value>
   </data>
   <data name="Model_TraktUnavailable" xml:space="preserve">
-    <value>Trakt ist nicht verbunden. Der Admin kann es unter Einstellungen → Integrationen verbinden.</value>
+    <value>Trakt ist nicht verbunden. Der Admin kann es unter Einstellungen → Allgemein verbinden.</value>
   </data>
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Deine Merkliste wird geprüft …</value>

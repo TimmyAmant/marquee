@@ -371,7 +371,7 @@
     <value>Deixe em branco para manter a senha atual</value>
   </data>
   <data name="Account_NoMediaServers" xml:space="preserve">
-    <value>Conecte o Plex ou o {0} na aba Integrações para importar os membros da casa e deixar que entrem com essas contas.</value>
+    <value>Conecte o Plex ou o {0} na aba Servidores de mídia para importar os membros da casa e deixar que entrem com essas contas.</value>
   </data>
   <data name="Account_NoPasswordNote.Text" xml:space="preserve">
     <value>Sua conta não tem senha do Marquee, então só entra com uma conta vinculada. Defina uma acima para entrar também com nome de usuário e senha.</value>
@@ -1337,7 +1337,7 @@
     <value>Nada para mostrar ainda</value>
   </data>
   <data name="Discover_EmptyText.Text" xml:space="preserve">
-    <value>Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Integrações e recarregue (F5).</value>
+    <value>Seu servidor não recebeu nada do TMDb. Verifique a conexão com a internet dele ou a credencial do TMDb em Configurações → Geral e recarregue (F5).</value>
   </data>
   <data name="Discover_ErrorHeading.Text" xml:space="preserve">
     <value>Não foi possível carregar Descobrir</value>
@@ -1388,7 +1388,7 @@
     <value>Descobrir</value>
   </data>
   <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
-    <value>Cada pôster, resultado de busca e página de título vem do TMDb. Adicione uma chave de API gratuita ou um token de acesso de leitura em Configurações → Integrações.</value>
+    <value>Cada pôster, resultado de busca e página de título vem do TMDb. Adicione uma chave de API gratuita ou um token de acesso de leitura em Configurações → Geral.</value>
   </data>
   <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Conecte o TMDb para começar a explorar</value>
@@ -1520,7 +1520,7 @@
     <value>Link de lista ou watchlist do Trakt</value>
   </data>
   <data name="DiscoverSettings_TraktNote" xml:space="preserve">
-    <value>O Trakt não está conectado, então esta fileira vai ficar vazia até o administrador conectá-lo em Configurações → Integrações.</value>
+    <value>O Trakt não está conectado, então esta fileira vai ficar vazia até o administrador conectá-lo em Configurações → Geral.</value>
   </data>
   <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
     <value>Tentar de novo</value>
@@ -3008,7 +3008,7 @@
     <value>Pedir também o que já está nela</value>
   </data>
   <data name="Model_TraktUnavailable" xml:space="preserve">
-    <value>O Trakt não está conectado. O administrador pode conectá-lo em Configurações → Integrações.</value>
+    <value>O Trakt não está conectado. O administrador pode conectá-lo em Configurações → Geral.</value>
   </data>
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Verificando sua lista…</value>

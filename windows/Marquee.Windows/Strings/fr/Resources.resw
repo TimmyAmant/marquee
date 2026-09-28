@@ -371,7 +371,7 @@
     <value>Laissez vide pour garder le mot de passe actuel</value>
   </data>
   <data name="Account_NoMediaServers" xml:space="preserve">
-    <value>Connectez Plex ou {0} dans l’onglet Intégrations pour en importer les membres du foyer et leur permettre de se connecter avec ces comptes.</value>
+    <value>Connectez Plex ou {0} dans l’onglet Serveurs multimédias pour en importer les membres du foyer et leur permettre de se connecter avec ces comptes.</value>
   </data>
   <data name="Account_NoPasswordNote.Text" xml:space="preserve">
     <value>Votre compte n’a pas de mot de passe Marquee, il se connecte donc uniquement avec un compte associé. Définissez-en un ci-dessus pour vous connecter aussi avec un nom d’utilisateur et un mot de passe.</value>
@@ -1337,7 +1337,7 @@
     <value>Rien à afficher pour l’instant</value>
   </data>
   <data name="Discover_EmptyText.Text" xml:space="preserve">
-    <value>Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Intégrations, puis rechargez (F5).</value>
+    <value>Votre serveur n’a rien reçu de TMDb. Vérifiez sa connexion Internet ou l’identifiant TMDb dans Paramètres → Général, puis rechargez (F5).</value>
   </data>
   <data name="Discover_ErrorHeading.Text" xml:space="preserve">
     <value>Impossible de charger Découvrir</value>
@@ -1388,7 +1388,7 @@
     <value>Découvrir</value>
   </data>
   <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
-    <value>Chaque affiche, résultat de recherche et page de titre provient de TMDb. Ajoutez une clé d’API gratuite ou un jeton d’accès en lecture dans Paramètres → Intégrations.</value>
+    <value>Chaque affiche, résultat de recherche et page de titre provient de TMDb. Ajoutez une clé d’API gratuite ou un jeton d’accès en lecture dans Paramètres → Général.</value>
   </data>
   <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Connectez TMDb pour commencer à explorer</value>
@@ -1520,7 +1520,7 @@
     <value>Lien de liste ou de watchlist Trakt</value>
   </data>
   <data name="DiscoverSettings_TraktNote" xml:space="preserve">
-    <value>Trakt n’est pas connecté : cette rangée restera vide tant que l’administrateur ne l’aura pas connecté dans Paramètres → Intégrations.</value>
+    <value>Trakt n’est pas connecté : cette rangée restera vide tant que l’administrateur ne l’aura pas connecté dans Paramètres → Général.</value>
   </data>
   <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
     <value>Réessayer</value>
@@ -3008,7 +3008,7 @@
     <value>Demander aussi ce qu’elle contient déjà</value>
   </data>
   <data name="Model_TraktUnavailable" xml:space="preserve">
-    <value>Trakt n’est pas connecté. L’administrateur peut le connecter dans Paramètres → Intégrations.</value>
+    <value>Trakt n’est pas connecté. L’administrateur peut le connecter dans Paramètres → Général.</value>
   </data>
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Vérification de votre liste…</value>

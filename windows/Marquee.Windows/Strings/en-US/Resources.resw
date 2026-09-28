@@ -375,7 +375,7 @@
     <value>Leave blank to keep the current password</value>
   </data>
   <data name="Account_NoMediaServers" xml:space="preserve">
-    <value>Connect Plex or {0} on the Integrations tab to import household members from it and let them sign in with those accounts.</value>
+    <value>Connect Plex or {0} on the Media servers tab to import household members from it and let them sign in with those accounts.</value>
   </data>
   <data name="Account_NoPasswordNote.Text" xml:space="preserve">
     <value>Your account has no Marquee password, so it signs in only with a linked account. Set one above to sign in with a username and password too.</value>
@@ -1386,7 +1386,7 @@
     <value>Nothing to show yet</value>
   </data>
   <data name="Discover_EmptyText.Text" xml:space="preserve">
-    <value>Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (F5).</value>
+    <value>Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → General, then reload (F5).</value>
   </data>
   <data name="Discover_ErrorHeading.Text" xml:space="preserve">
     <value>Couldn't load Discover</value>
@@ -1439,7 +1439,7 @@
     <value>Discover</value>
   </data>
   <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
-    <value>Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations.</value>
+    <value>Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → General.</value>
     <comment>Shown to an admin on Discover, Movies/Series and Search when the server has no TMDb credential.</comment>
   </data>
   <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
@@ -1581,7 +1581,7 @@
     <value>Trakt list or watchlist link</value>
   </data>
   <data name="DiscoverSettings_TraktNote" xml:space="preserve">
-    <value>Trakt isn't connected, so this row will stay empty until the admin connects it in Settings → Integrations.</value>
+    <value>Trakt isn't connected, so this row will stay empty until the admin connects it in Settings → General.</value>
   </data>
   <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
     <value>Try again</value>
@@ -3133,7 +3133,7 @@
     <value>Also request what's on it now</value>
   </data>
   <data name="Model_TraktUnavailable" xml:space="preserve">
-    <value>Trakt isn't connected. The admin can connect it in Settings → Integrations.</value>
+    <value>Trakt isn't connected. The admin can connect it in Settings → General.</value>
   </data>
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Checking your watchlist…</value>

@@ -371,7 +371,7 @@
     <value>Déjalo en blanco para mantener la contraseña actual</value>
   </data>
   <data name="Account_NoMediaServers" xml:space="preserve">
-    <value>Conecta Plex o {0} en la pestaña Integraciones para importar desde ahí a los miembros del hogar y dejar que inicien sesión con esas cuentas.</value>
+    <value>Conecta Plex o {0} en la pestaña Servidores multimedia para importar desde ahí a los miembros del hogar y dejar que inicien sesión con esas cuentas.</value>
   </data>
   <data name="Account_NoPasswordNote.Text" xml:space="preserve">
     <value>Tu cuenta no tiene contraseña de Marquee, así que solo puede iniciar sesión con una cuenta vinculada. Pon una arriba para iniciar sesión también con nombre de usuario y contraseña.</value>
@@ -1337,7 +1337,7 @@
     <value>Aún no hay nada que mostrar</value>
   </data>
   <data name="Discover_EmptyText.Text" xml:space="preserve">
-    <value>Tu servidor no recibió nada de TMDb. Revisa su conexión a internet o la credencial de TMDb en Ajustes → Integraciones y vuelve a cargar (F5).</value>
+    <value>Tu servidor no recibió nada de TMDb. Revisa su conexión a internet o la credencial de TMDb en Ajustes → General y vuelve a cargar (F5).</value>
   </data>
   <data name="Discover_ErrorHeading.Text" xml:space="preserve">
     <value>No se pudo cargar Descubrir</value>
@@ -1388,7 +1388,7 @@
     <value>Descubrir</value>
   </data>
   <data name="Discover_TmdbMissingAdmin" xml:space="preserve">
-    <value>Cada póster, resultado de búsqueda y página de título viene de TMDb. Añade una clave de API gratuita o un token de acceso de lectura en Ajustes → Integraciones.</value>
+    <value>Cada póster, resultado de búsqueda y página de título viene de TMDb. Añade una clave de API gratuita o un token de acceso de lectura en Ajustes → General.</value>
   </data>
   <data name="Discover_TmdbMissingHeading.Text" xml:space="preserve">
     <value>Conecta TMDb para empezar a explorar</value>
@@ -1520,7 +1520,7 @@
     <value>Enlace de lista o watchlist de Trakt</value>
   </data>
   <data name="DiscoverSettings_TraktNote" xml:space="preserve">
-    <value>Trakt no está conectado, así que esta fila seguirá vacía hasta que el administrador lo conecte en Ajustes → Integraciones.</value>
+    <value>Trakt no está conectado, así que esta fila seguirá vacía hasta que el administrador lo conecte en Ajustes → General.</value>
   </data>
   <data name="DiscoverSettings_TryAgain.Content" xml:space="preserve">
     <value>Reintentar</value>
@@ -3008,7 +3008,7 @@
     <value>Solicitar también lo que ya contiene</value>
   </data>
   <data name="Model_TraktUnavailable" xml:space="preserve">
-    <value>Trakt no está conectado. El administrador puede conectarlo en Ajustes → Integraciones.</value>
+    <value>Trakt no está conectado. El administrador puede conectarlo en Ajustes → General.</value>
   </data>
   <data name="Model_WatchlistChecking" xml:space="preserve">
     <value>Comprobando tu lista…</value>

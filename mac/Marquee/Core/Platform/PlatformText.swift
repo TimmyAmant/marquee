@@ -38,9 +38,9 @@ enum PlatformText {
 
     static var tmdbUnreachable: String {
         #if os(macOS)
-        String(localized: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then reload (⌘R).")
+        String(localized: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → General, then reload (⌘R).")
         #else
-        String(localized: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → Integrations, then try again.")
+        String(localized: "Your server couldn't get anything back from TMDb. Check its internet connection or the TMDb credential in Settings → General, then try again.")
         #endif
     }
 
