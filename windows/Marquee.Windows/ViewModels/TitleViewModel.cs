@@ -200,6 +200,8 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(HasTracking),
         nameof(CanRemoveFromArr),
         nameof(RemoveFromArrLabel),
+        nameof(CanRemoveFromArrFourK),
+        nameof(RemoveFromArrFourKLabel),
         nameof(MonitorLabel),
         nameof(CanRelink),
         nameof(NeedsArrSetup),
@@ -500,19 +502,28 @@ public sealed partial class TitleViewModel : ObservableObject
 
     public string RemoveFromArrLabel => Loc.Format("Title_RemoveFromArr", Id.MediaType.ArrName);
 
+    /// <summary>"Remove from Radarr 4K" in the … menu: the admin's, while a 4K server has it.</summary>
+    public bool CanRemoveFromArrFourK => model.Viewer?.IsAdmin == true && FourK is { } fourK && fourK.Status != LibraryStatus.Untracked;
+
+    public string RemoveFromArrFourKLabel => Loc.Format("Title_RemoveFromArr", FourKArrName);
+
+    /// <summary>"Radarr 4K" / "Sonarr 4K".</summary>
+    public string FourKArrName => $"{Id.MediaType.ArrName} 4K";
+
     /// <summary>
     /// <c>POST /titles/{type}/{id}/remove-from-arr</c> (admin, 0.58+): off every
-    /// server that has it, with its files when <paramref name="deleteFiles"/>.
-    /// Its approved requests are marked removed, so it can be requested again.
+    /// server that has it (the 4K ones with <paramref name="fourK"/>), with its
+    /// files when <paramref name="deleteFiles"/>. Its approved requests are
+    /// marked removed, so it can be requested again.
     /// </summary>
-    public async Task RemoveFromArrAsync(bool deleteFiles)
+    public async Task RemoveFromArrAsync(bool deleteFiles, bool fourK = false)
     {
         TrackingMessage = null;
         try
         {
-            await model.Api.AdminTools.RemoveFromArrAsync(Id.MediaType, Id.TmdbId, deleteFiles);
+            await model.Api.AdminTools.RemoveFromArrAsync(Id.MediaType, Id.TmdbId, deleteFiles, is4k: fourK);
             TrackingIsError = false;
-            TrackingMessage = Loc.Format("Title_RemovedFromArr", Id.MediaType.ArrName);
+            TrackingMessage = Loc.Format("Title_RemovedFromArr", fourK ? FourKArrName : Id.MediaType.ArrName);
             await RefreshStatusAsync();
         }
         catch (ApiException error)
@@ -679,7 +690,7 @@ public sealed partial class TitleViewModel : ObservableObject
     /// Stop / Start monitoring, Fix ID and Block requests, the tools nobody
     /// needs every visit.
     /// </summary>
-    public bool HasMoreActions => HasTracking || CanRelink || CanBlock;
+    public bool HasMoreActions => HasTracking || CanRelink || CanBlock || CanRemoveFromArrFourK;
 
     /// <summary>"Unblock requests" on a title blocked from its own page.</summary>
     public bool CanUnblock => ManagesBlocklist && Blocked != null && Blocked.KeywordLine == null;

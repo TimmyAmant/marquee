@@ -124,12 +124,18 @@ public sealed partial class SettingsPage : Page
             new IntegrationsSettingsView(SettingsPart.Services),
             new OverrideRulesView()),
         SettingsTab.Notifications => new NotificationsSettingsView(),
-        SettingsTab.Discover => new DiscoverSettingsView(),
+        // 0.53+: Region & language under the rows (hidden on an older server).
+        SettingsTab.Discover => new CompositeSettingsView(
+            new DiscoverSettingsView(),
+            new DiscoverLocaleView()),
         SettingsTab.Blocklist => new CompositeSettingsView(
             new AccountSettingsView(SettingsPart.Blocklist),
             new AutoBlockView()),
         SettingsTab.Activity => new ActivitySettingsView(),
-        SettingsTab.Jobs => new JobsSettingsView(),
+        // 0.46+: the Can't Find Check's wait under the jobs.
+        SettingsTab.Jobs => new CompositeSettingsView(
+            new JobsSettingsView(),
+            new NotFoundHoursView()),
         SettingsTab.Logs => new LogsSettingsView(),
         SettingsTab.About => new AboutSettingsView(),
         _ => new AccountSettingsView(SettingsPart.Account),

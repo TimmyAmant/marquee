@@ -796,6 +796,8 @@ private struct TitleActionRow: View {
     @State private var blockReason = ""
     /// "Remove from Radarr/Sonarr"'s confirmation (0.58+).
     @State private var confirmingRemove = false
+    /// The confirmation is for "Remove from Radarr 4K" (the 4K servers).
+    @State private var removingFourK = false
 
     var body: some View {
         let viewer = detail.viewer
@@ -808,6 +810,9 @@ private struct TitleActionRow: View {
         let splitFourK = advancedOffered && !targets.standard && targets.fourK
         let menuTracking = viewer.arrTracking
         let menuBlock = viewer.offersBlocking(managesBlocklist: managesBlocklist) && viewer.block == nil && !askingBlockReason
+        // "Remove from Radarr 4K": only while a 4K server has it.
+        let menuRemoveFourK = model.viewer?.isAdmin == true && viewer.fourK.map { $0.status != .untracked } == true
+        let removeArrName = removingFourK ? "\(detail.mediaType.arrName) 4K" : detail.mediaType.arrName
         VStack(alignment: .leading, spacing: 8) {
             // components/title-hero.tsx (0.54+): one row of 32pt capsules on
             // a shared midline — the main action first, then the library
@@ -962,7 +967,7 @@ private struct TitleActionRow: View {
 
                 // components/title-more-menu.tsx: the tools nobody needs
                 // every visit.
-                if menuTracking != nil || menuBlock || viewer.canRelink {
+                if menuTracking != nil || menuBlock || viewer.canRelink || menuRemoveFourK {
                     Menu {
                         if let tracking = menuTracking {
                             Button {
@@ -983,12 +988,22 @@ private struct TitleActionRow: View {
                             // components/remove-from-arr-button.tsx (0.58+): asks first.
                             if model.viewer?.isAdmin == true {
                                 Button(role: .destructive) {
+                                    removingFourK = false
                                     confirmingRemove = true
                                 } label: {
                                     Label(String(localized: "Remove from \(detail.mediaType.arrName)"), systemImage: "trash")
                                 }
                                 .disabled(screen.isRemovingFromArr)
                             }
+                        }
+                        if menuRemoveFourK {
+                            Button(role: .destructive) {
+                                removingFourK = true
+                                confirmingRemove = true
+                            } label: {
+                                Label(String(localized: "Remove from \(detail.mediaType.arrName + " 4K")"), systemImage: "trash")
+                            }
+                            .disabled(screen.isRemovingFromArr)
                         }
                         if menuBlock {
                             Button {
@@ -1015,15 +1030,19 @@ private struct TitleActionRow: View {
                     .help(String(localized: "More actions"))
                     .accessibilityLabel(String(localized: "More actions"))
                     .confirmationDialog(
-                        String(localized: "Remove \(detail.name) from \(detail.mediaType.arrName)?"),
+                        String(localized: "Remove \(detail.name) from \(removeArrName)?"),
                         isPresented: $confirmingRemove,
                         titleVisibility: .visible
                     ) {
-                        Button(String(localized: "Remove"), role: .destructive) { screen.removeFromArr(deleteFiles: false) }
-                        Button(String(localized: "Remove and delete files"), role: .destructive) { screen.removeFromArr(deleteFiles: true) }
+                        Button(String(localized: "Remove"), role: .destructive) {
+                            screen.removeFromArr(deleteFiles: false, fourK: removingFourK)
+                        }
+                        Button(String(localized: "Remove and delete files"), role: .destructive) {
+                            screen.removeFromArr(deleteFiles: true, fourK: removingFourK)
+                        }
                         Button(String(localized: "Cancel"), role: .cancel) {}
                     } message: {
-                        Text("\(detail.mediaType.arrName) stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too.")
+                        Text("\(removeArrName) stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too.")
                     }
                 }
 

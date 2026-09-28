@@ -159,7 +159,7 @@
   "plexConnect": "Plex verbinden",
   "plexFinishSignIn": "Schließ die Anmeldung im gerade geöffneten Tab ab.",
   "ssoTitle": "Single Sign-on",
-  "ssoIntro": "Fügt „Anmelden mit …“ für deinen eigenen Identitätsanbieter hinzu – Authentik, Authelia, Pocket ID, Keycloak, Google oder alles andere, was OpenID Connect spricht – auf der Website und in den Apps für Mac und Windows.",
+  "ssoIntro": "Fügt „Anmelden mit …“ für deinen eigenen Identitätsanbieter hinzu – Authentik, Authelia, Pocket ID, Keycloak, Google oder alles andere, was OpenID Connect spricht – auf der Website und in den Apps für Mac, iPhone und Windows.",
   "ssoButtonName": "Name der Schaltfläche",
   "ssoButtonNameHint": "Der Name auf der Anmeldeschaltfläche, wie in „Anmelden mit Authentik“.",
   "ssoPublicUrl": "Adresse von Marquee",

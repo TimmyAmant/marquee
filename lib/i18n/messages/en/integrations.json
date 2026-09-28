@@ -159,7 +159,7 @@
   "plexConnect": "Connect Plex",
   "plexFinishSignIn": "Finish signing in in the tab that just opened.",
   "ssoTitle": "Single sign-on",
-  "ssoIntro": "Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac and Windows apps.",
+  "ssoIntro": "Adds “Sign in with …” for your own identity provider — Authentik, Authelia, Pocket ID, Keycloak, Google, or anything else that speaks OpenID Connect — on the website and the Mac, iPhone and Windows apps.",
   "ssoButtonName": "Button name",
   "ssoButtonNameHint": "The name on the sign-in button, as in “Sign in with Authentik”.",
   "ssoPublicUrl": "Marquee's address",

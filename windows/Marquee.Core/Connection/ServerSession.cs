@@ -244,9 +244,22 @@ public sealed class ServerSession
                 RaiseStateChanged();
                 return new RestoreResult.SignedOut();
             }
-            return new RestoreResult.Unreachable(new ProbeOutcome.Unreachable(UnreachableReason.Failed(retryError.Message)));
+            return new RestoreResult.Unreachable(new ProbeOutcome.Unreachable(OutageReason(retryError)));
         }
     }
+
+    /// <summary>
+    /// Why <c>/me</c> failed right after server-info answered: a server still
+    /// booting (a 5xx, a dropped connection) is an outage to wait out, not a
+    /// new problem to explain.
+    /// </summary>
+    public static UnreachableReason OutageReason(ApiException error) => error.Kind switch
+    {
+        ApiErrorKind.Server => UnreachableReason.ServerError(500),
+        ApiErrorKind.NotMarquee => UnreachableReason.ServerError(502),
+        ApiErrorKind.Network => ServerProbe.UnreachableReasonFor(error),
+        _ => UnreachableReason.Failed(error.Message),
+    };
 
     private static Task<User> FetchMeAsync(ApiClient client, CancellationToken ct) =>
         client.GetAsync<User>("/me", timeout: RestoreTimeout, ct: ct);

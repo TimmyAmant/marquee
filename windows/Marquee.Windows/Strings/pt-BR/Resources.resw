@@ -82,6 +82,9 @@
   <data name="About_DownloadManually.Content" xml:space="preserve">
     <value>Baixar manualmente</value>
   </data>
+  <data name="About_ErrorReference.Content" xml:space="preserve">
+    <value>Referência de erros</value>
+  </data>
   <data name="About_FactMovies" xml:space="preserve">
     <value>Filmes</value>
   </data>
@@ -1225,6 +1228,9 @@
   <data name="Connect_Retry" xml:space="preserve">
     <value>Tentar de novo</value>
   </data>
+  <data name="Connect_RetryNow" xml:space="preserve">
+    <value>Tentar agora</value>
+  </data>
   <data name="Connect_SetupChangeServerLink.Content" xml:space="preserve">
     <value>Alterar</value>
   </data>
@@ -1291,8 +1297,20 @@
   <data name="Connect_UsernameJellyfin" xml:space="preserve">
     <value>Nome de usuário do {0}</value>
   </data>
+  <data name="Connect_WaitingChangeServer.Content" xml:space="preserve">
+    <value>Trocar de servidor</value>
+  </data>
+  <data name="Connect_WaitingExplanation" xml:space="preserve">
+    <value>O Marquee em {0} não está respondendo agora. Se ele estiver reiniciando ou atualizando, a conexão volta sozinha.</value>
+  </data>
   <data name="Connect_WaitingFor" xml:space="preserve">
     <value>Aguardando {0}…</value>
+  </data>
+  <data name="Connect_WaitingStatus" xml:space="preserve">
+    <value>Tentando de novo em instantes…</value>
+  </data>
+  <data name="Connect_WaitingTitle.Text" xml:space="preserve">
+    <value>Aguardando seu servidor voltar…</value>
   </data>
   <data name="Connect_WelcomeBack.Text" xml:space="preserve">
     <value>Que bom ver você de novo</value>
@@ -1398,6 +1416,30 @@
   </data>
   <data name="Discover_TryAgain.Content" xml:space="preserve">
     <value>Tentar de novo</value>
+  </data>
+  <data name="DiscoverLocale_AnyLanguage" xml:space="preserve">
+    <value>Qualquer idioma</value>
+  </data>
+  <data name="DiscoverLocale_Automatic" xml:space="preserve">
+    <value>Automática — {0}</value>
+  </data>
+  <data name="DiscoverLocale_DiscoverLanguage" xml:space="preserve">
+    <value>Idioma de Descobrir</value>
+  </data>
+  <data name="DiscoverLocale_DiscoverRegion" xml:space="preserve">
+    <value>Região de Descobrir</value>
+  </data>
+  <data name="DiscoverLocale_Intro" xml:space="preserve">
+    <value>Para qual país são os serviços de streaming e as datas de lançamento, e de onde e em qual idioma vêm as fileiras Populares e Em breve do TMDb.</value>
+  </data>
+  <data name="DiscoverLocale_StreamingRegion" xml:space="preserve">
+    <value>Região de streaming</value>
+  </data>
+  <data name="DiscoverLocale_Title" xml:space="preserve">
+    <value>Região e idioma</value>
+  </data>
+  <data name="DiscoverLocale_Worldwide" xml:space="preserve">
+    <value>Mundo todo</value>
   </data>
   <data name="DiscoverSettings_Added" xml:space="preserve">
     <value>“{0}” adicionada ao fim do Descobrir.</value>
@@ -1677,6 +1719,18 @@
   </data>
   <data name="Enum_SuggestionStudio" xml:space="preserve">
     <value>Estúdio</value>
+  </data>
+  <data name="Errors_Empty" xml:space="preserve">
+    <value>Seu servidor não retornou uma referência de erros.</value>
+  </data>
+  <data name="Errors_Intro" xml:space="preserve">
+    <value>O que cada mensagem de erro do Marquee realmente significa e o que fazer. Se o texto exato que você viu não está abaixo, provavelmente é uma mensagem repassada diretamente pelo Sonarr, Radarr, Plex ou Jellyfin — confira os logs desse serviço.</value>
+  </data>
+  <data name="Errors_Title" xml:space="preserve">
+    <value>Referência de erros</value>
+  </data>
+  <data name="Errors_WhatToDo" xml:space="preserve">
+    <value>O que fazer:</value>
   </data>
   <data name="Favorites_Collections.Text" xml:space="preserve">
     <value>Coleções</value>
@@ -2060,7 +2114,7 @@
     <value>Claim de grupos</value>
   </data>
   <data name="Integrations_SsoIntro.Text" xml:space="preserve">
-    <value>Adiciona “Entrar com …” para o seu próprio provedor de identidade (Authentik, Authelia, Pocket ID, Keycloak, Google ou qualquer outro que fale OpenID Connect) no site e nos apps para Mac e Windows.</value>
+    <value>Adiciona “Entrar com …” para o seu próprio provedor de identidade (Authentik, Authelia, Pocket ID, Keycloak, Google ou qualquer outro que fale OpenID Connect) no site e nos apps para Mac, iPhone e Windows.</value>
   </data>
   <data name="Integrations_SsoIssuer.Header" xml:space="preserve">
     <value>URL do emissor</value>
@@ -2286,6 +2340,27 @@
   </data>
   <data name="Jobs_Empty.Text" xml:space="preserve">
     <value>Este servidor não informa tarefas programadas.</value>
+  </data>
+  <data name="Jobs_NotFoundAfter" xml:space="preserve">
+    <value>horas sem ser encontrado</value>
+  </data>
+  <data name="Jobs_NotFoundBefore" xml:space="preserve">
+    <value>Sinalizar um pedido após</value>
+  </data>
+  <data name="Jobs_NotFoundHeading" xml:space="preserve">
+    <value>Não encontrado</value>
+  </data>
+  <data name="Jobs_NotFoundHours" xml:space="preserve">
+    <value>Horas</value>
+  </data>
+  <data name="Jobs_NotFoundSave" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Jobs_NotFoundSaved" xml:space="preserve">
+    <value>Salvo.</value>
+  </data>
+  <data name="Jobs_NotFoundSaving" xml:space="preserve">
+    <value>Salvando…</value>
   </data>
   <data name="Jobs_RanFromThisPc" xml:space="preserve">
     <value>Executada neste PC {0}</value>
@@ -3781,6 +3856,9 @@
   <data name="Rows_UpcomingSeries" xml:space="preserve">
     <value>Próximas séries</value>
   </data>
+  <data name="Rules_MoreGenres" xml:space="preserve">
+    <value>+{0} a mais</value>
+  </data>
   <data name="Search_Box.PlaceholderText" xml:space="preserve">
     <value>Busque um ator, um estúdio, um título…</value>
   </data>
@@ -3916,8 +3994,14 @@
   <data name="Server_ProbeRefused" xml:space="preserve">
     <value>Nada está respondendo na porta {0} em {1}. Verifique a porta e se o Marquee está em execução.</value>
   </data>
+  <data name="Server_ProbeSavedOutage" xml:space="preserve">
+    <value>O Marquee não está respondendo em {0}. Se ele estiver reiniciando ou atualizando, isso se resolve sozinho.</value>
+  </data>
   <data name="Server_ProbeServerError" xml:space="preserve">
     <value>o servidor retornou um erro ({0}).</value>
+  </data>
+  <data name="Server_ProbeServerErrorStatus" xml:space="preserve">
+    <value>{0} respondeu com um erro ({1}). Se o Marquee estiver iniciando, tente novamente em instantes.</value>
   </data>
   <data name="Server_ProbeTooNew" xml:space="preserve">
     <value>O servidor em {0} executa o Marquee {1}, mais novo do que este app suporta. Atualize o Marquee para Windows.</value>
@@ -4195,8 +4279,11 @@
   <data name="Title_AddToFourK" xml:space="preserve">
     <value>Adicionar ao {0} 4K</value>
   </data>
-  <data name="Title_AdvancedFourK.Header" xml:space="preserve">
-    <value>Avançado (4K)</value>
+  <data name="Title_AdvancedFourKToggle.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Opções avançadas (4K)</value>
+  </data>
+  <data name="Title_AdvancedFourKToggle.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Opções avançadas (4K)</value>
   </data>
   <data name="Title_AdvancedQualityProfile.Header" xml:space="preserve">
     <value>Perfil de qualidade</value>

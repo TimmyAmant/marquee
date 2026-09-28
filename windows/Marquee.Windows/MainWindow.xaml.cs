@@ -181,6 +181,7 @@ public sealed partial class MainWindow : Window, INavigator
         Route.Company => (typeof(CompanyPage), route),
         Route.Search => (typeof(SearchPage), route),
         Route.DiscoverList => (typeof(DiscoverListPage), route),
+        Route.ErrorReference => (typeof(ErrorReferencePage), route),
         _ => throw new ArgumentOutOfRangeException(nameof(route)),
     };
 
@@ -736,12 +737,13 @@ public sealed partial class MainWindow : Window, INavigator
         args.Handled = true;
     }
 
-    /// <summary>The window came to the front: catch up on the badge counts right away.</summary>
+    /// <summary>The window came to the front: catch up on the badge counts right away, or retry a server that was down.</summary>
     private void OnActivated(object sender, WindowActivatedEventArgs args)
     {
         if (args.WindowActivationState != WindowActivationState.Deactivated)
         {
             model.RefreshCounts();
+            model.RetryIfDown();
         }
     }
 

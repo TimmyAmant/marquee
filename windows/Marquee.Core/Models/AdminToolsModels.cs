@@ -159,6 +159,29 @@ public sealed record OverrideRule
     public int Position { get; init; }
 
     public bool HasConditions => Genres.Count > 0 || Languages.Count > 0 || Keywords.Count > 0 || UserIds.Count > 0;
+
+    /// <summary>
+    /// The genres on the rule's tile by name, as the website shows them: up
+    /// to <paramref name="limit"/> names, then "+N more". Null when the names
+    /// couldn't be loaded, for the tile's "N genres".
+    /// </summary>
+    public IReadOnlyList<string>? GenreLabels(IReadOnlyDictionary<int, string> names, int limit = 3)
+    {
+        if (Genres.Count == 0)
+        {
+            return [];
+        }
+        if (names.Count == 0)
+        {
+            return null;
+        }
+        var labels = Genres.Select(id => names.TryGetValue(id, out var name) ? name : $"#{id.ToString(CultureInfo.InvariantCulture)}").ToList();
+        if (labels.Count <= limit + 1)
+        {
+            return labels;
+        }
+        return [.. labels.Take(limit), Loc.Format("Rules_MoreGenres", labels.Count - limit)];
+    }
 }
 
 /// <summary><c>POST /settings/override-rules</c> and <c>PUT …/{id}</c> body; nulls are sent, clearing a pick.</summary>

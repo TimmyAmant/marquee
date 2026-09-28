@@ -63,6 +63,9 @@ public abstract record Route
     /// </summary>
     public sealed record DiscoverList(DiscoverListKind List, string? Heading = null) : Route;
 
+    /// <summary>What every error message means (<c>GET /help/errors</c>): <c>ErrorReferencePage</c>.</summary>
+    public sealed record ErrorReference : Route;
+
     /// <summary>
     /// The same page on the server's website, relative to its root, for
     /// "Open in browser" and "Copy link". Null for screens the website has no

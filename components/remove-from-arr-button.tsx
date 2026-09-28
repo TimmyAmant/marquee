@@ -11,17 +11,20 @@ import { showToast } from "@/components/toast";
 
 /** "Remove from Radarr/Sonarr" in the title page's "…" menu (admin): asks
  * first, with "Also delete the files" off, then takes the title off every
- * server that has it (lib/arr/remove.ts). */
+ * server that has it (lib/arr/remove.ts). With `fourK`, "Remove from Radarr
+ * 4K": the same, for the 4K servers. */
 export function RemoveFromArrButton({
   mediaType,
   tmdbId,
   tvdbId,
   name,
+  fourK = false,
 }: {
   mediaType: MediaType;
   tmdbId: number;
   tvdbId: number | null;
   name: string;
+  fourK?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -31,7 +34,7 @@ export function RemoveFromArrButton({
   const [isPending, startTransition] = useTransition();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const app = mediaType === "movie" ? "Radarr" : "Sonarr";
+  const app = `${mediaType === "movie" ? "Radarr" : "Sonarr"}${fourK ? " 4K" : ""}`;
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +49,7 @@ export function RemoveFromArrButton({
   function remove() {
     setError(null);
     startTransition(async () => {
-      const result = await removeFromArrAction(mediaType, tmdbId, tvdbId, deleteFiles).catch(() => ({
+      const result = await removeFromArrAction(mediaType, tmdbId, tvdbId, deleteFiles, fourK).catch(() => ({
         error: t("common.somethingWentWrong"),
         removedFrom: undefined,
       }));

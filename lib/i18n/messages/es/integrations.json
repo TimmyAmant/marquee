@@ -159,7 +159,7 @@
   "plexConnect": "Conectar Plex",
   "plexFinishSignIn": "Termina de iniciar sesión en la pestaña que se acaba de abrir.",
   "ssoTitle": "Inicio de sesión único",
-  "ssoIntro": "Añade «Iniciar sesión con…» para tu propio proveedor de identidad (Authentik, Authelia, Pocket ID, Keycloak, Google o cualquier otro que hable OpenID Connect) en la web y en las apps de Mac y Windows.",
+  "ssoIntro": "Añade «Iniciar sesión con…» para tu propio proveedor de identidad (Authentik, Authelia, Pocket ID, Keycloak, Google o cualquier otro que hable OpenID Connect) en la web y en las apps de Mac, iPhone y Windows.",
   "ssoButtonName": "Nombre del botón",
   "ssoButtonNameHint": "El nombre del botón de inicio de sesión, como en «Iniciar sesión con Authentik».",
   "ssoPublicUrl": "Dirección de Marquee",

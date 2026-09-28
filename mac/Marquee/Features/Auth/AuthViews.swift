@@ -14,6 +14,8 @@ struct RootView: View {
                 AuthScreen { ConnectFlowView() }
             case .signIn:
                 AuthScreen { ServerSignInView() }
+            case .waiting:
+                AuthScreen { ServerWaitingView() }
             case .unreachable:
                 AuthScreen { ServerUnreachableView() }
             case .ready:

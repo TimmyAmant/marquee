@@ -231,6 +231,8 @@ export async function TitleHero({
   const menuBlock = Boolean(may?.manageBlocklist) && !blocked;
   const menuTracking = Boolean(isAdmin && arrTracking);
   const menuRelink = Boolean(isAdmin && !isUnwanted(status));
+  // "Remove from Radarr 4K": only while a 4K server has it.
+  const menuRemoveFourK = Boolean(isAdmin && fourK && fourK.status !== "untracked");
 
   return (
     <div className={TITLE_HERO_FRAME}>
@@ -364,7 +366,7 @@ export async function TitleHero({
                 <BlockRequestsButton mediaType={mediaType} tmdbId={tmdbId} blocked={blocked} />
               )}
 
-              {(menuBlock || menuTracking || menuRelink) && (
+              {(menuBlock || menuTracking || menuRelink || menuRemoveFourK) && (
                 <TitleMoreMenu>
                   {menuTracking && arrTracking && (
                     <ArrTrackingControls
@@ -381,6 +383,15 @@ export async function TitleHero({
                   {menuRelink && <RelinkTitleForm mediaType={mediaType} tmdbId={tmdbId} variant="menu" />}
                   {menuTracking && (
                     <RemoveFromArrButton mediaType={mediaType} tmdbId={tmdbId} tvdbId={tvdbId ?? null} name={name} />
+                  )}
+                  {menuRemoveFourK && (
+                    <RemoveFromArrButton
+                      mediaType={mediaType}
+                      tmdbId={tmdbId}
+                      tvdbId={tvdbId ?? null}
+                      name={name}
+                      fourK
+                    />
                   )}
                 </TitleMoreMenu>
               )}
