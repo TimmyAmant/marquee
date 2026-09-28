@@ -35,7 +35,7 @@ export async function OpenInArrLinks({ links, variant }: { links: ArrLink[]; var
       rel="noopener noreferrer"
       data-testid="open-in-arr"
       title={link.url}
-      className={variant === "pills" ? `${PILL_OUTLINE} hidden sm:inline-flex` : `${MENU_ITEM} sm:hidden`}
+      className={variant === "pills" ? `${PILL_OUTLINE} max-sm:hidden` : `${MENU_ITEM} sm:hidden`}
     >
       <BrandDot kind={link.kind} />
       {t("title.openIn", { name: names[i] })}
