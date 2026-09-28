@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 // household's (the admin's), else English — and the household channels in
 // the household's. Against a real Postgres (PGlite).
 
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db/client", async () => (await import("@/lib/test/pglite")).testDatabase());
 vi.mock("@/lib/notifications/bus", () => ({ publishNotification: () => undefined }));
 const pushed = vi.hoisted(() => [] as { title: string; body: string }[]);
@@ -19,7 +20,7 @@ vi.mock("@/lib/push/deliver", async (importOriginal) => ({
 vi.mock("@/lib/notifications/fan-out", () => ({ fanOut: vi.fn(async () => undefined) }));
 
 import { resetTestDatabase, testDatabase } from "@/lib/test/pglite";
-import { notifications, users } from "@/lib/db/schema";
+import { notifications, titles, titleTranslations, users } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications/query";
 import { fanOut } from "@/lib/notifications/fan-out";
 import { shareTitle } from "@/lib/sharing";
@@ -98,5 +99,35 @@ describe("a notification's language", () => {
     expect(await shareTitle(admin, "movie", 425, { userIds: [anna, ben], note: "Watch it" })).toEqual({ ok: true, sharedWith: 2 });
     expect(await messagesOf(anna)).toEqual(["susan a partagé «\u00a0Ice Age\u00a0» avec vous : Watch it"]);
     expect(await messagesOf(ben)).toEqual(["susan compartió «Ice Age» contigo: Watch it"]);
+  });
+
+  it("names the title in the recipient's language when a translation is saved, and in English for the household", async () => {
+    await addUser("admin", "admin");
+    const anna = await addUser("anna", "member", "fr");
+    const [dune] = await (await db())
+      .insert(titles)
+      .values({ mediaType: "movie", tmdbId: 438631, name: "Dune" })
+      .returning({ id: titles.id });
+    await (await db()).insert(titleTranslations).values({ titleId: dune.id, language: "fr", name: "Dune : Deuxième partie" });
+    await createNotification(approved(anna));
+    const [saved] = await (await db()).select().from(notifications).where(eq(notifications.userId, anna));
+    expect(saved.title).toBe("Dune : Deuxième partie");
+    expect(saved.message).toBe("«\u00a0Dune : Deuxième partie\u00a0» a été approuvé — il arrive dans votre bibliothèque.");
+    expect(fanOut).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Dune : Deuxième partie",
+        householdTitle: "Dune",
+        householdMessage: '"Dune" was approved — it\'s on its way to your library.',
+      }),
+      true,
+    );
+  });
+
+  it("keeps the English name when no translation is saved", async () => {
+    await addUser("admin", "admin");
+    const anna = await addUser("anna", "member", "fr");
+    await createNotification(approved(anna));
+    const [saved] = await (await db()).select().from(notifications).where(eq(notifications.userId, anna));
+    expect(saved.title).toBe("Dune");
   });
 });

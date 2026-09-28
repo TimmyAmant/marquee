@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.64.0",
+    date: "2026-09-27",
+    changes: [
+      "Movie and show details now follow your language: titles, overviews, taglines, genres, posters, logos, trailers and season and episode names come from TMDb in Spanish, French, German or Portuguese when you use Marquee in that language, falling back to English wherever TMDb has no translation. On the website and every app.",
+      "Search understands titles and genres typed in your language (\"terror\" finds Horror), and notifications use a title's name in each person's language once it's known.",
+    ],
+  },
+  {
     version: "0.63.0",
     date: "2026-09-27",
     changes: [

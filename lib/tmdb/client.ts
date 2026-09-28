@@ -2,8 +2,11 @@ import "server-only";
 import { getStoredDiscoverLocale, getTmdbAccessToken } from "@/lib/integrations/app-settings";
 import { resolveDiscoverLocale, type DiscoverLocale } from "@/lib/discover/locale";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
-import { trimTitleImages, type TmdbTitleImages } from "@/lib/tmdb/logo";
+import { trimTitleImages, type TmdbLogoImage, type TmdbTitleImages } from "@/lib/tmdb/logo";
 import type { TmdbPersonExternalIds } from "@/lib/tmdb/entity-links";
+import { getLocale } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/locales";
+import { imageLanguages, isoLanguage, tmdbContentLanguage } from "@/lib/tmdb/language";
 
 /** Logos (lib/tmdb/logo.ts) in English or with no text at all. */
 const TITLE_IMAGE_LANGUAGES = "en,null";
@@ -65,6 +68,33 @@ async function tmdbFetch<T>(
   return res.json() as Promise<T>;
 }
 
+/**
+ * The language this request's viewer reads TMDb's words in ("es-ES"): their
+ * Marquee language (lib/i18n/server.ts — the account's choice, else the
+ * browser's or app's Accept-Language), with Spanish and French following
+ * the household's Discover region. English (en-US) outside a request.
+ *
+ * Lists, search and anything shown straight from TMDb ask in this
+ * language. What's cached in the database (a title's, person's or
+ * studio's details) is always fetched in English; translations of those
+ * live beside them (lib/tmdb/translations.ts).
+ */
+export async function viewerContentLanguage(): Promise<string> {
+  try {
+    return await contentLanguageFor(await getLocale());
+  } catch {
+    return "en-US";
+  }
+}
+
+/** TMDb's `language` for one of Marquee's languages, in this household's
+ * region. */
+export async function contentLanguageFor(locale: Locale): Promise<string> {
+  if (locale === "en") return "en-US";
+  const { discoverRegion } = await getDiscoverLocale();
+  return tmdbContentLanguage(locale, discoverRegion);
+}
+
 /** Tests a credential directly (not the currently-configured one) against
  * TMDb's own auth-check endpoint, for the "test & save" flow in Settings.
  *
@@ -107,8 +137,13 @@ export interface TmdbSearchMultiResponse {
   total_results: number;
 }
 
-export function searchMulti(query: string, page = 1) {
-  return tmdbFetch<TmdbSearchMultiResponse>("/search/multi", { query, page, include_adult: "false" });
+export async function searchMulti(query: string, page = 1) {
+  return tmdbFetch<TmdbSearchMultiResponse>("/search/multi", {
+    query,
+    page,
+    include_adult: "false",
+    language: await viewerContentLanguage(),
+  });
 }
 
 export interface TmdbTitleSearchResult {
@@ -139,16 +174,31 @@ export type TmdbPagedSearch<T> = { page: number; results: T[]; total_pages: numb
 
 /** One kind of result at a time, for the search page's sections and their
  * "See all" lists (search/multi mixes them and can't be paged per kind). */
-export function searchMovies(query: string, page = 1) {
-  return tmdbFetch<TmdbPagedSearch<TmdbTitleSearchResult>>("/search/movie", { query, page, include_adult: "false" });
+export async function searchMovies(query: string, page = 1) {
+  return tmdbFetch<TmdbPagedSearch<TmdbTitleSearchResult>>("/search/movie", {
+    query,
+    page,
+    include_adult: "false",
+    language: await viewerContentLanguage(),
+  });
 }
 
-export function searchTv(query: string, page = 1) {
-  return tmdbFetch<TmdbPagedSearch<TmdbTitleSearchResult>>("/search/tv", { query, page, include_adult: "false" });
+export async function searchTv(query: string, page = 1) {
+  return tmdbFetch<TmdbPagedSearch<TmdbTitleSearchResult>>("/search/tv", {
+    query,
+    page,
+    include_adult: "false",
+    language: await viewerContentLanguage(),
+  });
 }
 
-export function searchPeople(query: string, page = 1) {
-  return tmdbFetch<TmdbPagedSearch<TmdbPersonSearchResult>>("/search/person", { query, page, include_adult: "false" });
+export async function searchPeople(query: string, page = 1) {
+  return tmdbFetch<TmdbPagedSearch<TmdbPersonSearchResult>>("/search/person", {
+    query,
+    page,
+    include_adult: "false",
+    language: await viewerContentLanguage(),
+  });
 }
 
 export interface TmdbCompanySearchResult {
@@ -196,6 +246,15 @@ export interface TmdbPersonDetails {
 
 export function getPersonDetails(id: number) {
   return tmdbFetch<TmdbPersonDetails>(`/person/${id}`, { append_to_response: "external_ids" });
+}
+
+/** A person's biography and credits in a language (the English ones are
+ * cached — lib/tmdb/cache.ts), for laying over the English page. */
+export function getLocalizedPerson(id: number, language: string) {
+  return tmdbFetch<{ biography: string; combined_credits?: TmdbCombinedCredits }>(`/person/${id}`, {
+    language,
+    append_to_response: "combined_credits",
+  });
 }
 
 export interface TmdbCreditItem {
@@ -283,24 +342,28 @@ export interface TmdbGenre {
   name: string;
 }
 
-export function getMovieGenres() {
-  return tmdbFetch<{ genres: TmdbGenre[] }>("/genre/movie/list");
+/** English unless a `language` is given: a Discover row's saved name is
+ * the admin's; the Discover page's genre tiles are the viewer's. */
+export function getMovieGenres(language?: string) {
+  return tmdbFetch<{ genres: TmdbGenre[] }>("/genre/movie/list", { language });
 }
 
-export function getTvGenres() {
-  return tmdbFetch<{ genres: TmdbGenre[] }>("/genre/tv/list");
+export function getTvGenres(language?: string) {
+  return tmdbFetch<{ genres: TmdbGenre[] }>("/genre/tv/list", { language });
 }
 
-export function discoverMoviesByKeyword(keywordId: number, page = 1) {
+export async function discoverMoviesByKeyword(keywordId: number, page = 1) {
   return tmdbFetch<TmdbDiscoverResponse>("/discover/movie", {
+    language: await viewerContentLanguage(),
     with_keywords: keywordId,
     page,
     sort_by: "popularity.desc",
   });
 }
 
-export function discoverTvByKeyword(keywordId: number, page = 1) {
+export async function discoverTvByKeyword(keywordId: number, page = 1) {
   return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
+    language: await viewerContentLanguage(),
     with_keywords: keywordId,
     page,
     sort_by: "popularity.desc",
@@ -341,6 +404,7 @@ export async function discoverMovies(options: {
         : "popularity.desc";
 
   return tmdbFetch<TmdbDiscoverResponse>("/discover/movie", {
+    language: await viewerContentLanguage(),
     with_genres: options.genreId,
     ...discoverParams(await getDiscoverLocale()),
     sort_by: sortBy,
@@ -367,6 +431,7 @@ export async function discoverTv(options: {
   // TMDb's /discover/tv has no region parameter.
   const { with_original_language } = discoverParams(await getDiscoverLocale());
   return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
+    language: await viewerContentLanguage(),
     with_genres: options.genreId,
     with_networks: options.networkId,
     with_original_language,
@@ -532,8 +597,8 @@ export interface TmdbCollectionDetails {
 /** A movie franchise (Harry Potter, James Bond, etc.) — TMDb tracks these
  * natively via `belongs_to_collection` on a movie plus this endpoint, so no
  * manual curation is needed the way TV crossovers require. */
-export function getCollection(id: number) {
-  return tmdbFetch<TmdbCollectionDetails>(`/collection/${id}`);
+export async function getCollection(id: number) {
+  return tmdbFetch<TmdbCollectionDetails>(`/collection/${id}`, { language: await viewerContentLanguage() });
 }
 
 export interface TmdbTvDetails {
@@ -578,6 +643,35 @@ export function getTvDetails(id: number) {
   }).then(trimTitleImages);
 }
 
+/** A movie's or show's words and artwork in one language — laid over the
+ * cached English details (lib/tmdb/translations.ts), so only what TMDb
+ * translates is asked for: name, overview, tagline, genres, season names,
+ * poster, the logo and a trailer in that language, and the similar titles'
+ * names. */
+export interface TmdbLocalizedDetails {
+  id: number;
+  title?: string;
+  name?: string;
+  overview?: string;
+  tagline?: string | null;
+  poster_path?: string | null;
+  genres?: TmdbGenre[];
+  seasons?: { season_number: number; name: string }[];
+  images?: { logos?: TmdbLogoImage[] };
+  videos?: { results: (TmdbVideo & { iso_639_1?: string })[] };
+  recommendations?: { results: TmdbRecommendationItem[] };
+}
+
+export function getLocalizedTitleDetails(mediaType: "movie" | "tv", id: number, language: string) {
+  return tmdbFetch<TmdbLocalizedDetails>(`/${mediaType}/${id}`, {
+    language,
+    append_to_response: "images,videos,recommendations",
+    include_image_language: imageLanguages(language),
+    // Only its own language's trailers: an English one is already cached.
+    include_video_language: isoLanguage(language),
+  });
+}
+
 export function findTrailer(videos: { results: TmdbVideo[] } | undefined): TmdbVideo | null {
   if (!videos?.results?.length) return null;
   const trailers = videos.results.filter((v) => v.site === "YouTube" && v.type === "Trailer");
@@ -594,8 +688,11 @@ export interface TmdbTrendingResult {
   first_air_date?: string;
 }
 
-export function getTrendingAll(page = 1) {
-  return tmdbFetch<{ results: TmdbTrendingResult[]; total_pages?: number; total_results?: number }>("/trending/all/week", { page });
+export async function getTrendingAll(page = 1) {
+  return tmdbFetch<{ results: TmdbTrendingResult[]; total_pages?: number; total_results?: number }>("/trending/all/week", {
+    page,
+    language: await viewerContentLanguage(),
+  });
 }
 
 export interface TmdbUpcomingResult {
@@ -612,6 +709,7 @@ export async function getUpcomingMovies(page = 1) {
   return tmdbFetch<{ results: TmdbUpcomingResult[]; total_pages?: number; total_results?: number }>("/movie/upcoming", {
     page,
     region: locale.discoverRegion ?? "US",
+    language: await viewerContentLanguage(),
   });
 }
 
@@ -625,6 +723,7 @@ export async function getUpcomingTv(page = 1) {
   const { with_original_language } = discoverParams(await getDiscoverLocale());
   return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
     page,
+    language: await viewerContentLanguage(),
     sort_by: "first_air_date.asc",
     "first_air_date.gte": todayStr,
     with_original_language,
@@ -648,12 +747,13 @@ export function getKeywordDetails(id: number) {
 /** A custom Discover row's titles (lib/discover/custom-shelves.ts): one
  * TMDb keyword, genre, company or network, most popular first, any
  * language (an "anime" row is mostly Japanese). */
-export function discoverForShelf(
+export async function discoverForShelf(
   mediaType: "movie" | "tv",
   filter: { keywordId?: number; genreId?: number; companyId?: number; networkId?: number },
   page = 1,
 ) {
   return tmdbFetch<TmdbDiscoverResponse>(`/discover/${mediaType}`, {
+    language: await viewerContentLanguage(),
     with_keywords: filter.keywordId,
     with_genres: filter.genreId,
     with_companies: filter.companyId,
@@ -683,9 +783,10 @@ export interface TmdbListDetails {
   items: TmdbListItem[];
 }
 
-/** A public TMDb list, 20 items a page. */
-export function getTmdbList(id: number, page = 1) {
-  return tmdbFetch<TmdbListDetails>(`/list/${id}`, { page });
+/** A public TMDb list, 20 items a page. Its name is its maker's; the
+ * titles in it are in the viewer's language. */
+export async function getTmdbList(id: number, page = 1) {
+  return tmdbFetch<TmdbListDetails>(`/list/${id}`, { page, language: await viewerContentLanguage() });
 }
 
 export interface TmdbFindResult {
@@ -717,6 +818,8 @@ export interface TmdbEpisode {
   still_path: string | null;
 }
 
-export function getTvSeasonDetails(tvId: number, seasonNumber: number) {
-  return tmdbFetch<{ episodes: TmdbEpisode[] }>(`/tv/${tvId}/season/${seasonNumber}`);
+/** English unless a `language` is given (lib/titles/season-episodes.ts
+ * asks for both and fills gaps in one from the other). */
+export function getTvSeasonDetails(tvId: number, seasonNumber: number, language?: string) {
+  return tmdbFetch<{ episodes: TmdbEpisode[] }>(`/tv/${tvId}/season/${seasonNumber}`, { language });
 }

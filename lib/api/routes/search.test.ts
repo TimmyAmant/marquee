@@ -38,6 +38,7 @@ const tmdb = vi.hoisted(() => ({ calls: [] as string[] }));
 const paged = <T,>(results: T[], total = results.length, pages = 1) => ({ page: 1, results, total_pages: pages, total_results: total });
 vi.mock("@/lib/tmdb/client", () => ({
   isTmdbConfigured: async () => true,
+  viewerContentLanguage: async () => "en-US",
   TmdbNotConfiguredError: class extends Error {},
   searchMovies: async (query: string, page: number) => {
     tmdb.calls.push(`movie:${query}:${page}`);

@@ -3,6 +3,7 @@ import {
   discoverTv,
   getMovieGenres,
   getTvGenres,
+  viewerContentLanguage,
   type DiscoverSort,
 } from "@/lib/tmdb/client";
 import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
@@ -55,7 +56,8 @@ export async function fetchDiscoverItems(
 ): Promise<{ items: DiscoverCardData[]; hasNextPage: boolean; totalPages: number; totalResults: number }> {
   const { lockedType, sort, genreId, year, networkId, hideOwned, page } = params;
 
-  const genres = await (lockedType === "movie" ? getMovieGenres() : getTvGenres()).catch(() => ({
+  const language = await viewerContentLanguage();
+  const genres = await (lockedType === "movie" ? getMovieGenres(language) : getTvGenres(language)).catch(() => ({
     genres: [],
   }));
   const genreMap = new Map(genres.genres.map((g) => [g.id, g.name]));

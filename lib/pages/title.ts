@@ -38,7 +38,9 @@ import { canRequestSeasons, seasonRequestStates, summarizeViewerRequests } from 
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { MediaType, RequestStatus } from "@/lib/db/schema";
 import type { TmdbMovieDetails, TmdbSeasonSummary, TmdbTvDetails } from "@/lib/tmdb/client";
-import { getT } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
+import { getTitleTranslation } from "@/lib/tmdb/translations";
+import { overlayTitle } from "@/lib/tmdb/language";
 import { formatNumber, regionName } from "@/lib/i18n/format";
 import { getTitleRatings } from "@/lib/ratings/cache";
 import { getPlayableItems } from "@/lib/media-servers/query";
@@ -278,9 +280,15 @@ export async function loadFranchise(
  * Returns null when TMDb has no such title (the page's notFound()).
  */
 export async function loadTitlePage(viewer: ViewerIdentity, type: MediaType, tmdbId: number) {
-  const title = await getOrFetchTitle(type, tmdbId).catch(() => undefined);
-  if (!title) return null;
+  const english = await getOrFetchTitle(type, tmdbId).catch(() => undefined);
+  if (!english) return null;
   const t = await getT();
+  // In the viewer's language (lib/tmdb/translations.ts): the name,
+  // overview, tagline, poster, genres, season names, logo and trailer TMDb
+  // has for it, each falling back to English. Everything else is shared.
+  const translation = await getTitleTranslation(english, await getLocale()).catch(() => null);
+  const localized = overlayTitle(english, english.rawTmdb as (TmdbMovieDetails | TmdbTvDetails) | null, translation);
+  const title = { ...localized.title, rawTmdb: localized.raw };
 
   const year = (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null;
 

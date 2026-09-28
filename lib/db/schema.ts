@@ -259,6 +259,31 @@ export const titles = pgTable(
   ],
 );
 
+/**
+ * A title's words in one of Marquee's other languages (lib/tmdb/
+ * translations.ts): the `titles` row stays English and carries the heavy
+ * details every language shares; this carries only what TMDb translates.
+ * `language` is a Marquee locale ("es", "pt-BR"). `details` is null for a
+ * light copy saved from a list (a person's credits), filled in the first
+ * time the title page is opened in that language.
+ */
+export const titleTranslations = pgTable(
+  "title_translations",
+  {
+    titleId: uuid("title_id")
+      .notNull()
+      .references(() => titles.id, { onDelete: "cascade" }),
+    language: text("language").notNull(),
+    name: text("name"),
+    overview: text("overview"),
+    tagline: text("tagline"),
+    posterPath: text("poster_path"),
+    details: jsonb("details"),
+    refreshedAt: timestamp("refreshed_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.titleId, table.language] })],
+);
+
 export const people = pgTable("people", {
   id: uuid("id").primaryKey().defaultRandom(),
   tmdbId: integer("tmdb_id").notNull().unique(),

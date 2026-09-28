@@ -10,6 +10,8 @@ import { fanOut } from "@/lib/notifications/fan-out";
 import { householdT, translatorForUser } from "@/lib/i18n/server";
 import { englishT } from "@/lib/i18n/catalog";
 import type { Translator } from "@/lib/i18n/translator";
+import type { Locale } from "@/lib/i18n/locales";
+import { swapTitleName } from "@/lib/tmdb/language";
 
 /** A notification's text: fixed, or written in whichever language it's
  * for — `(t) => t("notify.…", …)`. The recipient's copy (bell, push, their
@@ -115,7 +117,11 @@ export async function createNotification(input: {
   const event = topic ?? preferenceEventFor(input.eventType);
   // Not being able to read the language mustn't lose it either: English.
   const t = await translatorForUser(input.userId).catch(() => englishT());
-  const row = { ...rest, title: localize(title, t), message: localize(message, t) };
+  // The title's own name in the recipient's language, when one's saved.
+  const renameFor = titleRenamer(input.mediaType, input.tmdbId, title);
+  const forRecipient = await renameFor(t.locale);
+  const row = { ...rest, title: forRecipient(localize(title, t)), message: forRecipient(localize(message, t)) };
+  const renamed = row.title !== localize(title, t) || row.message !== localize(message, t);
   // Not being able to read the choices mustn't lose the notification: the
   // defaults are what everyone had before there were choices.
   const overrides = await loadBellPushOverrides(input.userId).catch(() => ({}));
@@ -138,7 +144,8 @@ export async function createNotification(input: {
   // differ from this account's.
   const shared = householdMessage ?? message;
   const fixed = typeof title === "string" && typeof message === "string" && typeof shared === "string";
-  const household = relay && !fixed ? await householdT().catch(() => englishT()) : null;
+  const household = relay && (!fixed || renamed) ? await householdT().catch(() => englishT()) : null;
+  const forHousehold = household ? await renameFor(household.locale) : (text: string) => text;
 
   // Household and personal channels, in the background: the notification
   // is already saved, and a slow or broken channel mustn't hold anything up.
@@ -150,7 +157,10 @@ export async function createNotification(input: {
       title: saved.title,
       message: saved.message,
       ...(household
-        ? { householdTitle: localize(title, household), householdMessage: localize(shared, household) }
+        ? {
+            householdTitle: forHousehold(localize(title, household)),
+            householdMessage: forHousehold(localize(shared, household)),
+          }
         : typeof shared === "string" && shared !== message
           ? { householdMessage: shared }
           : {}),
@@ -160,6 +170,33 @@ export async function createNotification(input: {
     relay,
   );
   return true;
+}
+
+/**
+ * Swaps a title's English name for its name in a language, in words
+ * written for that language — only when the notification's title is the
+ * title's name (as every title notification's is) and a translation of it
+ * is saved (lib/tmdb/translations.ts, filled as people browse). Looked up
+ * once per language; anything that goes wrong leaves the words as they are.
+ */
+function titleRenamer(mediaType: MediaType, tmdbId: number, title: Localized) {
+  const unchanged = (text: string) => text;
+  const lookups = new Map<Locale, Promise<(text: string) => string>>();
+  return (locale: Locale): Promise<(text: string) => string> => {
+    if (typeof title !== "string" || locale === "en") return Promise.resolve(unchanged);
+    let lookup = lookups.get(locale);
+    if (!lookup) {
+      lookup = import("@/lib/tmdb/translations")
+        .then(({ getTranslatedNames }) => getTranslatedNames([{ mediaType, tmdbId }], locale))
+        .then((names) => {
+          const name = names.get(`${mediaType}:${tmdbId}`);
+          return (text: string) => swapTitleName(text, title, name);
+        })
+        .catch(() => unchanged);
+      lookups.set(locale, lookup);
+    }
+    return lookup;
+  };
 }
 
 type NewNotification = typeof notifications.$inferInsert;
