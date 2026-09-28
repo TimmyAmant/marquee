@@ -131,14 +131,6 @@ export const userAvatars = pgTable("user_avatars", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const sessions = pgTable("sessions", {
-  sessionToken: text("session_token").primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { withTimezone: true }).notNull(),
-});
-
 // sonarr4k / radarr4k: the optional second Sonarr and Radarr for 4K copies
 // (lib/arr/fourk.ts) — requested "in 4K", kept apart from the main library.
 export const integrationProviderValues = ["sonarr", "radarr", "plex", "jellyfin", "sonarr4k", "radarr4k"] as const;
