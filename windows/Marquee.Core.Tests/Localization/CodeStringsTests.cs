@@ -45,6 +45,7 @@ public sealed partial class CodeStringsTests
         "CrashReporter.cs: Unobserved task",
         "LibraryModels.cs: Dolby Vision",
         "LibraryModels.cs: {…} Mbps",
+        "LogsSettingsView.cs: Consolas",
         "MainWindow.xaml.cs: Assets",
         "MarqueeApi.Discover.cs: TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations.",
         "PasswordVaultTokenStore.cs: Marquee server session",

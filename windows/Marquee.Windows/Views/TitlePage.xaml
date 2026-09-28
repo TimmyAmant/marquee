@@ -453,6 +453,10 @@
                                                         Command="{x:Bind ViewModel.ToggleMonitorCommand}"
                                                         Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                                     <MenuFlyoutItem
+                                                        Text="{x:Bind ViewModel.RemoveFromArrLabel, Mode=OneWay}"
+                                                        Click="OnRemoveFromArrClick"
+                                                        Visibility="{x:Bind ViewModel.CanRemoveFromArr, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                                    <MenuFlyoutItem
                                                         x:Uid="Title_FixId"
                                                         Click="OnFixIdClick"
                                                         Visibility="{x:Bind ViewModel.CanRelink, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />

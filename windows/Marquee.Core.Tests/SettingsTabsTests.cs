@@ -13,7 +13,7 @@ public sealed class SettingsTabsTests
             {
                 SettingsTab.Account, SettingsTab.General, SettingsTab.Members, SettingsTab.MediaServers,
                 SettingsTab.Services, SettingsTab.Notifications, SettingsTab.Discover, SettingsTab.Blocklist,
-                SettingsTab.Jobs, SettingsTab.Activity, SettingsTab.About,
+                SettingsTab.Jobs, SettingsTab.Logs, SettingsTab.Activity, SettingsTab.About,
             },
             SettingsTabs.All);
     }
@@ -54,7 +54,8 @@ public sealed class SettingsTabsTests
             new[]
             {
                 NotificationsSubTab.Personal, NotificationsSubTab.Household, NotificationsSubTab.Discord, NotificationsSubTab.Ntfy,
-                NotificationsSubTab.Telegram, NotificationsSubTab.Pushover, NotificationsSubTab.Email, NotificationsSubTab.Webhook,
+                NotificationsSubTab.Telegram, NotificationsSubTab.Pushover, NotificationsSubTab.Email,
+                NotificationsSubTab.Gotify, NotificationsSubTab.Slack, NotificationsSubTab.Pushbullet, NotificationsSubTab.Webhook,
             },
             SettingsTabs.VisibleNotificationsSubTabs(isAdmin: true));
     }

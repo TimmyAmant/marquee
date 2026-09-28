@@ -20,6 +20,10 @@ public enum SettingsTab
 
     Blocklist,
     Jobs,
+
+    /// <summary>Settings › Logs (0.58+): the server's recent log lines.</summary>
+    Logs,
+
     Activity,
     About,
 }
@@ -34,6 +38,12 @@ public enum NotificationsSubTab
     Telegram,
     Pushover,
     Email,
+
+    /// <summary>0.58+.</summary>
+    Gotify,
+    Slack,
+    Pushbullet,
+
     Webhook,
 }
 
@@ -51,6 +61,7 @@ public static class SettingsTabs
         SettingsTab.Discover,
         SettingsTab.Blocklist,
         SettingsTab.Jobs,
+        SettingsTab.Logs,
         SettingsTab.Activity,
         SettingsTab.About,
     ];
@@ -64,6 +75,9 @@ public static class SettingsTabs
         NotificationsSubTab.Telegram,
         NotificationsSubTab.Pushover,
         NotificationsSubTab.Email,
+        NotificationsSubTab.Gotify,
+        NotificationsSubTab.Slack,
+        NotificationsSubTab.Pushbullet,
         NotificationsSubTab.Webhook,
     ];
 
@@ -78,6 +92,7 @@ public static class SettingsTabs
         SettingsTab.Discover => Loc.Get("Nav_SettingsTabDiscover"),
         SettingsTab.Blocklist => Loc.Get("Nav_SettingsTabBlocklist"),
         SettingsTab.Jobs => Loc.Get("Nav_SettingsTabJobs"),
+        SettingsTab.Logs => Loc.Get("Nav_SettingsTabLogs"),
         SettingsTab.Activity => Loc.Get("Nav_SettingsTabActivity"),
         SettingsTab.About => Loc.Get("Nav_SettingsTabAbout"),
         _ => tab.ToString(),
@@ -92,6 +107,9 @@ public static class SettingsTabs
         NotificationsSubTab.Telegram => Loc.Get("Nav_NotificationsTelegram"),
         NotificationsSubTab.Pushover => Loc.Get("Nav_NotificationsPushover"),
         NotificationsSubTab.Email => Loc.Get("Nav_NotificationsEmail"),
+        NotificationsSubTab.Gotify => "Gotify",
+        NotificationsSubTab.Slack => "Slack",
+        NotificationsSubTab.Pushbullet => "Pushbullet",
         NotificationsSubTab.Webhook => Loc.Get("Nav_NotificationsWebhook"),
         _ => tab.ToString(),
     };

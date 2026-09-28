@@ -135,6 +135,46 @@ public sealed partial class TitlePage : Page
         await dialog.TryShowAsync();
     }
 
+    /// <summary>
+    /// "Remove from Radarr/Sonarr" (components/remove-from-arr-button.tsx,
+    /// 0.58+): asks first, with "Also delete the files" off, then takes the
+    /// title off every server that has it.
+    /// </summary>
+    private async void OnRemoveFromArrClick(object sender, RoutedEventArgs e)
+    {
+        if (Id is not { } title)
+        {
+            return;
+        }
+        var arr = title.MediaType.ArrName;
+        var deleteFiles = new CheckBox { Content = Loc.Get("Title_RemoveDeleteFiles") };
+        var body = new StackPanel { Spacing = 12 };
+        body.Children.Add(new TextBlock { Text = Loc.Format("Title_RemoveFromArrBody", arr), TextWrapping = TextWrapping.Wrap });
+        body.Children.Add(deleteFiles);
+        body.Children.Add(new TextBlock
+        {
+            Text = Loc.Get("Title_RemoveDeleteFilesHelp"),
+            TextWrapping = TextWrapping.Wrap,
+            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+        });
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = Loc.Format("Title_RemoveFromArrTitle", ViewModel.Name, arr),
+            Content = body,
+            PrimaryButtonText = Loc.Get("Title_RemoveConfirm"),
+            CloseButtonText = Loc.Get("Title_Cancel"),
+            DefaultButton = ContentDialogButton.Close,
+        };
+        deleteFiles.Checked += (_, _) => dialog.PrimaryButtonText = Loc.Get("Title_RemoveAndDelete");
+        deleteFiles.Unchecked += (_, _) => dialog.PrimaryButtonText = Loc.Get("Title_RemoveConfirm");
+        if (await dialog.TryShowAsync() != ContentDialogResult.Primary)
+        {
+            return;
+        }
+        await ViewModel.RemoveFromArrAsync(deleteFiles.IsChecked == true);
+    }
+
     /// <summary>"Wrong match? Fix ID": ask for an id, repoint, then open the corrected title.</summary>
     private async void OnFixIdClick(object sender, RoutedEventArgs e)
     {

@@ -26,7 +26,7 @@ public sealed class NotificationChannelsFixtureTests
     {
         var overview = Fixtures.Decode<NotificationChannelsOverview>("notification-channels");
 
-        Assert.Equal(6, overview.Available.Count);
+        Assert.Equal(9, overview.Available.Count);
         var telegram = overview.AvailabilityOf(NotificationChannelKind.Telegram)!;
         Assert.True(telegram.Available);
         Assert.Equal("MarqueeHomeBot", telegram.BotUsername);
@@ -40,7 +40,10 @@ public sealed class NotificationChannelsFixtureTests
         Assert.Null(webhook.BotUsername);
 
         Assert.Equal(
-            [NotificationChannelKind.Telegram, NotificationChannelKind.Email, NotificationChannelKind.Discord, NotificationChannelKind.Ntfy, NotificationChannelKind.Webhook],
+            [
+                NotificationChannelKind.Telegram, NotificationChannelKind.Email, NotificationChannelKind.Discord, NotificationChannelKind.Ntfy,
+                NotificationChannelKind.Slack, NotificationChannelKind.Gotify, NotificationChannelKind.Pushbullet, NotificationChannelKind.Webhook,
+            ],
             overview.AddableKinds);
 
         Assert.Equal(2, overview.Channels.Count);

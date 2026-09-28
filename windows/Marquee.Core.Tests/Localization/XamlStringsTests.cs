@@ -40,7 +40,7 @@ public sealed class XamlStringsTests
     internal static readonly HashSet<string> Allowed =
     [
         "Marquee", "Plex", "Jellyfin", "Emby", "Sonarr", "Radarr", "TMDb", "TheTVDB", "IMDb", "Trakt", "Discord",
-        "Telegram", "Pushover", "ntfy", "Gotify", "Slack", "Homepage", "Homarr", "Organizr", "Unraid", "GitHub",
+        "Telegram", "Pushover", "ntfy", "Gotify", "Slack", "Pushbullet", "Homepage", "Homarr", "Organizr", "Unraid", "GitHub",
         "OpenAPI", "4K", "HDR", "Plex Watchlist", "Quick Connect", "API", "URL", "Webhook", "OK",
     ];
 
