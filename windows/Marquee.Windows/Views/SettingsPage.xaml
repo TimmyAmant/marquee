@@ -14,6 +14,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Marquee.Windows.Controls"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -139,16 +140,10 @@
                 <!--
                   The tabs (components/settings-nav.tsx, lib/settings/tabs.ts):
                   a pill each, solid for the current one, made by the code-behind
-                  for the tabs this viewer gets. The row scrolls sideways when the
-                  window is narrower than the tabs.
+                  for the tabs this viewer gets. They wrap onto a second line
+                  when the window is narrower than the row.
                 -->
-                <ScrollViewer
-                    HorizontalScrollBarVisibility="Hidden"
-                    HorizontalScrollMode="Enabled"
-                    VerticalScrollBarVisibility="Disabled"
-                    VerticalScrollMode="Disabled">
-                    <StackPanel x:Name="TabBar" Orientation="Horizontal" Spacing="2" />
-                </ScrollViewer>
+                <controls:WrapPanel x:Name="TabBar" HorizontalSpacing="2" VerticalSpacing="6" />
                 <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
             </StackPanel>
 

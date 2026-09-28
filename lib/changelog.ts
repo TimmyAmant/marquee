@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.57.1",
+    date: "2026-09-27",
+    changes: [
+      "Mac and Windows: Settings' tabs wrap onto a second line in a narrower window, so Activity and About (where updates are) are always visible instead of hidden off the right edge.",
+    ],
+  },
+  {
     version: "0.57.0",
     date: "2026-09-27",
     changes: [

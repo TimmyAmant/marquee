@@ -117,20 +117,14 @@ struct SettingsRootView: View {
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                     VStack(spacing: 10) {
-                        ScrollViewReader { proxy in
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 2) {
-                                    ForEach(tabs, id: \.self) { tab in
-                                        SettingsTabButton(title: tab.title, current: tab == current) {
-                                            model.settingsTab = tab
-                                        }
-                                        .id(tab)
-                                    }
+                        // Wraps onto a second line rather than scrolling:
+                        // a sideways-scrolling row hid Activity and About
+                        // off the right edge with nothing to say they were there.
+                        FlowLayout(spacing: 2, lineSpacing: 6, centersLines: true) {
+                            ForEach(tabs, id: \.self) { tab in
+                                SettingsTabButton(title: tab.title, current: tab == current) {
+                                    model.settingsTab = tab
                                 }
-                            }
-                            .onAppear { proxy.scrollTo(current) }
-                            .onChange(of: current) { _, tab in
-                                withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(tab) }
                             }
                         }
                         Divider().overlay(Theme.border)
