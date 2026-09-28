@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { layoutChanged, layoutOrder, moveShelf, toggleShelfHidden, type EditableShelf } from "@/lib/discover/edit-mode";
+import { layoutChanged, layoutOrder, toggleShelfHidden, type EditableShelf } from "@/lib/discover/edit-mode";
+import { moveShelf } from "@/lib/discover/shelves";
 
 const shelves: EditableShelf[] = [
   { id: "a", title: "A", hidden: false },

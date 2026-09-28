@@ -15,6 +15,7 @@ import type { ArrServerDto } from "@/lib/arr/servers";
 import type { ArrPickerOptions } from "@/lib/arr/add-options-server";
 import type { ArrProvider, SonarrSeriesType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { kindLabel } from "@/lib/arr/instances";
 import type { MessageKey } from "@/lib/i18n/translator";
 import { showToast } from "@/components/toast";
 import { AddTile } from "@/components/settings/settings-ui";
@@ -35,10 +36,6 @@ const SERIES_TYPES: { value: SonarrSeriesType; label: MessageKey }[] = [
   { value: "daily", label: "integrations.seriesTypeDaily" },
   { value: "anime", label: "integrations.seriesTypeAnime" },
 ];
-
-function kindName(kind: ArrProvider) {
-  return kind === "sonarr" ? "Sonarr" : "Radarr";
-}
 
 function Badge({ children, tone = "muted" }: { children: React.ReactNode; tone?: "muted" | "accent" | "warn" }) {
   const styles = {
@@ -187,7 +184,7 @@ function ServerEditor({
         rootFolderPath: d.rootFolderPath ?? result.rootFolders[0]?.path ?? null,
       }));
       setMessage({ tone: "ok", text: result.version
-          ? t("integrations.arrConnectedVersion", { app: kindName(kind), version: result.version })
+          ? t("integrations.arrConnectedVersion", { app: kindLabel(kind), version: result.version })
           : t("integrations.arrConnected"),
       });
     });
@@ -242,7 +239,7 @@ function ServerEditor({
   return (
     <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-accent/50 bg-bg-1 p-5">
       <h4 className="text-sm font-semibold text-text-primary">
-        {server ? server.name : t("integrations.addArrServer", { app: kindName(kind) })}
+        {server ? server.name : t("integrations.addArrServer", { app: kindLabel(kind) })}
       </h4>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={LABEL}>
@@ -251,7 +248,7 @@ function ServerEditor({
             type="text"
             value={draft.name}
             maxLength={60}
-            placeholder={server ? "" : `${draft.is4k ? "4K " : ""}${kindName(kind)}`}
+            placeholder={server ? "" : `${draft.is4k ? "4K " : ""}${kindLabel(kind)}`}
             onChange={(e) => set("name", e.target.value)}
             className={INPUT}
           />
@@ -295,7 +292,7 @@ function ServerEditor({
             onChange={(e) => set("isDefault", e.target.checked)}
             className="accent-accent"
           />
-          {draft.is4k ? t("integrations.arrDefault4k", { app: kindName(kind) }) : t("integrations.arrDefault", { app: kindName(kind) })}
+          {draft.is4k ? t("integrations.arrDefault4k", { app: kindLabel(kind) }) : t("integrations.arrDefault", { app: kindLabel(kind) })}
         </label>
         <button type="button" onClick={handleTest} disabled={busy || !draft.baseUrl} className={SMALL_BUTTON}>
           {isTesting ? t("integrations.testing") : t("common.test")}
@@ -418,7 +415,7 @@ function ServerEditor({
         <div className="flex flex-col gap-2 border-t border-border pt-3">
           <WebhookUrlRow label={t("integrations.webhookUrl")} url={webhookUrl} />
           <p className="text-xs text-text-muted">
-            {t("integrations.arrWebhookHelp", { app: kindName(kind) })}{" "}
+            {t("integrations.arrWebhookHelp", { app: kindLabel(kind) })}{" "}
             <button
               type="button"
               onClick={handleRegenerate}
@@ -557,7 +554,7 @@ function KindSection({
   const editingServer = servers.find((server) => server.id === editing) ?? null;
   return (
     <section>
-      <h3 className="text-base font-semibold text-text-primary">{t("integrations.arrServersHeading", { app: kindName(kind) })}</h3>
+      <h3 className="text-base font-semibold text-text-primary">{t("integrations.arrServersHeading", { app: kindLabel(kind) })}</h3>
       {servers.length === 0 && (
         <p className="mt-1 text-sm text-text-secondary">
           {kind === "sonarr" ? t("integrations.noSonarrYet") : t("integrations.noRadarrYet")}
@@ -573,7 +570,7 @@ function KindSection({
           />
         ))}
         <AddTile
-          label={t("integrations.addArrServer", { app: kindName(kind) })}
+          label={t("integrations.addArrServer", { app: kindLabel(kind) })}
           onClick={() => setEditing(`new:${kind}`)}
           active={adding}
         />

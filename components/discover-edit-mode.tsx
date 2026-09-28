@@ -3,7 +3,8 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { resetDiscoverAction, saveDiscoverOrderAction } from "@/app/settings/discover/actions";
-import { layoutChanged, layoutOrder, moveShelf, toggleShelfHidden, type EditableShelf } from "@/lib/discover/edit-mode";
+import { layoutChanged, layoutOrder, toggleShelfHidden, type EditableShelf } from "@/lib/discover/edit-mode";
+import { moveShelf } from "@/lib/discover/shelves";
 import { showToast } from "@/components/toast";
 import { useT } from "@/lib/i18n/client";
 

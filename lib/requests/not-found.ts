@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { db } from "@/lib/db/client";
+import { getAdminUserId } from "@/lib/auth/get-admin";
 import { appSettings, notifications, requests, titles, users } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { fail, type CoreResult } from "@/lib/core-result";
@@ -17,7 +18,6 @@ import type { Translator } from "@/lib/i18n/translator";
 import {
   arrTitleUrl,
   decideNotFound,
-  MAX_NOT_FOUND_AFTER_HOURS,
   notFoundAfterHours,
   notFoundName,
   observeMovie,
@@ -65,22 +65,12 @@ export async function saveNotFoundAfterHours(value: unknown): Promise<CoreResult
   return { ok: true, afterHours: parsed.hours };
 }
 
-/** The wait, in ms. MARQUEE_NOT_FOUND_AFTER_MINUTES overrides the setting —
- * for trying the feature out without waiting a day. */
+/** The wait, in ms. */
 async function waitMs(): Promise<number> {
-  const minutes = Number(process.env.MARQUEE_NOT_FOUND_AFTER_MINUTES);
-  if (Number.isFinite(minutes) && minutes >= 0 && process.env.MARQUEE_NOT_FOUND_AFTER_MINUTES?.trim()) {
-    return Math.min(minutes, MAX_NOT_FOUND_AFTER_HOURS * 60) * 60_000;
-  }
   return (await getNotFoundAfterHours()) * 3_600_000;
 }
 
 // ── Finding the server a request went to ────────────────────────────────
-
-async function adminId(): Promise<string | null> {
-  const [admin] = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin")).limit(1);
-  return admin?.id ?? null;
-}
 
 /** The server approving it added the title to; for a request approved
  * before servers were recorded (or whose server was removed), the default
@@ -223,7 +213,7 @@ export async function checkNotFoundRequests(now = new Date()): Promise<void> {
     );
   if (rows.length === 0) return;
 
-  const owner = await adminId();
+  const owner = await getAdminUserId();
   const queued = queueCache();
   const years = new Map<string, number | null>();
 
@@ -404,7 +394,7 @@ export async function getNotFoundRequests(): Promise<NotFoundRow[]> {
     .where(flagged)
     .orderBy(requests.notFoundSince, desc(requests.createdAt));
   if (rows.length === 0) return [];
-  const owner = await adminId();
+  const owner = await getAdminUserId();
   const servers = new Map<string, ArrServer | null>();
   return Promise.all(
     rows.map(async (row) => {
@@ -490,7 +480,7 @@ export async function searchNotFoundAgain(requestId: string): Promise<CoreResult
   const t = await getT();
   const row = await flaggedRequest(requestId);
   if (!row) return fail("not_found", t(NOT_LISTED));
-  const server = await serverFor(row, await adminId());
+  const server = await serverFor(row, await getAdminUserId());
   const kind = row.mediaType === "movie" ? "Radarr" : "Sonarr";
   if (!server) return fail("conflict", t("notify.arrNotConnected", { kind }));
   const config = arrConfig(server);

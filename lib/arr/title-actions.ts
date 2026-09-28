@@ -5,6 +5,7 @@ import { arrStatusCache, plexLibraryItems, jellyfinLibraryItems, tmdbIdOverrides
 import type { MediaType, SonarrSeriesType } from "@/lib/db/schema";
 import { findLibraryCopies } from "@/lib/integrations/status";
 import { arrConfig, type ArrServer } from "@/lib/arr/servers";
+import { kindLabel } from "@/lib/arr/instances";
 import { hasOverrides, resolveAdd, type AddDefaults, type AddOverrides } from "@/lib/arr/add-options";
 import { pickServer, titleIsAnime } from "@/lib/arr/add-options-server";
 import { statusRank } from "@/lib/arr/fan-out";
@@ -180,7 +181,7 @@ export async function addMovieToRadarrForUser(
 /** How errors name a server: the old wording ("Radarr", "the 4K Radarr")
  * for a server still called what it was called before servers had names. */
 function serverLabel(t: Translator, server: ArrServer): string {
-  const kind = server.kind === "sonarr" ? "Sonarr" : "Radarr";
+  const kind = kindLabel(server.kind);
   if (server.is4k && server.name === `4K ${kind}`) return t("notify.arrThe4k", { kind });
   return server.name;
 }

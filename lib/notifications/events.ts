@@ -40,8 +40,6 @@ type EventInfo = {
   householdLabelKey?: MessageKey;
   /** Who can get it at all. */
   audience: "everyone" | "reviewers" | "admin";
-  /** Sent today. An event that isn't is never listed. */
-  live: boolean;
   /** A newly added personal channel gets it unless turned off. "Started
    * downloading" is off: it's chatty, and the bell already has it. */
   channelDefault: boolean;
@@ -57,21 +55,21 @@ type EventInfo = {
 };
 
 export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo> = {
-  request_approved: { labelKey: "settings.eventRequestApproved", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
-  request_declined: { labelKey: "settings.eventRequestDeclined", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
-  request_available: { labelKey: "settings.eventRequestAvailable", audience: "everyone", live: true, channelDefault: true, householdDefault: true },
-  request_downloading: { labelKey: "settings.eventRequestDownloading", audience: "everyone", live: true, channelDefault: false, householdDefault: true },
-  request_still_looking: { labelKey: "settings.eventRequestStillLooking", audience: "everyone", live: true, channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
-  issue_updated: { labelKey: "settings.eventIssueUpdated", householdLabelKey: "settings.eventIssueUpdatedHousehold", audience: "everyone", live: true, channelDefault: true, householdDefault: false },
+  request_approved: { labelKey: "settings.eventRequestApproved", audience: "everyone", channelDefault: true, householdDefault: true },
+  request_declined: { labelKey: "settings.eventRequestDeclined", audience: "everyone", channelDefault: true, householdDefault: true },
+  request_available: { labelKey: "settings.eventRequestAvailable", audience: "everyone", channelDefault: true, householdDefault: true },
+  request_downloading: { labelKey: "settings.eventRequestDownloading", audience: "everyone", channelDefault: false, householdDefault: true },
+  request_still_looking: { labelKey: "settings.eventRequestStillLooking", audience: "everyone", channelDefault: false, householdDefault: false, pushDefault: false, personalOnly: true },
+  issue_updated: { labelKey: "settings.eventIssueUpdated", householdLabelKey: "settings.eventIssueUpdatedHousehold", audience: "everyone", channelDefault: true, householdDefault: false },
   // Between the people in the conversation, so never the household channels.
-  request_comment: { labelKey: "settings.eventRequestComment", audience: "everyone", live: true, channelDefault: true, householdDefault: false, personalOnly: true },
+  request_comment: { labelKey: "settings.eventRequestComment", audience: "everyone", channelDefault: true, householdDefault: false, personalOnly: true },
   // In the bell and pushed to devices by default like everything else, but
   // off for a new personal channel: it's a nudge, not news.
-  title_shared: { labelKey: "settings.eventTitleShared", audience: "everyone", live: true, channelDefault: false, householdDefault: false, personalOnly: true },
-  request_pending: { labelKey: "settings.eventRequestPending", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
-  request_not_found: { labelKey: "settings.eventRequestNotFound", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
-  issue_reported: { labelKey: "settings.eventIssueReported", audience: "admin", live: true, channelDefault: true, householdDefault: true },
-  watchlist_requests: { labelKey: "settings.eventWatchlistRequests", audience: "reviewers", live: true, channelDefault: true, householdDefault: true },
+  title_shared: { labelKey: "settings.eventTitleShared", audience: "everyone", channelDefault: false, householdDefault: false, personalOnly: true },
+  request_pending: { labelKey: "settings.eventRequestPending", audience: "reviewers", channelDefault: true, householdDefault: true },
+  request_not_found: { labelKey: "settings.eventRequestNotFound", audience: "reviewers", channelDefault: true, householdDefault: true },
+  issue_reported: { labelKey: "settings.eventIssueReported", audience: "admin", channelDefault: true, householdDefault: true },
+  watchlist_requests: { labelKey: "settings.eventWatchlistRequests", audience: "reviewers", channelDefault: true, householdDefault: true },
 };
 
 /** An event's name for someone's own list, in `t`'s language. */
@@ -90,7 +88,6 @@ export function householdEventLabel(t: Translator, event: NotificationPreference
 export function eventsFor(account: PermissionSubject): NotificationPreferenceEvent[] {
   return notificationPreferenceEventValues.filter((event) => {
     const info = NOTIFICATION_EVENTS[event];
-    if (!info.live) return false;
     if (info.audience === "admin") return account.role === "admin";
     if (info.audience === "reviewers") return can(account, "reviewRequests");
     return true;
@@ -99,7 +96,7 @@ export function eventsFor(account: PermissionSubject): NotificationPreferenceEve
 
 /** Everything the household channels can post, in order. */
 export const householdEvents = notificationPreferenceEventValues.filter(
-  (event) => NOTIFICATION_EVENTS[event].live && !NOTIFICATION_EVENTS[event].personalOnly,
+  (event) => !NOTIFICATION_EVENTS[event].personalOnly,
 );
 
 export const defaultHouseholdEvents = householdEvents.filter((event) => NOTIFICATION_EVENTS[event].householdDefault);

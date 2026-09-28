@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { requests, titles, users } from "@/lib/db/schema";
+import { getAdminUserId } from "@/lib/auth/get-admin";
+import { requests, titles } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
 import { mapWithLimit } from "@/lib/async/map-limit";
 import { debounce } from "@/lib/async/single-flight";
@@ -54,11 +55,6 @@ type Candidate = {
   armed: boolean;
 };
 
-async function adminId(): Promise<string | null> {
-  const [admin] = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin")).limit(1);
-  return admin?.id ?? null;
-}
-
 /** After a Download webhook: checks the title once things go quiet. */
 export function scheduleCompletionCheck(scope: CompletionScope): void {
   debounce(`complete-check:${scope.mediaType}:${scope.tmdbId}:${scope.is4k}`, WEBHOOK_CHECK_DEBOUNCE_MS, () => {
@@ -109,7 +105,7 @@ export async function checkCompletedRequests(scope?: CompletionScope, now = new 
     groups.set(key, [...(groups.get(key) ?? []), row]);
   }
 
-  const owner = await adminId();
+  const owner = await getAdminUserId();
   await mapWithLimit([...groups.values()], CHECK_CONCURRENCY, async (group) => {
     const [first] = group;
     const observation = await observeTitle(owner, first).catch((): TitleObservation => ({ kind: "unknown" }));

@@ -1,4 +1,5 @@
 import "server-only";
+import { compareVersions, parseVersion } from "@/lib/version";
 
 // Settings › About's update line: the newest Marquee release on GitHub,
 // the same one the Mac and Windows apps check (their Updater). Asked at
@@ -11,24 +12,6 @@ const TIMEOUT_MS = 3000;
 
 let cached: { at: number; version: string | null } | null = null;
 
-/** "v0.54.1" or "0.54.1" → [0, 54, 1]; anything else → null. */
-export function parseVersion(value: string | null | undefined): number[] | null {
-  const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(value?.trim() ?? "");
-  return match ? match.slice(1, 4).map(Number) : null;
-}
-
-/** Negative when a is older than b, 0 when the same, positive when newer.
- * Null when either isn't a version. */
-export function compareVersions(a: string, b: string): number | null {
-  const left = parseVersion(a);
-  const right = parseVersion(b);
-  if (!left || !right) return null;
-  for (let i = 0; i < 3; i++) {
-    if (left[i] !== right[i]) return left[i] - right[i];
-  }
-  return 0;
-}
-
 export type UpdateStatus =
   | { kind: "unknown" }
   | { kind: "current"; latest: string }
@@ -36,8 +19,8 @@ export type UpdateStatus =
 
 export function updateStatus(running: string, latest: string | null): UpdateStatus {
   if (!latest) return { kind: "unknown" };
+  if (!parseVersion(running) || !parseVersion(latest)) return { kind: "unknown" };
   const order = compareVersions(running, latest);
-  if (order === null) return { kind: "unknown" };
   const bare = latest.replace(/^v/, "");
   return order < 0 ? { kind: "available", latest: bare } : { kind: "current", latest: bare };
 }

@@ -7,10 +7,10 @@ import type { ArrProvider } from "@/lib/db/schema";
 import { encryptSecret } from "@/lib/crypto/encryption";
 import { revalidatePathSafely as revalidatePath } from "@/lib/cache/revalidate";
 import { fail, type CoreResult } from "@/lib/core-result";
+import { kindLabel } from "@/lib/arr/instances";
 import {
   defaultServerName,
   getArrServer,
-  kindLabel,
   listArrServers,
   toArrServer,
   type ArrServer,

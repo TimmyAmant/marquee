@@ -5,16 +5,6 @@
  */
 export type EditableShelf = { id: string; title: string; hidden: boolean };
 
-/** Moves the row at `index` one place up (-1) or down (1); a move past
- * either end leaves the order as it is. */
-export function moveShelf<T>(order: readonly T[], index: number, direction: -1 | 1): T[] {
-  const target = index + direction;
-  if (index < 0 || index >= order.length || target < 0 || target >= order.length) return [...order];
-  const next = [...order];
-  [next[index], next[target]] = [next[target], next[index]];
-  return next;
-}
-
 export function toggleShelfHidden(order: readonly EditableShelf[], id: string): EditableShelf[] {
   return order.map((shelf) => (shelf.id === id ? { ...shelf, hidden: !shelf.hidden } : shelf));
 }
