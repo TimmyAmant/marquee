@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { loadIntegrationsPage } from "@/lib/pages/settings";
-import { PlexConnectCard } from "@/components/plex-connect-card";
-import { JellyfinConnectCard } from "@/components/jellyfin-connect-card";
+import { MediaServerTiles } from "@/components/media-server-tiles";
 import { SyncNowButton } from "@/components/sync-now-button";
 import { getT } from "@/lib/i18n/server";
-import { SettingsHeader, SettingsSection } from "@/components/settings/settings-ui";
+import { SettingsHeader } from "@/components/settings/settings-ui";
 
 /** Settings › Media servers, the admin's: Plex and Jellyfin, what the
  * household already owns. */
@@ -25,31 +24,27 @@ export default async function MediaServersSettingsPage() {
         actions={<SyncNowButton />}
       />
 
-      <SettingsSection>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <PlexConnectCard
-            initialConnected={plexSummary.connected}
-            initialServers={plexSummary.servers.map((s) => ({
-              name: s.name,
-              lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
-            }))}
-            initialMovieCount={plexSummary.movieCount}
-            initialTvCount={plexSummary.tvCount}
-          />
-          <JellyfinConnectCard
-            existing={jellyfin.existing}
-            summary={{
-              servers: jellyfin.summary.servers.map((s) => ({
-                name: s.name,
-                lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
-              })),
-              movieCount: jellyfin.summary.movieCount,
-              tvCount: jellyfin.summary.tvCount,
-            }}
-            name={jellyfin.existing && jellyfin.summary.servers.length > 0 ? jellyfin.name : null}
-          />
-        </div>
-      </SettingsSection>
+      <MediaServerTiles
+        plex={{
+          connected: plexSummary.connected,
+          servers: plexSummary.servers.map((s) => ({
+            name: s.name,
+            lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
+          })),
+          movieCount: plexSummary.movieCount,
+          tvCount: plexSummary.tvCount,
+        }}
+        jellyfin={{
+          existing: jellyfin.existing,
+          name: jellyfin.existing && jellyfin.summary.servers.length > 0 ? jellyfin.name : null,
+          servers: jellyfin.summary.servers.map((s) => ({
+            name: s.name,
+            lastSyncedAt: s.lastSyncedAt ? s.lastSyncedAt.toISOString() : null,
+          })),
+          movieCount: jellyfin.summary.movieCount,
+          tvCount: jellyfin.summary.tvCount,
+        }}
+      />
     </div>
   );
 }

@@ -294,5 +294,10 @@
   "updateAvailableHelp": "Atualize seu servidor baixando a nova imagem do Docker (no Unraid: Docker › Check for Updates e depois aplique).",
   "updateCurrent": "Atualizado",
   "updateCurrentHelp": "Este servidor está na versão mais recente.",
-  "updateUnknownHelp": "Não foi possível consultar o GitHub agora para ver se há uma versão nova."
+  "updateUnknownHelp": "Não foi possível consultar o GitHub agora para ver se há uma versão nova.",
+  "testPassed": "Funciona. Salve para manter.",
+  "testSent": "Funciona — uma mensagem de teste está a caminho. Salve para manter.",
+  "removedToast": "Removido",
+  "disconnectedToast": "{name} desconectado",
+  "addJellyfin": "Adicionar Jellyfin ou Emby"
 }

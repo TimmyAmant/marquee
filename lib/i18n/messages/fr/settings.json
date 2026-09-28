@@ -294,5 +294,10 @@
   "updateAvailableHelp": "Mettez à jour votre serveur en récupérant la nouvelle image Docker (sur Unraid : Docker › Check for Updates, puis appliquez-la).",
   "updateCurrent": "À jour",
   "updateCurrentHelp": "Ce serveur a la dernière version.",
-  "updateUnknownHelp": "Impossible de vérifier sur GitHub s’il y a une nouvelle version pour le moment."
+  "updateUnknownHelp": "Impossible de vérifier sur GitHub s’il y a une nouvelle version pour le moment.",
+  "testPassed": "Ça fonctionne. Enregistrez pour le garder.",
+  "testSent": "Ça fonctionne — un message de test est en route. Enregistrez pour le garder.",
+  "removedToast": "Supprimé",
+  "disconnectedToast": "{name} déconnecté",
+  "addJellyfin": "Ajouter Jellyfin ou Emby"
 }

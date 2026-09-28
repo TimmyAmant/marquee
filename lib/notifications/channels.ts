@@ -8,6 +8,8 @@ import { pushoverConfigError, verifyPushover, type PushoverConfig } from "@/lib/
 import { emailConfigError, parseRecipients, verifyEmail, type EmailConfig } from "@/lib/email/client";
 import { getT } from "@/lib/i18n/server";
 
+import type { TestOptions } from "@/lib/integrations/manage";
+
 // Telegram, Pushover and email settings (Settings → Integrations →
 // Notifications, and /api/v1/settings/integrations/{telegram,pushover,email}).
 // Each is saved only after a test message goes through, like Discord and
@@ -62,7 +64,7 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function testAndSaveTelegram(input: { botToken?: unknown; chatId?: unknown }): Promise<CoreResult> {
+export async function testAndSaveTelegram(input: { botToken?: unknown; chatId?: unknown }, options: TestOptions = {}): Promise<CoreResult> {
   const saved = await getChannelConfig("telegram");
   const config: TelegramConfig = {
     botToken: text(input.botToken) || saved?.botToken || "",
@@ -73,11 +75,13 @@ export async function testAndSaveTelegram(input: { botToken?: unknown; chatId?: 
   if (invalid) return fail("invalid", invalid);
   const test = await verifyTelegram(config);
   if (!test.ok) return fail("invalid", t("notify.telegramTestFailed", { error: test.error }));
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await saveChannelConfig("telegram", config);
   return { ok: true };
 }
 
-export async function testAndSavePushover(input: { appToken?: unknown; userKey?: unknown }): Promise<CoreResult> {
+export async function testAndSavePushover(input: { appToken?: unknown; userKey?: unknown }, options: TestOptions = {}): Promise<CoreResult> {
   const saved = await getChannelConfig("pushover");
   const config: PushoverConfig = {
     appToken: text(input.appToken) || saved?.appToken || "",
@@ -88,19 +92,24 @@ export async function testAndSavePushover(input: { appToken?: unknown; userKey?:
   if (invalid) return fail("invalid", invalid);
   const test = await verifyPushover(config);
   if (!test.ok) return fail("invalid", t("notify.pushoverTestFailed", { error: test.error }));
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await saveChannelConfig("pushover", config);
   return { ok: true };
 }
 
-export async function testAndSaveEmail(input: {
-  host?: unknown;
-  port?: unknown;
-  secure?: unknown;
-  username?: unknown;
-  password?: unknown;
-  from?: unknown;
-  to?: unknown;
-}): Promise<CoreResult> {
+export async function testAndSaveEmail(
+  input: {
+    host?: unknown;
+    port?: unknown;
+    secure?: unknown;
+    username?: unknown;
+    password?: unknown;
+    from?: unknown;
+    to?: unknown;
+  },
+  options: TestOptions = {},
+): Promise<CoreResult> {
   const saved = await getChannelConfig("email");
   const host = text(input.host);
   const username = text(input.username) || null;
@@ -124,6 +133,8 @@ export async function testAndSaveEmail(input: {
   if (invalid) return fail("invalid", invalid);
   const test = await verifyEmail(config);
   if (!test.ok) return fail("invalid", t("notify.testEmailFailed", { error: test.error }));
+  // "Test": everything but the save.
+  if (options.dryRun) return { ok: true };
   await saveChannelConfig("email", config);
   return { ok: true };
 }

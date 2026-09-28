@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { regenerateWebhookSecretAction } from "@/app/settings/integrations/actions";
 import { arrWebhookUrls } from "@/lib/integrations/webhook-urls";
 import { useT } from "@/lib/i18n/client";
+import { SettingRow, SettingsGroup, SettingsGroupHeader } from "@/components/settings/settings-ui";
 
 export function WebhookUrlRow({ label, url }: { label: string; url: string }) {
   const t = useT();
@@ -16,7 +17,7 @@ export function WebhookUrlRow({ label, url }: { label: string; url: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-1.5 text-sm text-text-secondary">
+    <div className="flex w-full flex-col gap-1.5 text-sm text-text-secondary">
       {label}
       <div className="flex items-center gap-2">
         <input
@@ -63,26 +64,37 @@ export function WebhookSettingsCard({
 
   const urls = arrWebhookUrls(baseUrl, userId, secret);
 
+  const regenerate = (
+    <button
+      type="button"
+      onClick={handleRegenerate}
+      disabled={isPending}
+      className="shrink-0 text-xs text-text-secondary transition-colors hover:text-accent disabled:opacity-60"
+    >
+      {isPending ? t("integrations.regenerating") : t("integrations.regenerateSecret")}
+    </button>
+  );
+  const rows = [
+    { label: t("integrations.webhookUrlFor", { app: "Radarr" }), url: urls.radarr, shown: true },
+    { label: t("integrations.webhookUrlFor", { app: "Sonarr" }), url: urls.sonarr, shown: true },
+    { label: t("integrations.webhookUrlFor4k", { app: "Radarr" }), url: urls.radarr4k, shown: fourK.radarr },
+    { label: t("integrations.webhookUrlFor4k", { app: "Sonarr" }), url: urls.sonarr4k, shown: fourK.sonarr },
+  ];
+
   return (
-    <div className="rounded-2xl border border-border bg-bg-1 p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl text-text-primary">{t("integrations.sharedWebhooksTitle")}</h3>
-        <button
-          type="button"
-          onClick={handleRegenerate}
-          disabled={isPending}
-          className="text-xs text-text-secondary transition-colors hover:text-accent disabled:opacity-60"
-        >
-          {isPending ? t("integrations.regenerating") : t("integrations.regenerateSecret")}
-        </button>
-      </div>
-      <p className="mt-2 text-sm text-text-secondary">{t("integrations.sharedWebhooksIntro")}</p>
-      <div className="mt-4 flex flex-col gap-3">
-        <WebhookUrlRow label={t("integrations.webhookUrlFor", { app: "Radarr" })} url={urls.radarr} />
-        <WebhookUrlRow label={t("integrations.webhookUrlFor", { app: "Sonarr" })} url={urls.sonarr} />
-        {fourK.radarr && <WebhookUrlRow label={t("integrations.webhookUrlFor4k", { app: "Radarr" })} url={urls.radarr4k} />}
-        {fourK.sonarr && <WebhookUrlRow label={t("integrations.webhookUrlFor4k", { app: "Sonarr" })} url={urls.sonarr4k} />}
-      </div>
-    </div>
+    <SettingsGroup>
+      <SettingsGroupHeader
+        title={t("integrations.sharedWebhooksTitle")}
+        description={t("integrations.sharedWebhooksIntro")}
+        status={regenerate}
+      />
+      {rows
+        .filter((row) => row.shown)
+        .map((row) => (
+          <SettingRow key={row.label} label={row.label} wideControl>
+            <WebhookUrlRow label="" url={row.url} />
+          </SettingRow>
+        ))}
+    </SettingsGroup>
   );
 }

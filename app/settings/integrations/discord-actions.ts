@@ -5,7 +5,7 @@ import { clearIntegrationSetting, testAndSaveDiscordWebhook as testAndSave } fro
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getT } from "@/lib/i18n/server";
 
-export type DiscordSettingsState = { error?: string; success?: boolean };
+export type DiscordSettingsState = { error?: string; success?: boolean; tested?: boolean };
 
 export async function testAndSaveDiscordWebhook(
   _prevState: DiscordSettingsState | undefined,
@@ -14,8 +14,11 @@ export async function testAndSaveDiscordWebhook(
   const admin = await requireAdmin((await getT())("integrations.adminOnly"));
   if (!admin.ok) return { error: admin.error };
 
-  const result = await testAndSave(String(formData.get("webhookUrl") || ""));
-  return result.ok ? { success: true } : { error: result.error };
+  // "Test" checks without saving; Save tests, then saves.
+  const dryRun = formData.get("intent") === "test";
+  const result = await testAndSave(String(formData.get("webhookUrl") || ""), { dryRun });
+  if (!result.ok) return { error: result.error };
+  return dryRun ? { tested: true } : { success: true };
 }
 
 export async function disconnectDiscord(

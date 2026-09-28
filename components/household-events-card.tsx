@@ -5,48 +5,71 @@ import { saveHouseholdEventsAction } from "@/app/settings/notification-actions";
 import type { HouseholdNotificationEvents } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
 import { showToast } from "@/components/toast";
+import { SaveBar, SettingRow, SettingsGroup, SettingsGroupHeader } from "@/components/settings/settings-ui";
 
-/** Settings › Integrations › Household channels: which events Discord,
- * ntfy, Telegram, Pushover, email and the webhook below post. Everyone's
- * own channels (Settings › Account) follow their own choices instead. */
+/** Settings › Notifications › Household events: which events Discord,
+ * ntfy, Telegram, Pushover, email and the webhook post — a row per event,
+ * saved together. Everyone's own channels (Settings › Notifications ›
+ * Personal) follow their own choices instead. */
 export function HouseholdEventsCard({ initial }: { initial: HouseholdNotificationEvents["events"] }) {
   const t = useT();
-  const [events, setEvents] = useState(initial);
+  const [saved, setSaved] = useState(initial);
+  const [draft, setDraft] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(initial.map((event) => [event.event, event.enabled])),
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  async function toggle(event: string, enabled: boolean) {
+  const changes = Object.fromEntries(
+    saved.filter((event) => draft[event.event] !== event.enabled).map((event) => [event.event, draft[event.event]]),
+  );
+  const dirty = Object.keys(changes).length > 0;
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!dirty) return;
     setSaving(true);
     setError(null);
-    setEvents((current) => current.map((e) => (e.event === event ? { ...e, enabled } : e)));
-    const result = await saveHouseholdEventsAction({ [event]: enabled });
+    const result = await saveHouseholdEventsAction(changes);
     setSaving(false);
-    if (result.data) setEvents(result.data.events);
-    if (result.error) setError(result.error);
-    if (result.error) showToast(result.error, "error");
-    else showToast(t("common.saved"));
+    if (result.error) {
+      setError(result.error);
+      showToast(result.error, "error");
+      return;
+    }
+    if (result.data) {
+      setSaved(result.data.events);
+      setDraft(Object.fromEntries(result.data.events.map((event) => [event.event, event.enabled])));
+    }
+    showToast(t("common.saved"));
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-bg-1 p-6">
-      <h3 className="font-display text-xl text-text-primary">{t("integrations.householdEventsTitle")}</h3>
-      <p className="mt-1 text-xs text-text-muted">{t("integrations.householdEventsIntro")}</p>
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-        {events.map((event) => (
-          <li key={event.event}>
-            <label className="flex items-center gap-2 text-sm text-text-secondary">
+    <form onSubmit={save}>
+      <SettingsGroup>
+        <SettingsGroupHeader title={t("integrations.householdEventsTitle")} description={t("integrations.householdEventsIntro")} />
+        {saved.map((event) => {
+          const id = `household-event-${event.event}`;
+          return (
+            <SettingRow key={event.event} label={event.label} htmlFor={id}>
               <input
+                id={id}
                 type="checkbox"
-                checked={event.enabled}
-                onChange={(e) => toggle(event.event, e.target.checked)}
+                checked={draft[event.event] ?? false}
+                onChange={(e) => setDraft((current) => ({ ...current, [event.event]: e.target.checked }))}
                 className="h-4 w-4 accent-accent"
               />
-              {event.label}
-            </label>
-          </li>
-        ))}
-      </ul>
-      {(error || saving) && <p className={`mt-3 text-xs ${error ? "text-red-400" : "text-text-muted"}`}>{error ?? t("common.saving")}</p>}
-    </div>
+            </SettingRow>
+          );
+        })}
+        <SaveBar
+          label={t("common.save")}
+          pendingLabel={t("common.saving")}
+          pending={saving}
+          disabled={!dirty}
+          status={error && <span className="text-red-400">{error}</span>}
+        />
+      </SettingsGroup>
+    </form>
   );
 }

@@ -1,26 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { removeChannelAction, saveChannelAction } from "@/app/settings/integrations/channel-actions";
 import type { ChannelSummaries } from "@/lib/notifications/channels";
 import type { NotificationChannelKind } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
-import { useResultToast } from "@/components/settings/use-result-toast";
+import { ConnectionForm, type ConnectionField } from "@/components/settings/connection-form";
+import { SettingRow } from "@/components/settings/settings-ui";
 
-const inputClass =
-  "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
-
-type Field = {
-  name: string;
-  label: string;
-  type?: "text" | "password" | "number" | "email";
-  placeholder?: string;
-  defaultValue?: string;
-  /** A secret already saved: left blank, the saved one is kept. */
-  keepsSaved?: boolean;
-  hint?: string;
-  required?: boolean;
-};
+type Field = ConnectionField & { hint?: string };
 
 function ChannelCard({
   kind,
@@ -43,74 +31,39 @@ function ChannelCard({
   successText: string;
 }) {
   const t = useT();
-  const [state, formAction, isPending] = useActionState(saveChannelAction, undefined);
-  useResultToast(state, successText);
-  const [removeState, removeAction, isRemoving] = useActionState(removeChannelAction, undefined);
-  // The newer of the two outcomes wins: a save after a remove is connected.
-  const [lastAction, setLastAction] = useState<"save" | "remove" | null>(null);
-  const isConnected =
-    lastAction === "save" && state?.success ? true : lastAction === "remove" && removeState?.removed ? false : connected;
-  const typed = state?.error ? state.values : undefined;
-
   return (
-    <div className="rounded-2xl border border-border bg-bg-1 p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="font-display text-xl text-text-primary">{title}</h3>
-          <p className="mt-1 text-xs text-text-muted">{description}</p>
-        </div>
-        {isConnected && (
-          <span className="shrink-0 rounded-full border border-owned/30 bg-owned-bg px-3 py-1 text-xs text-owned">
-            {t("integrations.connected")}
-          </span>
-        )}
-      </div>
+    <ConnectionForm
+      title={title}
+      description={description}
+      connected={connected}
+      fields={fields.map(({ hint, ...field }) => ({ ...field, help: field.help ?? hint }))}
+      action={saveChannelAction}
+      remove={removeChannelAction}
+      removeLabel={t("integrations.removeChannel", { name: shortName })}
+      savedText={successText}
+      testedText={t("settings.testSent")}
+      hidden={{ kind }}
+    >
+      {children}
+    </ConnectionForm>
+  );
+}
 
-      <form action={formAction} onSubmit={() => setLastAction("save")} className="mt-4 flex flex-col gap-3">
-        <input type="hidden" name="kind" value={kind} />
-        {fields.map((field) => (
-          <label key={field.name} className="flex flex-col gap-1.5 text-sm text-text-secondary">
-            {field.label}
-            <input
-              type={field.type ?? "text"}
-              name={field.name}
-              required={field.required && !(field.keepsSaved && isConnected)}
-              defaultValue={typed?.[field.name] ?? field.defaultValue}
-              autoComplete="off"
-              placeholder={field.keepsSaved && isConnected ? t("integrations.leaveBlankToKeep") : field.placeholder}
-              className={inputClass}
-            />
-            {field.hint && <span className="text-xs text-text-muted">{field.hint}</span>}
-          </label>
-        ))}
-        {children}
-
-        {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
-        {state?.success && <p className="text-sm text-owned">{successText}</p>}
-
-        <button
-          type="submit"
-          disabled={isPending}
-          className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-bg-0 transition-colors hover:bg-accent-hover disabled:opacity-60"
-        >
-          {isPending ? t("integrations.testing") : t("integrations.testAndSave")}
-        </button>
-      </form>
-
-      {isConnected && (
-        <form action={removeAction} onSubmit={() => setLastAction("remove")} className="mt-3">
-          <input type="hidden" name="kind" value={kind} />
-          <button
-            type="submit"
-            disabled={isRemoving}
-            className="text-xs text-text-muted underline decoration-dotted hover:text-red-400 disabled:opacity-60"
-          >
-            {isRemoving ? t("integrations.removing") : t("integrations.removeChannel", { name: shortName })}
-          </button>
-          {removeState?.error && <p className="mt-1 text-xs text-red-400">{removeState.error}</p>}
-        </form>
-      )}
-    </div>
+/** Email's "Secure connection", a row of its own. */
+function SecureRow({ initial }: { initial: boolean }) {
+  const t = useT();
+  const [on, setOn] = useState(initial);
+  return (
+    <SettingRow label={t("integrations.secureConnection")} htmlFor="channel-email-secure">
+      <input
+        id="channel-email-secure"
+        type="checkbox"
+        name="secure"
+        checked={on}
+        onChange={(e) => setOn(e.target.checked)}
+        className="h-4 w-4 rounded border-border accent-accent"
+      />
+    </SettingRow>
   );
 }
 
@@ -221,10 +174,7 @@ export function NotificationChannelCards({
           },
         ]}
       >
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <input type="checkbox" name="secure" defaultChecked={email.secure} className="h-4 w-4 rounded border-border accent-accent" />
-          {t("integrations.secureConnection")}
-        </label>
+        <SecureRow initial={email.secure} />
       </ChannelCard>}
     </>
   );

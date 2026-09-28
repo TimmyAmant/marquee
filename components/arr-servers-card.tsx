@@ -17,6 +17,7 @@ import type { ArrProvider, SonarrSeriesType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
 import { showToast } from "@/components/toast";
+import { AddTile } from "@/components/settings/settings-ui";
 
 // Settings › Services: every Sonarr and Radarr server as a tile, each with
 // its own defaults and webhook URL (lib/arr/servers.ts).
@@ -571,23 +572,11 @@ function KindSection({
             onEdit={() => setEditing(server.id)}
           />
         ))}
-        <li>
-          <button
-            type="button"
-            onClick={() => setEditing(`new:${kind}`)}
-            disabled={adding}
-            className={`flex h-full min-h-[132px] w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-4 text-sm transition-colors ${
-              adding
-                ? "border-accent text-text-primary"
-                : "border-border-strong text-text-secondary hover:border-accent hover:text-accent"
-            }`}
-          >
-            <span aria-hidden className="text-2xl leading-none">
-              +
-            </span>
-            {t("integrations.addArrServer", { app: kindName(kind) })}
-          </button>
-        </li>
+        <AddTile
+          label={t("integrations.addArrServer", { app: kindName(kind) })}
+          onClick={() => setEditing(`new:${kind}`)}
+          active={adding}
+        />
       </ul>
       {editingServer && (
         <ServerEditor key={editingServer.id} kind={kind} server={editingServer} onDone={() => setEditing(null)} />

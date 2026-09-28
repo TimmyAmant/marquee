@@ -45,9 +45,7 @@ export default async function MembersSettingsPage() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.addMemberHeading")} description={t("settings.addMemberIntro")}>
-        <div className="rounded-2xl border border-border bg-bg-1 p-6">
-          <CreateUserForm />
-        </div>
+        <CreateUserForm />
       </SettingsSection>
 
       {(available.plex || available.jellyfin) && (
