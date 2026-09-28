@@ -1058,21 +1058,6 @@ private struct TitleActionRow: View {
                     .fixedSize()
                     .help(String(localized: "More actions"))
                     .accessibilityLabel(String(localized: "More actions"))
-                    .confirmationDialog(
-                        String(localized: "Remove \(detail.name) from \(removeArrName)?"),
-                        isPresented: $confirmingRemove,
-                        titleVisibility: .visible
-                    ) {
-                        Button(String(localized: "Remove"), role: .destructive) {
-                            screen.removeFromArr(deleteFiles: false, fourK: removingFourK)
-                        }
-                        Button(String(localized: "Remove and delete files"), role: .destructive) {
-                            screen.removeFromArr(deleteFiles: true, fourK: removingFourK)
-                        }
-                        Button(String(localized: "Cancel"), role: .cancel) {}
-                    } message: {
-                        Text("\(removeArrName) stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too.")
-                    }
                 }
 
                 if viewer.needsArrSetup {
@@ -1103,6 +1088,13 @@ private struct TitleActionRow: View {
             }
             if let error = screen.blockError {
                 InlineMessage(text: error)
+            }
+        }
+        // components/remove-from-arr-button.tsx: one Remove button, with
+        // "Also delete the files" as a checkbox.
+        .sheet(isPresented: $confirmingRemove) {
+            RemoveFromArrSheet(name: detail.name, arrName: removeArrName) { deleteFiles in
+                screen.removeFromArr(deleteFiles: deleteFiles, fourK: removingFourK)
             }
         }
     }

@@ -855,30 +855,30 @@
         }
       }
     },
-    "%@ stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too." : {
+    "%@ stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again." : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ verfolgt ihn auf keinem Server mehr. Genehmigte Anfragen dafür werden als entfernt markiert, er kann also wieder angefragt werden."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ deja de seguirlo en todos los servidores que lo tienen. Sus solicitudes aprobadas quedan como quitadas, así que se puede volver a pedir. Borrar los archivos los elimina del disco para siempre; Plex y Jellyfin también lo pierden."
+            "value" : "%@ deja de seguirlo en todos los servidores que lo tienen. Sus solicitudes aprobadas quedan como quitadas, así que se puede volver a pedir."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ arrête de le suivre sur tous les serveurs qui l’ont. Ses demandes approuvées sont marquées comme retirées, il peut donc être redemandé. Supprimer les fichiers les efface définitivement du disque — Plex et Jellyfin le perdent aussi."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ verfolgt ihn auf keinem Server mehr. Genehmigte Anfragen dafür werden als entfernt markiert, er kann also wieder angefragt werden. Das Löschen der Dateien entfernt sie endgültig von der Festplatte – auch Plex und Jellyfin verlieren ihn."
+            "value" : "%@ arrête de le suivre sur tous les serveurs qui l’ont. Ses demandes approuvées sont marquées comme retirées, il peut donc être redemandé."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O %@ deixa de acompanhá-lo em todos os servidores que o têm. Os pedidos aprovados ficam como removidos, então ele pode ser pedido de novo. Apagar os arquivos os tira do disco de vez — o Plex e o Jellyfin também o perdem."
+            "value" : "O %@ deixa de acompanhá-lo em todos os servidores que o têm. Os pedidos aprovados ficam como removidos, então ele pode ser pedido de novo."
           }
         }
       }
@@ -6616,6 +6616,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Já na sua biblioteca"
+          }
+        }
+      }
+    },
+    "Also delete the files" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auch die Dateien löschen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar también los archivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer aussi les fichiers"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagar também os arquivos"
           }
         }
       }
@@ -16611,6 +16639,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir"
+          }
+        }
+      }
+    },
+    "Gone from the disk for good — Plex and Jellyfin lose it too." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endgültig von der Festplatte weg – auch Plex und Jellyfin verlieren ihn."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se borra del disco para siempre; Plex y Jellyfin también lo pierden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définitivement supprimé du disque — Plex et Jellyfin le perdent aussi."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sai do disco de vez — o Plex e o Jellyfin também o perdem."
           }
         }
       }
