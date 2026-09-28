@@ -1226,6 +1226,11 @@ export type IntegrationsSettings = {
     from: string | null;
     to: string[];
   };
+  /** 0.58+: Gotify (its server and priority, never the token), Slack and
+   * Pushbullet (its channel tag, never the token). */
+  gotify?: { connected: boolean; url: string | null; priority: number | null };
+  slack?: { connected: boolean };
+  pushbullet?: { connected: boolean; channelTag: string | null };
   genericWebhook: { connected: boolean };
   arrWebhooks: { secret: string; radarrUrl: string; sonarrUrl: string; radarr4kUrl: string; sonarr4kUrl: string };
   /** 0.43+: every Sonarr and Radarr server (the four above are the defaults). */

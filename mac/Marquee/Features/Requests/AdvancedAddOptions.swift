@@ -17,7 +17,9 @@ struct AddOptionsSelection: Hashable, Sendable {
 
     init(_ options: API.AddOptions) {
         self.options = options
-        if let server = options.servers.first(where: \.isDefault) ?? options.servers.first {
+        // An override rule's server first (0.58+), with the rule's picks.
+        let ruled = options.rule.flatMap { rule in options.servers.first { $0.id == rule.serverId } }
+        if let server = ruled ?? options.servers.first(where: \.isDefault) ?? options.servers.first {
             apply(server)
         }
     }
@@ -170,6 +172,10 @@ struct AddOptionsPanel: View {
     let is4k: Bool
     /// "Add to 4K Sonarr" when the page shows more than one panel.
     var heading: String?
+    /// The request being reviewed, or (`forRequest`) one being made: the
+    /// override rule that applies is picked first (0.58+).
+    var requestId: String? = nil
+    var forRequest = false
 
     @Environment(AppModel.self) private var model
 
@@ -228,6 +234,11 @@ struct AddOptionsPanel: View {
 
     @ViewBuilder
     private func pickers(_ current: AddOptionsSelection) -> some View {
+        if let rule = current.options.rule, rule.serverId == current.serverId {
+            Text("Picked by the override rule “\(rule.name)”.")
+                .font(.system(size: Metrics.text(11.5)))
+                .foregroundStyle(Theme.textMuted)
+        }
         Picker("Server", selection: Binding(
             get: { current.serverId ?? "" },
             set: { selection.wrappedValue.selectServer($0) }
@@ -295,7 +306,9 @@ struct AddOptionsPanel: View {
         let api = model.api
         let result: Result<API.AddOptions, any Error>
         do {
-            result = .success(try await api.titles.addOptions(mediaType, id: tmdbId, is4k: is4k))
+            result = .success(try await api.titles.addOptions(
+                mediaType, id: tmdbId, is4k: is4k, requestId: requestId, forRequest: forRequest
+            ))
         } catch {
             result = .failure(error)
         }

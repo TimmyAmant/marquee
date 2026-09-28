@@ -351,6 +351,34 @@
         }
       }
     },
+    "%@ and up" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ y superior"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ et plus"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ und höher"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ e acima"
+          }
+        }
+      }
+    },
     "%@ can be added once the admin sets it up for the household." : {
       "localizations" : {
         "de" : {
@@ -795,6 +823,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ respondeu, mas não é um servidor Marquee. Verifique o endereço e a porta."
+          }
+        }
+      }
+    },
+    "%@ stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ deja de seguirlo en todos los servidores que lo tienen. Sus solicitudes aprobadas quedan como quitadas, así que se puede volver a pedir. Borrar los archivos los elimina del disco para siempre; Plex y Jellyfin también lo pierden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ arrête de le suivre sur tous les serveurs qui l’ont. Ses demandes approuvées sont marquées comme retirées, il peut donc être redemandé. Supprimer les fichiers les efface définitivement du disque — Plex et Jellyfin le perdent aussi."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ verfolgt ihn auf keinem Server mehr. Genehmigte Anfragen dafür werden als entfernt markiert, er kann also wieder angefragt werden. Das Löschen der Dateien entfernt sie endgültig von der Festplatte – auch Plex und Jellyfin verlieren ihn."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O %@ deixa de acompanhá-lo em todos os servidores que o têm. Os pedidos aprovados ficam como removidos, então ele pode ser pedido de novo. Apagar os arquivos os tira do disco de vez — o Plex e o Jellyfin também o perdem."
           }
         }
       }
@@ -1617,6 +1673,34 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld genres" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld géneros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld genres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Genres"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld gêneros"
           }
         }
       }
@@ -3334,6 +3418,62 @@
         }
       }
     },
+    "0 to 10 (5 if left blank)." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De 0 a 10 (5 si lo dejas vacío)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De 0 à 10 (5 si laissé vide)."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 bis 10 (leer: 5)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De 0 a 10 (5 se ficar em branco)."
+          }
+        }
+      }
+    },
+    "0 to 10; Gotify's apps alert from 5 up by default." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De 0 a 10; las apps de Gotify avisan a partir de 5 por defecto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De 0 à 10 ; les applis Gotify alertent à partir de 5 par défaut."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0 bis 10; die Gotify-Apps melden sich standardmäßig ab 5."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De 0 a 10; os apps do Gotify alertam a partir de 5 por padrão."
+          }
+        }
+      }
+    },
     "1 year" : {
       "localizations" : {
         "de" : {
@@ -4006,6 +4146,62 @@
         }
       }
     },
+    "A removed server" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un servidor eliminado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un serveur supprimé"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein entfernter Server"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um servidor removido"
+          }
+        }
+      }
+    },
+    "A request matches when every condition you set holds; any one entry in a list will do. When several rules match, the one with the most conditions wins." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una solicitud coincide cuando se cumplen todas las condiciones que pongas; en una lista basta con una. Si coinciden varias reglas, gana la que tenga más condiciones."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une demande correspond quand chaque condition définie est remplie ; dans une liste, une seule entrée suffit. Si plusieurs règles correspondent, celle qui a le plus de conditions l’emporte."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Anfrage passt, wenn jede gesetzte Bedingung zutrifft; innerhalb einer Liste reicht ein Eintrag. Passen mehrere Regeln, gewinnt die mit den meisten Bedingungen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um pedido corresponde quando todas as condições definidas valem; numa lista, basta um item. Se várias regras corresponderem, vence a que tiver mais condições."
+          }
+        }
+      }
+    },
     "A second Radarr for 4K copies. Once it's set up, members can request movies in 4K, and approving those adds them here instead of to the main Radarr." : {
       "localizations" : {
         "de" : {
@@ -4310,6 +4506,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Acesso"
+          }
+        }
+      }
+    },
+    "Access token" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Token de acceso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeton d’accès"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zugriffstoken"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Token de acesso"
           }
         }
       }
@@ -4904,6 +5128,34 @@
         }
       }
     },
+    "Add a Sonarr or Radarr server first." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade primero un servidor de Sonarr o Radarr."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez d’abord un serveur Sonarr ou Radarr."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge zuerst einen Sonarr- oder Radarr-Server hinzu."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicione primeiro um servidor Sonarr ou Radarr."
+          }
+        }
+      }
+    },
     "Add a channel" : {
       "localizations" : {
         "de" : {
@@ -5284,6 +5536,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar fileira"
+          }
+        }
+      }
+    },
+    "Add rule" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir regla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une règle"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regel hinzufügen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar regra"
           }
         }
       }
@@ -5858,6 +6138,62 @@
         }
       }
     },
+    "Adult content" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenido para adultos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenu pour adultes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inhalte für Erwachsene"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conteúdo adulto"
+          }
+        }
+      }
+    },
+    "Adult titles (as TMDb marks them)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Títulos para adultos (según los marca TMDb)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titres pour adultes (tels que TMDb les signale)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel für Erwachsene (wie TMDb sie markiert)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Títulos adultos (como o TMDb os marca)"
+          }
+        }
+      }
+    },
     "Advanced" : {
       "localizations" : {
         "de" : {
@@ -5938,6 +6274,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opções avançadas de pedido"
+          }
+        }
+      }
+    },
+    "Age rating" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clasificación por edad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classification par âge"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altersfreigabe"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classificação etária"
           }
         }
       }
@@ -6134,6 +6498,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Já está em um serviço de streaming que temos"
+          }
+        }
+      }
+    },
+    "Already blocked — remove it from the list above to allow it again." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya está bloqueado; quítalo de la lista de arriba para volver a permitirlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà bloqué — retirez-le de la liste ci-dessus pour l’autoriser à nouveau."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schon gesperrt – entferne es oben aus der Liste, um es wieder zu erlauben."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já bloqueado — remova da lista acima para permitir de novo."
           }
         }
       }
@@ -6414,6 +6806,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tags para anime"
+          }
+        }
+      }
+    },
+    "Anime to the anime folder" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anime a la carpeta de anime"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les animés dans le dossier animé"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anime in den Anime-Ordner"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anime na pasta de anime"
           }
         }
       }
@@ -7044,6 +7464,34 @@
         }
       }
     },
+    "As TMDb lists it for that country: NC-17, TV-MA, 18…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como la indica TMDb para ese país: NC-17, TV-MA, 18…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telle que TMDb l’indique pour ce pays : NC-17, TV-MA, 18…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So, wie TMDb sie für das Land führt: 18, 16, TV-MA…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como o TMDb a lista para esse país: NC-17, TV-MA, 18…"
+          }
+        }
+      }
+    },
     "Ask for movies to be added." : {
       "localizations" : {
         "de" : {
@@ -7436,6 +7884,34 @@
         }
       }
     },
+    "Back to the default" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver al predeterminado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenir à la valeur par défaut"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Standard zurücksetzen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voltar ao padrão"
+          }
+        }
+      }
+    },
     "Bad video quality" : {
       "localizations" : {
         "de" : {
@@ -7600,6 +8076,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bloquear uma palavra-chave ou um gênero"
+          }
+        }
+      }
+    },
+    "Block automatically" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear automáticamente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer automatiquement"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch sperren"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear automaticamente"
+          }
+        }
+      }
+    },
+    "Block by" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear por"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquer selon"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sperren nach"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquear por"
           }
         }
       }
@@ -8468,6 +9000,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Canal"
+          }
+        }
+      }
+    },
+    "Channel tag (optional)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta de canal (opcional)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifiant de chaîne (facultatif)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanal-Tag (optional)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag do canal (opcional)"
           }
         }
       }
@@ -11502,6 +12062,34 @@
         }
       }
     },
+    "Country" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "País"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pays"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Land"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "País"
+          }
+        }
+      }
+    },
     "Create a key" : {
       "localizations" : {
         "de" : {
@@ -11946,6 +12534,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Escuro"
+          }
+        }
+      }
+    },
+    "Debug" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depuración"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débogage"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debug"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depuração"
           }
         }
       }
@@ -12716,6 +13332,34 @@
         }
       }
     },
+    "Download" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descargar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Télécharger"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herunterladen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Baixar"
+          }
+        }
+      }
+    },
     "Download Manually" : {
       "localizations" : {
         "de" : {
@@ -13048,6 +13692,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Editar %@"
+          }
+        }
+      }
+    },
+    "Edit rule" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar regla"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la règle"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regel bearbeiten"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar regra"
           }
         }
       }
@@ -13640,6 +14312,34 @@
         }
       }
     },
+    "Error" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erro"
+          }
+        }
+      }
+    },
     "Error Reference" : {
       "localizations" : {
         "de" : {
@@ -13818,6 +14518,90 @@
         }
       }
     },
+    "Every %lld hours" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada %lld horas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les %lld heures"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle %lld Stunden"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A cada %lld horas"
+          }
+        }
+      }
+    },
+    "Every %lld minutes" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada %lld minutos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les %lld minutes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle %lld Minuten"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A cada %lld minutos"
+          }
+        }
+      }
+    },
+    "Every hour" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada hora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les heures"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Stunde"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A cada hora"
+          }
+        }
+      }
+    },
     "Every poster, search result, and title page comes from TMDb. Add a free API key or read access token in Settings → Integrations." : {
       "localizations" : {
         "de" : {
@@ -13842,6 +14626,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Todo pôster, resultado de busca e página de título vem do TMDb. Adicione uma chave de API gratuita ou um token de acesso de leitura em Configurações → Integrações."
+          }
+        }
+      }
+    },
+    "Every request" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las solicitudes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les demandes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede Anfrage"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os pedidos"
+          }
+        }
+      }
+    },
+    "Every title that matches can't be requested — you can still add it yourself. Preview shows what it would catch among the titles Marquee has looked up." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se podrá pedir ningún título que coincida; tú aún puedes añadirlo. La vista previa muestra lo que bloquearía entre los títulos que Marquee ya ha consultado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun titre correspondant ne pourra être demandé — vous pouvez toujours l’ajouter vous-même. L’aperçu montre ce qui serait bloqué parmi les titres déjà consultés par Marquee."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passende Titel können nicht angefragt werden – du kannst sie weiterhin selbst hinzufügen. Die Vorschau zeigt, was es unter den Titeln träfe, die Marquee schon kennt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum título que corresponda poderá ser pedido — você ainda pode adicioná-lo. A prévia mostra o que seria bloqueado entre os títulos que o Marquee já consultou."
           }
         }
       }
@@ -13898,6 +14738,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pedidos de todos"
+          }
+        }
+      }
+    },
+    "Everything TMDb marks as adult." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todo lo que TMDb marca como para adultos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout ce que TMDb signale comme réservé aux adultes."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles, was TMDb als für Erwachsene markiert."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tudo o que o TMDb marca como adulto."
           }
         }
       }
@@ -14234,6 +15102,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Filtrar gêneros"
+          }
+        }
+      }
+    },
+    "Filter lines" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar líneas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer les lignes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeilen filtern"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrar linhas"
           }
         }
       }
@@ -14630,6 +15526,34 @@
         }
       }
     },
+    "Former member" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Antiguo miembro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancien membre"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ehemaliges Mitglied"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ex-membro"
+          }
+        }
+      }
+    },
     "Found %@" : {
       "localizations" : {
         "de" : {
@@ -14861,6 +15785,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Em Settings → General no %@"
+          }
+        }
+      }
+    },
+    "From Slack's Incoming Webhooks app, or Mattermost's or Rocket.Chat's." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De la app Incoming Webhooks de Slack, o la de Mattermost o Rocket.Chat."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Depuis l’appli Incoming Webhooks de Slack, ou celle de Mattermost ou Rocket.Chat."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus der Slack-App „Incoming Webhooks“ oder von Mattermost bzw. Rocket.Chat."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do app Incoming Webhooks do Slack, ou do Mattermost ou Rocket.Chat."
           }
         }
       }
@@ -15317,6 +16269,34 @@
         }
       }
     },
+    "Genres" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Géneros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genres"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genres"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gêneros"
+          }
+        }
+      }
+    },
     "Get notifications on this Mac?" : {
       "localizations" : {
         "de" : {
@@ -15566,6 +16546,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ir"
+          }
+        }
+      }
+    },
+    "Gotify" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify"
+          }
+        }
+      }
+    },
+    "Gotify connected — a test message is on its way." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify conectado: va de camino un mensaje de prueba."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify connecté — un message de test est en route."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify verbunden – eine Testnachricht ist unterwegs."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify conectado — uma mensagem de teste está a caminho."
+          }
+        }
+      }
+    },
+    "Gotify server" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servidor de Gotify"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serveur Gotify"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify-Server"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servidor Gotify"
           }
         }
       }
@@ -16014,6 +17078,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Como o Marquee aparece neste dispositivo."
+          }
+        }
+      }
+    },
+    "How often %@ runs" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Con qué frecuencia se ejecuta %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fréquence de %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wie oft %@ läuft"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Com que frequência %@ roda"
           }
         }
       }
@@ -16743,6 +17835,90 @@
         }
       }
     },
+    "In Gotify, Apps › Create application, then copy its token. Left blank, the saved one is kept." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En Gotify, Apps › Create application, y copia su token. Si lo dejas vacío se conserva el guardado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans Gotify, Apps › Create application, puis copiez son jeton. Laissé vide, celui enregistré est conservé."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Gotify unter Apps › Create application anlegen und das Token kopieren. Leer gelassen, bleibt das gespeicherte."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Gotify, Apps › Create application e copie o token. Em branco, o salvo é mantido."
+          }
+        }
+      }
+    },
+    "In Gotify, Apps › Create application." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En Gotify, Apps › Create application."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans Gotify, Apps › Create application."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Gotify unter Apps › Create application."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Gotify, Apps › Create application."
+          }
+        }
+      }
+    },
+    "In Slack, add the Incoming Webhooks app to a channel and copy its URL. Left blank, the saved one is kept." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En Slack, añade la app Incoming Webhooks a un canal y copia su URL. Si la dejas vacía se conserva la guardada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans Slack, ajoutez l’appli Incoming Webhooks à une chaîne et copiez son URL. Laissée vide, celle enregistrée est conservée."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Slack die App „Incoming Webhooks“ zu einem Kanal hinzufügen und die URL kopieren. Leer gelassen, bleibt die gespeicherte."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Slack, adicione o app Incoming Webhooks a um canal e copie a URL. Em branco, a salva é mantida."
+          }
+        }
+      }
+    },
     "In Sonarr/Radarr but not monitored — it won't download on its own." : {
       "localizations" : {
         "de" : {
@@ -16855,6 +18031,34 @@
         }
       }
     },
+    "Incoming webhook URL" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL del webhook entrante"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL du webhook entrant"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL des eingehenden Webhooks"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL do webhook de entrada"
+          }
+        }
+      }
+    },
     "Incorrect username or password." : {
       "localizations" : {
         "de" : {
@@ -16879,6 +18083,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nome de usuário ou senha incorretos."
+          }
+        }
+      }
+    },
+    "Info" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Info"
           }
         }
       }
@@ -17135,6 +18367,34 @@
         }
       }
     },
+    "Keep" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conservar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserver"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behalten"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter"
+          }
+        }
+      }
+    },
     "Keep a Trakt list in sync" : {
       "localizations" : {
         "de" : {
@@ -17275,6 +18535,34 @@
         }
       }
     },
+    "Keyword or genre" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palabra clave o género"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot-clé ou genre"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stichwort oder Genre"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palavra-chave ou gênero"
+          }
+        }
+      }
+    },
     "Keyword: %@" : {
       "localizations" : {
         "de" : {
@@ -17299,6 +18587,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Palavra-chave: %@"
+          }
+        }
+      }
+    },
+    "Keywords" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palabras clave"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots-clés"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stichwörter"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palavras-chave"
           }
         }
       }
@@ -18033,6 +19349,34 @@
         }
       }
     },
+    "Leave blank to push to all your devices." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjalo vacío para enviar a todos tus dispositivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laissez vide pour envoyer à tous vos appareils."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer lassen, um an alle deine Geräte zu senden."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deixe em branco para enviar a todos os seus dispositivos."
+          }
+        }
+      }
+    },
     "Leave empty for a public client" : {
       "localizations" : {
         "de" : {
@@ -18141,6 +19485,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deixe painéis como Homepage ou Homarr, scripts e outros apps usarem o Marquee. Uma chave funciona como entrar na conta, então mantenha-a em segredo."
+          }
+        }
+      }
+    },
+    "Level" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nivel"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stufe"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nível"
           }
         }
       }
@@ -18649,6 +20021,34 @@
         }
       }
     },
+    "Logs" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journaux"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokolle"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logs"
+          }
+        }
+      }
+    },
     "Looking for Marquee on %@. This usually takes under a minute." : {
       "localizations" : {
         "de" : {
@@ -18701,6 +20101,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Procurando o Marquee na sua rede local."
+          }
+        }
+      }
+    },
+    "Looking…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird gesucht…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Procurando…"
           }
         }
       }
@@ -21350,6 +22778,68 @@
         }
       }
     },
+    "Next run %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima ejecución %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochaine exécution %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächster Lauf %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima execução %@"
+          }
+        }
+      }
+    },
+    "Next run %@ · last ran %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima ejecución %@ · última vez %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochaine exécution %@ · dernière exécution %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächster Lauf %@ · zuletzt %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Próxima execução %@ · última vez %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next run %1$@ · last ran %2$@"
+          }
+        }
+      }
+    },
     "Next →" : {
       "localizations" : {
         "de" : {
@@ -21994,6 +23484,90 @@
         }
       }
     },
+    "None picked: any." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si no eliges ninguno: cualquiera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de choisi : n’importe lequel."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts gewählt: beliebig."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum escolhido: qualquer um."
+          }
+        }
+      }
+    },
+    "None picked: anyone." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si no eliges a nadie: cualquiera."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personne de choisi : n’importe qui."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niemand gewählt: jeder."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguém escolhido: qualquer pessoa."
+          }
+        }
+      }
+    },
+    "None picked: the server's default tags." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si no eliges ninguna: las etiquetas predeterminadas del servidor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de choisi : les étiquettes par défaut du serveur."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts gewählt: die Standard-Tags des Servers."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma escolhida: as tags padrão do servidor."
+          }
+        }
+      }
+    },
     "Not a fit for the household library" : {
       "localizations" : {
         "de" : {
@@ -22330,6 +23904,34 @@
         }
       }
     },
+    "Nothing among the %lld titles Marquee has looked up." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada entre los %lld títulos que Marquee ha consultado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien parmi les %lld titres consultés par Marquee."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts unter den %lld Titeln, die Marquee kennt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada entre os %lld títulos que o Marquee consultou."
+          }
+        }
+      }
+    },
     "Nothing blocked. Block a title from its page, or a keyword below." : {
       "localizations" : {
         "de" : {
@@ -22522,6 +24124,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nada mais aqui"
+          }
+        }
+      }
+    },
+    "Nothing logged that matches." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay nada registrado que coincida."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de correspondant dans le journal."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts protokolliert, das passt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada registrado que corresponda."
           }
         }
       }
@@ -22863,6 +24493,34 @@
         }
       }
     },
+    "Off" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivée"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativada"
+          }
+        }
+      }
+    },
     "Older shared webhook URLs" : {
       "localizations" : {
         "de" : {
@@ -22975,6 +24633,62 @@
         }
       }
     },
+    "On pushbullet.com, Settings › Account › Create access token." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pushbullet.com, Settings › Account › Create access token."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur pushbullet.com, Settings › Account › Create access token."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf pushbullet.com unter Settings › Account › Create access token."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em pushbullet.com, Settings › Account › Create access token."
+          }
+        }
+      }
+    },
+    "On pushbullet.com, Settings › Account › Create access token. Left blank, the saved one is kept." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pushbullet.com, Settings › Account › Create access token. Si lo dejas vacío se conserva el guardado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur pushbullet.com, Settings › Account › Create access token. Laissé vide, celui enregistré est conservé."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf pushbullet.com unter Settings › Account › Create access token. Leer gelassen, bleibt das gespeicherte."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em pushbullet.com, Settings › Account › Create access token. Em branco, o salvo é mantido."
+          }
+        }
+      }
+    },
     "On several servers" : {
       "localizations" : {
         "es" : {
@@ -22999,6 +24713,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Em vários servidores"
+          }
+        }
+      }
+    },
+    "Once a day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vez al día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une fois par jour"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einmal am Tag"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma vez por dia"
           }
         }
       }
@@ -23564,6 +25306,34 @@
         }
       }
     },
+    "Original language" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idioma original"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue d’origine"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originalsprache"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idioma original"
+          }
+        }
+      }
+    },
     "Other" : {
       "localizations" : {
         "de" : {
@@ -23588,6 +25358,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Outro"
+          }
+        }
+      }
+    },
+    "Override rules" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reglas de anulación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles de remplacement"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überschreibungsregeln"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regras de substituição"
           }
         }
       }
@@ -23756,6 +25554,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cole o link de uma lista ou watchlist pública do Trakt."
+          }
+        }
+      }
+    },
+    "Pause" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mettre en pause"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anhalten"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar"
+          }
+        }
+      }
+    },
+    "Paused · %lld lines" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pausa · %lld líneas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En pause · %lld lignes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angehalten · %lld Zeilen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausado · %lld linhas"
           }
         }
       }
@@ -24124,6 +25978,34 @@
         }
       }
     },
+    "Picked by the override rule “%@”." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegido por la regla de anulación «%@»."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisi par la règle de remplacement « %@ »."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von der Überschreibungsregel „%@“ gewählt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolhido pela regra de substituição “%@”."
+          }
+        }
+      }
+    },
     "Picked: %@" : {
       "localizations" : {
         "de" : {
@@ -24404,6 +26286,34 @@
         }
       }
     },
+    "Post to a channel you own instead of your own devices." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publica en un canal tuyo en lugar de en tus dispositivos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publier sur une chaîne dont vous êtes propriétaire plutôt que sur vos appareils."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An einen eigenen Kanal senden statt an deine Geräte."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publica num canal seu em vez dos seus dispositivos."
+          }
+        }
+      }
+    },
     "Posters get a colored strip along the bottom, and title pages a badge, showing where each title stands in your library. They use the same colors as Radarr and Sonarr, so a title looks the same everywhere." : {
       "localizations" : {
         "de" : {
@@ -24488,6 +26398,34 @@
         }
       }
     },
+    "Posts to a Slack channel through an incoming webhook — Mattermost's and Rocket.Chat's work too. Which events it gets is on the Household events tab." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publica en un canal de Slack con un webhook entrante; también sirven los de Mattermost y Rocket.Chat. Qué eventos recibe se elige en la pestaña Eventos del hogar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publie dans une chaîne Slack via un webhook entrant — ceux de Mattermost et Rocket.Chat fonctionnent aussi. Les événements envoyés se choisissent dans l’onglet Événements du foyer."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postet über einen eingehenden Webhook in einen Slack-Kanal – auch die von Mattermost und Rocket.Chat funktionieren. Welche Ereignisse, legst du im Tab „Haushaltsereignisse“ fest."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publica num canal do Slack por um webhook de entrada — os do Mattermost e do Rocket.Chat também servem. Quais eventos ele recebe fica na aba Eventos da casa."
+          }
+        }
+      }
+    },
     "Posts to a Telegram chat, group or channel through your own bot whenever something is grabbed, downloaded, or a request is approved/rejected." : {
       "localizations" : {
         "de" : {
@@ -24512,6 +26450,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Publica num chat, grupo ou canal do Telegram pelo seu próprio bot sempre que algo é capturado, baixado ou um pedido é aprovado/recusado."
+          }
+        }
+      }
+    },
+    "Posts to your own Gotify server. Which events it gets is on the Household events tab." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publica en tu propio servidor de Gotify. Qué eventos recibe se elige en la pestaña Eventos del hogar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publie sur votre propre serveur Gotify. Les événements envoyés se choisissent dans l’onglet Événements du foyer."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Postet an deinen eigenen Gotify-Server. Welche Ereignisse, legst du im Tab „Haushaltsereignisse“ fest."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Publica no seu próprio servidor Gotify. Quais eventos ele recebe fica na aba Eventos da casa."
+          }
+        }
+      }
+    },
+    "Preview" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vista previa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prévia"
+          }
+        }
+      }
+    },
+    "Priority" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioridad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priorité"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priorität"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioridade"
           }
         }
       }
@@ -24624,6 +26646,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Perfil %lld"
+          }
+        }
+      }
+    },
+    "Pushbullet" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet"
+          }
+        }
+      }
+    },
+    "Pushbullet connected — a test push is on its way." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet conectado: va de camino un aviso de prueba."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet connecté — une notification de test est en route."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet verbunden – eine Test-Mitteilung ist unterwegs."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet conectado — um push de teste está a caminho."
+          }
+        }
+      }
+    },
+    "Pushes to your Pushbullet devices, or to one of your Pushbullet channels. Which events it gets is on the Household events tab." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía a tus dispositivos de Pushbullet o a uno de tus canales de Pushbullet. Qué eventos recibe se elige en la pestaña Eventos del hogar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoie vers vos appareils Pushbullet, ou vers l’une de vos chaînes Pushbullet. Les événements envoyés se choisissent dans l’onglet Événements du foyer."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sendet an deine Pushbullet-Geräte oder an einen deiner Pushbullet-Kanäle. Welche Ereignisse, legst du im Tab „Haushaltsereignisse“ fest."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envia para seus dispositivos do Pushbullet ou para um dos seus canais do Pushbullet. Quais eventos ele recebe fica na aba Eventos da casa."
           }
         }
       }
@@ -24820,6 +26926,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Executada deste Mac %@"
+          }
+        }
+      }
+    },
+    "Rated %@ in %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clasificación %@ en %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classé %@ (%@)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Freigabe %@ in %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classificação %@ em %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rated %1$@ in %2$@"
           }
         }
       }
@@ -25552,6 +27692,40 @@
         }
       }
     },
+    "Remove %@ from %@?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Quitar %@ de %@?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer %@ de %@ ?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ aus %@ entfernen?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover %@ do %@?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove %1$@ from %2$@?"
+          }
+        }
+      }
+    },
     "Remove %@?" : {
       "localizations" : {
         "de" : {
@@ -25608,6 +27782,62 @@
         }
       }
     },
+    "Remove Gotify" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar Gotify"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer Gotify"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gotify entfernen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover Gotify"
+          }
+        }
+      }
+    },
+    "Remove Pushbullet" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar Pushbullet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer Pushbullet"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pushbullet entfernen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover Pushbullet"
+          }
+        }
+      }
+    },
     "Remove Pushover" : {
       "localizations" : {
         "de" : {
@@ -25636,6 +27866,34 @@
         }
       }
     },
+    "Remove Slack" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar Slack"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer Slack"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack entfernen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover Slack"
+          }
+        }
+      }
+    },
     "Remove Telegram" : {
       "localizations" : {
         "de" : {
@@ -25660,6 +27918,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover Telegram"
+          }
+        }
+      }
+    },
+    "Remove and delete files" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar y borrar archivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer et supprimer les fichiers"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen und Dateien löschen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover e apagar arquivos"
+          }
+        }
+      }
+    },
+    "Remove from %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer de %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus %@ entfernen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover do %@"
           }
         }
       }
@@ -25968,6 +28282,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover esta fileira?"
+          }
+        }
+      }
+    },
+    "Remove “%@”?" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Eliminar «%@»?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer « %@ » ?"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ entfernen?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover “%@”?"
+          }
+        }
+      }
+    },
+    "Removed from %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitado de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retiré de %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus %@ entfernt"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removido do %@"
           }
         }
       }
@@ -27234,6 +29604,34 @@
         }
       }
     },
+    "Requests waiting for review for these: %lld" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solicitudes pendientes de estos: %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demandes en attente les concernant : %lld"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wartende Anfragen dafür: %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedidos aguardando revisão destes: %lld"
+          }
+        }
+      }
+    },
     "Required group (optional)" : {
       "localizations" : {
         "de" : {
@@ -27426,6 +29824,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Resultados para “%@”"
+          }
+        }
+      }
+    },
+    "Resume" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fortsetzen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retomar"
           }
         }
       }
@@ -29306,6 +31732,34 @@
         }
       }
     },
+    "Send some requests to another server, profile, folder or tags — by genre, original language, keyword or who asked. Applied when a request is approved and shown as the default under Advanced; picks made by hand still win." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía algunas solicitudes a otro servidor, perfil, carpeta o etiquetas, según el género, el idioma original, la palabra clave o quién la pidió. Se aplica al aprobar y aparece por defecto en Avanzado; lo que se elija a mano sigue mandando."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyez certaines demandes vers un autre serveur, profil, dossier ou d’autres étiquettes — selon le genre, la langue d’origine, un mot-clé ou le demandeur. Appliqué à l’approbation et proposé par défaut dans Avancé ; un choix fait à la main l’emporte."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schicke bestimmte Anfragen an einen anderen Server, ein anderes Profil, einen anderen Ordner oder andere Tags – nach Genre, Originalsprache, Stichwort oder Anfragendem. Gilt bei der Genehmigung und ist unter „Erweitert“ vorausgewählt; eigene Auswahl hat Vorrang."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envie alguns pedidos para outro servidor, perfil, pasta ou tags — por gênero, idioma original, palavra-chave ou quem pediu. Aplicado na aprovação e mostrado como padrão em Avançado; escolhas feitas à mão continuam valendo."
+          }
+        }
+      }
+    },
     "Send to" : {
       "localizations" : {
         "de" : {
@@ -29844,6 +32298,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Versão do servidor"
+          }
+        }
+      }
+    },
+    "Server address" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dirección del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse du serveur"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Serveradresse"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endereço do servidor"
           }
         }
       }
@@ -31111,6 +33593,62 @@
         }
       }
     },
+    "Slack" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack"
+          }
+        }
+      }
+    },
+    "Slack connected — a test message is on its way." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack conectado: va de camino un mensaje de prueba."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack connecté — un message de test est en route."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack verbunden – eine Testnachricht ist unterwegs."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slack conectado — uma mensagem de teste está a caminho."
+          }
+        }
+      }
+    },
     "Something else" : {
       "localizations" : {
         "de" : {
@@ -32087,6 +34625,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Palavra-chave do TMDb"
+          }
+        }
+      }
+    },
+    "TMDb keywords. An anime show only matches a rule that lists the “anime” keyword." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palabras clave de TMDb. Una serie de anime solo coincide con una regla que incluya la palabra clave «anime»."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots-clés TMDb. Une série animée ne correspond qu’à une règle qui contient le mot-clé « anime »."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TMDb-Stichwörter. Eine Anime-Serie passt nur zu einer Regel mit dem Stichwort „anime“."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palavras-chave do TMDb. Uma série de anime só corresponde a uma regra que inclua a palavra-chave “anime”."
           }
         }
       }
@@ -33660,6 +36226,34 @@
         }
       }
     },
+    "The server didn't answer" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El servidor no respondió"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le serveur n’a pas répondu"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Server hat nicht geantwortet"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O servidor não respondeu"
+          }
+        }
+      }
+    },
     "The server didn't answer like a Marquee server. It may need updating to %@ or later." : {
       "localizations" : {
         "de" : {
@@ -33684,6 +36278,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O servidor não respondeu como um servidor do Marquee. Talvez ele precise ser atualizado para %@ ou mais recente."
+          }
+        }
+      }
+    },
+    "The server's default" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El predeterminado del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celui du serveur par défaut"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard des Servers"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O padrão do servidor"
           }
         }
       }
@@ -34109,6 +36731,34 @@
         }
       }
     },
+    "This server can only block keywords and genres. Update it to preview or block by rating." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor solo puede bloquear palabras clave y géneros. Actualízalo para ver la vista previa o bloquear por clasificación."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce serveur ne peut bloquer que des mots-clés et des genres. Mettez-le à jour pour prévisualiser ou bloquer par classification."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server kann nur Stichwörter und Genres sperren. Aktualisiere ihn, um eine Vorschau zu sehen oder nach Freigabe zu sperren."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor só bloqueia palavras-chave e gêneros. Atualize-o para ver a prévia ou bloquear por classificação."
+          }
+        }
+      }
+    },
     "This server doesn't have Discover settings yet. Update it to Marquee 0.49 or later." : {
       "localizations" : {
         "de" : {
@@ -34161,6 +36811,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este servidor ainda não tem página de Biblioteca. Atualize-o para o Marquee 0.51 ou mais recente."
+          }
+        }
+      }
+    },
+    "This server doesn't have this channel yet. Update it to use it." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor aún no tiene este canal. Actualízalo para usarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce serveur n’a pas encore ce canal. Mettez-le à jour pour l’utiliser."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server hat diesen Kanal noch nicht. Aktualisiere ihn, um ihn zu nutzen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor ainda não tem este canal. Atualize-o para usá-lo."
+          }
+        }
+      }
+    },
+    "This server doesn't keep its log for Settings yet. Update it to see it here." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor aún no guarda su registro para Ajustes. Actualízalo para verlo aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce serveur ne conserve pas encore son journal pour les Réglages. Mettez-le à jour pour le voir ici."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server hält sein Protokoll noch nicht für die Einstellungen bereit. Aktualisiere ihn, um es hier zu sehen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor ainda não guarda o log para os Ajustes. Atualize-o para vê-lo aqui."
           }
         }
       }
@@ -34334,6 +37040,34 @@
         }
       }
     },
+    "Time of day" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hora del día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heure de la journée"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uhrzeit"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Horário"
+          }
+        }
+      }
+    },
     "Timed out waiting for Plex sign-in. Try again." : {
       "localizations" : {
         "de" : {
@@ -34470,6 +37204,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Títulos com mais de um arquivo, ou listados em dois servidores Plex ou dois Jellyfin. O mesmo arquivo visto por mapeamentos de pasta diferentes (como /movies e /data/Movies) não conta. Confira os caminhos antes de apagar qualquer coisa — o Marquee não apaga nada sozinho."
+          }
+        }
+      }
+    },
+    "To %@" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vers %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para %@"
           }
         }
       }
@@ -35847,6 +38609,34 @@
         }
       }
     },
+    "Updating every few seconds · %lld lines" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se actualiza cada pocos segundos · %lld líneas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mise à jour toutes les quelques secondes · %lld lignes"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird alle paar Sekunden aktualisiert · %lld Zeilen"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualiza a cada poucos segundos · %lld linhas"
+          }
+        }
+      }
+    },
     "Upgrade available" : {
       "localizations" : {
         "es" : {
@@ -36435,6 +39225,34 @@
         }
       }
     },
+    "Warning" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avertissement"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warnung"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aviso"
+          }
+        }
+      }
+    },
     "We couldn't find a Marquee server on your network." : {
       "localizations" : {
         "de" : {
@@ -36767,6 +39585,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "O que os canais da casa publicam"
+          }
+        }
+      }
+    },
+    "What the server has been doing, newest at the bottom. Keys, tokens and passwords are masked." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que ha estado haciendo el servidor, lo más reciente abajo. Las claves, los tokens y las contraseñas aparecen ocultos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que fait le serveur, le plus récent en bas. Les clés, jetons et mots de passe sont masqués."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was der Server zuletzt getan hat, das Neueste unten. Schlüssel, Tokens und Passwörter sind unkenntlich gemacht."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que o servidor anda fazendo, o mais recente embaixo. Chaves, tokens e senhas aparecem ocultos."
           }
         }
       }
@@ -37135,6 +39981,34 @@
         }
       }
     },
+    "Where matching requests go. A 4K server's rules apply to 4K requests." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A dónde van las solicitudes que coinciden. Las reglas de un servidor 4K se aplican a solicitudes en 4K."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où vont les demandes correspondantes. Les règles d’un serveur 4K s’appliquent aux demandes en 4K."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wohin passende Anfragen gehen. Regeln eines 4K-Servers gelten für 4K-Anfragen."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para onde vão os pedidos que correspondem. Regras de um servidor 4K valem para pedidos em 4K."
+          }
+        }
+      }
+    },
     "Which country streaming providers and release dates are for, and where and in what language TMDb's Popular and Upcoming rows are picked from." : {
       "localizations" : {
         "de" : {
@@ -37384,6 +40258,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mundo todo"
+          }
+        }
+      }
+    },
+    "Would block %lld of the %lld titles Marquee has looked up." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquearía %lld de los %lld títulos que Marquee ha consultado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquerait %lld des %lld titres consultés par Marquee."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Würde %lld der %lld Titel sperren, die Marquee kennt."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bloquearia %lld dos %lld títulos que o Marquee consultou."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Would block %1$lld of the %2$lld titles Marquee has looked up."
           }
         }
       }

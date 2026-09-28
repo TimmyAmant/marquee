@@ -3,7 +3,7 @@ import SwiftUI
 /// Settings' tabs, in the website's order (lib/settings/tabs.ts) and the
 /// Windows app's (Marquee.Core/Settings/SettingsTabs.cs).
 enum SettingsTab: String, Hashable, CaseIterable {
-    case account, general, members, mediaServers, services, notifications, discover, blocklist, jobs, activity, about
+    case account, general, members, mediaServers, services, notifications, discover, blocklist, jobs, logs, activity, about
 }
 
 extension SettingsTab {
@@ -18,6 +18,7 @@ extension SettingsTab {
         case .discover: return String(localized: "Discover")
         case .blocklist: return String(localized: "Blocklist")
         case .jobs: return String(localized: "Jobs")
+        case .logs: return String(localized: "Logs")
         case .activity: return String(localized: "Activity")
         case .about: return String(localized: "About")
         }
@@ -29,7 +30,7 @@ extension SettingsTab {
         switch self {
         case .account, .notifications, .about: return true
         case .blocklist: return isAdmin || canManageBlocklist
-        case .general, .members, .mediaServers, .services, .discover, .jobs, .activity: return isAdmin
+        case .general, .members, .mediaServers, .services, .discover, .jobs, .logs, .activity: return isAdmin
         }
     }
 
@@ -51,7 +52,7 @@ extension SettingsTab {
 /// Settings › Notifications' own tabs (the website's per-agent tabs): yours,
 /// then the household's channels, the admin's.
 enum NotificationsSubTab: String, Hashable, CaseIterable {
-    case personal, household, discord, ntfy, telegram, pushover, email, webhook
+    case personal, household, discord, ntfy, telegram, pushover, email, gotify, slack, pushbullet, webhook
 
     var title: String {
         switch self {
@@ -62,6 +63,9 @@ enum NotificationsSubTab: String, Hashable, CaseIterable {
         case .telegram: return "Telegram" // i18n-ignore: brand
         case .pushover: return "Pushover" // i18n-ignore: brand
         case .email: return String(localized: "Email")
+        case .gotify: return "Gotify" // i18n-ignore: brand
+        case .slack: return "Slack" // i18n-ignore: brand
+        case .pushbullet: return "Pushbullet" // i18n-ignore: brand
         case .webhook: return String(localized: "Webhook")
         }
     }
@@ -147,6 +151,7 @@ struct SettingsRootView: View {
                     case .discover: DiscoverSettingsView()
                     case .blocklist: BlocklistSettingsView()
                     case .jobs: JobsSettingsView()
+                    case .logs: LogsSettingsView()
                     case .activity: ActivitySettingsView()
                     case .about: AboutSettingsView()
                     }
@@ -605,14 +610,21 @@ struct JobsSettingsView: View {
                     .font(.system(size: 11.5))
                     .foregroundStyle(Theme.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 10) {
-                    Text(job.schedule)
-                    if let finishedAt = run?.finishedAt {
-                        Text("Ran from this Mac \(Format.timeAgo(finishedAt))")
+                if job.interval != nil {
+                    // 0.58+: how often it runs, and when it runs next.
+                    JobIntervalSetting(job: job) { updated in
+                        jobs = jobs?.map { $0.id == updated.id ? updated : $0 }
                     }
+                } else {
+                    HStack(spacing: 10) {
+                        Text(job.schedule)
+                        if let finishedAt = run?.finishedAt {
+                            Text("Ran from this Mac \(Format.timeAgo(finishedAt))")
+                        }
+                    }
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textSecondary)
                 }
-                .font(.system(size: 11.5))
-                .foregroundStyle(Theme.textSecondary)
                 // 0.46+: the Can't Find Check's wait (components/not-found-hours-setting.tsx).
                 if job.id == API.Job.notFoundCheckID {
                     NotFoundHoursSetting()

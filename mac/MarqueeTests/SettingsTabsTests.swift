@@ -7,7 +7,7 @@ final class SettingsTabsTests: XCTestCase {
     func testTheTabsComeInTheWebsitesOrder() {
         XCTAssertEqual(SettingsTab.allCases, [
             .account, .general, .members, .mediaServers, .services, .notifications,
-            .discover, .blocklist, .jobs, .activity, .about,
+            .discover, .blocklist, .jobs, .logs, .activity, .about,
         ])
     }
 
@@ -40,7 +40,7 @@ final class SettingsTabsTests: XCTestCase {
         XCTAssertEqual(NotificationsSubTab.visible(isAdmin: false), [.personal])
         XCTAssertEqual(
             NotificationsSubTab.visible(isAdmin: true),
-            [.personal, .household, .discord, .ntfy, .telegram, .pushover, .email, .webhook]
+            [.personal, .household, .discord, .ntfy, .telegram, .pushover, .email, .gotify, .slack, .pushbullet, .webhook]
         )
     }
 }

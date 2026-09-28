@@ -66,6 +66,9 @@ export const GET = withApi(async (request): Promise<IntegrationsSettings> => {
     telegram: data.channels.telegram,
     pushover: data.channels.pushover,
     email: data.channels.email,
+    gotify: data.channels.gotify,
+    slack: data.channels.slack,
+    pushbullet: data.channels.pushbullet,
     genericWebhook: { connected: data.genericWebhookConnected },
     arrWebhooks: {
       secret: data.webhookSecret,
