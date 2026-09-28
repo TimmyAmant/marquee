@@ -24,7 +24,9 @@ public sealed partial class DeclineRequestDialog : ContentDialog
     public DeclineRequestDialog(string title, string requester, IReadOnlyList<string> reasons, bool approved = false)
     {
         InitializeComponent();
-        ExplanationText.Text = Loc.Format(approved ? "Decline_ExplanationApproved" : "Decline_Explanation", requester, title);
+        ExplanationText.Text = approved
+            ? Loc.Format("Decline_ExplanationApproved", requester, title)
+            : Loc.Format("Decline_Explanation", requester, title);
         chooser = new ReasonChooser(reasons);
         chooser.Changed += (_, _) => IsPrimaryButtonEnabled = chooser.IsValid;
         Body.Children.Add(chooser);
