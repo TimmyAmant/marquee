@@ -235,6 +235,7 @@ targets:
           - ApiKeysTests.swift
           - PersonalNotificationsTests.swift
           - ArrServersTests.swift
+          - SettingsTabsTests.swift
       - path: MarqueeTests/Fixtures
         type: folder
         buildPhase: resources
