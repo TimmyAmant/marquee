@@ -42,6 +42,7 @@ public sealed class XamlStringsTests
         "Marquee", "Plex", "Jellyfin", "Emby", "Sonarr", "Radarr", "TMDb", "TheTVDB", "IMDb", "Trakt", "Discord",
         "Telegram", "Pushover", "ntfy", "Gotify", "Slack", "Pushbullet", "Homepage", "Homarr", "Organizr", "Unraid", "GitHub",
         "OpenAPI", "4K", "HDR", "Plex Watchlist", "Quick Connect", "API", "URL", "Webhook", "OK",
+        "Instagram", "Facebook", "X / Twitter", "Twitter", "TikTok", "YouTube",
     ];
 
     /// <summary>What an <c>x:Uid</c>'s strings may set on each element (plus <see cref="AnyElement"/>).</summary>

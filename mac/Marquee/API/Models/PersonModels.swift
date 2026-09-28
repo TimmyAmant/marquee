@@ -92,9 +92,9 @@ extension API {
         var label: String {
             switch kind {
             case "imdb": return "IMDb"
-            case "instagram": return "Instagram"
-            case "twitter": return "X / Twitter"
-            case "facebook": return "Facebook"
+            case "instagram": return "Instagram" // i18n-ignore
+            case "twitter": return "X / Twitter" // i18n-ignore
+            case "facebook": return "Facebook" // i18n-ignore
             case "tiktok": return "TikTok"
             case "youtube": return "YouTube"
             case "homepage": return String(localized: "Website")
