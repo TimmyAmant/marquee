@@ -127,6 +127,10 @@ final class ServerSession {
     /// and the token has been dropped.
     @ObservationIgnored var onUnauthorized: (() -> Void)?
 
+    /// Called when a call made with `client` couldn't reach the server at
+    /// all, so the app can check whether it went away.
+    @ObservationIgnored var onServerUnreachable: (() -> Void)?
+
     /// Shown in the server's device list; `name` on the token row.
     @ObservationIgnored private(set) lazy var deviceName: String = Platform.deviceName
 
@@ -184,10 +188,12 @@ final class ServerSession {
     var client: APIClient? {
         guard let server else { return nil }
         let token = currentToken()
-        return APIClient(baseURL: server.baseURL, token: token, session: urlSession) { [weak self] in
+        return APIClient(baseURL: server.baseURL, token: token, session: urlSession, onUnauthorized: { [weak self] in
             guard let token else { return }
             await self?.handleUnauthorized(token: token)
-        }
+        }, onUnreachable: { [weak self] in
+            await self?.serverUnreachable()
+        })
     }
 
     /// The typed API over `client`, without a refresh signal (AppModel's
@@ -584,6 +590,10 @@ final class ServerSession {
             tokenLoaded = true
             tokenUnavailable = false
         }
+    }
+
+    private func serverUnreachable() {
+        onServerUnreachable?()
     }
 
     private func handleUnauthorized(token rejected: String) {

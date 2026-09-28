@@ -33,6 +33,12 @@ protocol NotificationWatermarkStore: AnyObject {
 ///   count changes, the newest notifications are fetched and any unread one
 ///   newer than the stored watermark becomes a banner.
 ///
+/// - A call that can't reach the server at all (the poll, the stream, or any
+///   screen's request, through `suspectOutage()`) starts quick checks of
+///   `/badges`; when one fails too, `isReconnecting` puts up a slim
+///   "Reconnecting to your server…" strip, and the first answer clears it,
+///   reopens the stream and has the screens reload (`onReconnected`).
+///
 /// A notification is announced once, whichever path saw it first: both check
 /// its id and the watermark. One with `alert: false` (the account turned
 /// device push off for its kind) updates the bell but posts no banner. `stop()` on sign-out, server change or a 401
@@ -62,15 +68,13 @@ final class LiveUpdates {
     static let notificationFetchLimit = 20
     /// More new notifications than this in one check post a single summary banner.
     static let maxBannersPerCheck = 3
-    /// Polls in a row that couldn't reach the server before `isOffline`.
-    static let offlineThreshold = 3
 
     private(set) var badges = API.Badges.zero
     private(set) var isRunning = false
-    /// The last `offlineThreshold` polls couldn't reach the server at all.
-    /// The main window shows a slim "retrying" strip; the next poll that gets
-    /// any answer clears it.
-    private(set) var isOffline = false
+    /// The server stopped answering while signed in (a check after a failed
+    /// call couldn't reach it either). The window shows a slim
+    /// "Reconnecting to your server…" strip; its first answer clears it.
+    private(set) var isReconnecting = false
     /// The notification stream is open (it said `ready`), so new ones arrive
     /// the moment they happen rather than at the next poll.
     private(set) var isStreaming = false
@@ -85,6 +89,16 @@ final class LiveUpdates {
     /// in `NotificationConsent`. Off, they still reach the bell, and the
     /// watermark still moves, so turning banners on later doesn't replay them.
     @ObservationIgnored var bannersEnabled = false
+
+    /// The server answered again after `isReconnecting`: the screens reload
+    /// what they couldn't load meanwhile.
+    @ObservationIgnored var onReconnected: (() -> Void)?
+
+    /// The checks while the server is down; tests shorten them.
+    @ObservationIgnored var outageSchedule: ReconnectSchedule {
+        get { outage.schedule }
+        set { outage.schedule = newValue }
+    }
 
     @ObservationIgnored private let events: ServerEvents
     @ObservationIgnored private let banners: NotificationBannerPosting
@@ -101,7 +115,9 @@ final class LiveUpdates {
     @ObservationIgnored private var timerTask: Task<Void, Never>?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
     @ObservationIgnored private var queuedReason: Reason?
-    @ObservationIgnored private var consecutiveFailures = 0
+    @ObservationIgnored private var outage = SignedInOutage()
+    /// The next outage check.
+    @ObservationIgnored private var outageTask: Task<Void, Never>?
     /// Every notification this run has announced (or would have, with banners
     /// off), so the stream and the poll never post the same one twice.
     @ObservationIgnored private var announcedIDs: Set<UUID> = []
@@ -178,9 +194,11 @@ final class LiveUpdates {
         apiProvider = nil
         identity = nil
         lastBadges = nil
-        consecutiveFailures = 0
+        outageTask?.cancel()
+        outageTask = nil
+        _ = outage.answered()
         announcedIDs = []
-        if isOffline { isOffline = false }
+        if isReconnecting { isReconnecting = false }
         isRunning = false
         if badges != .zero { badges = .zero }
         setDockBadge(nil)
@@ -239,11 +257,15 @@ final class LiveUpdates {
             Self.logger.info("Badge poll failed: \(failure.localizedDescription, privacy: .public)")
             // Only "no answer at all" counts: a server that answers with an
             // error is still reachable.
-            recordReachability(!failure.isConnectivityFailure)
+            if failure.isConnectivityFailure {
+                suspectOutage()
+            } else {
+                serverAnswered()
+            }
             return
         }
         guard generation == self.generation else { return }
-        recordReachability(true)
+        serverAnswered()
 
         let previous = lastBadges
         lastBadges = fresh
@@ -273,14 +295,58 @@ final class LiveUpdates {
         }
     }
 
-    private func recordReachability(_ reached: Bool) {
-        if reached {
-            consecutiveFailures = 0
-            if isOffline { isOffline = false }
-        } else {
-            consecutiveFailures += 1
-            if consecutiveFailures >= Self.offlineThreshold, !isOffline { isOffline = true }
+    // MARK: Outages
+
+    /// A call couldn't reach the server at all: check it on `outageSchedule`
+    /// until it answers. Nothing shows until a check fails too.
+    func suspectOutage() {
+        guard isRunning, let wait = outage.suspect() else { return }
+        scheduleOutageCheck(after: wait)
+    }
+
+    private func scheduleOutageCheck(after wait: Duration) {
+        outageTask?.cancel()
+        let generation = self.generation
+        outageTask = Task { [weak self] in
+            try? await Task.sleep(for: wait)
+            guard !Task.isCancelled, let self, self.generation == generation else { return }
+            await self.checkServer(generation: generation)
         }
+    }
+
+    private func checkServer(generation: Int) async {
+        guard let api = apiProvider?() else { return }
+        do {
+            _ = try await api.badges()
+        } catch {
+            let failure = APIError.wrapping(error)
+            guard generation == self.generation, !(error is CancellationError), !failure.isCancellation else { return }
+            if failure.isConnectivityFailure {
+                let next = outage.checkFailed()
+                if !isReconnecting { isReconnecting = true }
+                if let next { scheduleOutageCheck(after: next) }
+                return
+            }
+        }
+        guard generation == self.generation else { return }
+        serverAnswered()
+    }
+
+    /// Any answer from the server ends an outage; one that had the strip up
+    /// catches up on what it missed and has the screens reload.
+    private func serverAnswered() {
+        guard outage.isChecking else { return }
+        outageTask?.cancel()
+        outageTask = nil
+        let wasReconnecting = outage.answered()
+        if isReconnecting { isReconnecting = false }
+        guard wasReconnecting else { return }
+        Self.logger.info("The server answers again")
+        refresh(.catchUp)
+        if streamsNotifications, streamWaiting {
+            startStream()
+        }
+        onReconnected?()
     }
 
     private func checkForNewNotifications(_ api: MarqueeAPI, generation: Int) async {
@@ -417,6 +483,7 @@ extension LiveUpdates {
             default:
                 if !error.isCancellation {
                     Self.logger.info("Notification stream dropped: \(error.localizedDescription, privacy: .public)")
+                    if error.isConnectivityFailure { suspectOutage() }
                 }
                 return streamSignedOut ? .signedOut : .dropped(retryHint: nil)
             }
@@ -430,6 +497,7 @@ extension LiveUpdates {
         switch event.name {
         case "ready":
             streamSaidReady = true
+            serverAnswered()
             if !isStreaming { isStreaming = true }
             // Anything that arrived while the stream was down (or, the first
             // time, between the first poll and the stream opening).

@@ -18,11 +18,11 @@ struct PhoneRootView: View {
         }
         .tint(Theme.accent)
         .safeAreaInset(edge: .top, spacing: 0) {
-            if model.live.isOffline {
+            if model.live.isReconnecting {
                 PhoneOfflineStrip()
             }
         }
-        .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
+        .animation(.easeOut(duration: 0.2), value: model.live.isReconnecting)
         .overlay(alignment: .bottom) {
             PhoneBannerView()
                 // Clear of the tab bar.
@@ -188,12 +188,12 @@ struct NotificationBellButton: View {
     }
 }
 
-/// Badge polling hasn't reached the server for a few minutes.
+/// Signed in, and the server stopped answering (`LiveUpdates.isReconnecting`).
 private struct PhoneOfflineStrip: View {
     var body: some View {
         HStack(spacing: 8) {
             ProgressView().controlSize(.mini)
-            Text("Can't reach your Marquee server — retrying…")
+            Text("Reconnecting to your server…")
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(Theme.textSecondary)
         }

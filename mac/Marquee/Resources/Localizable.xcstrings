@@ -8647,34 +8647,6 @@
         }
       }
     },
-    "Can't reach your Marquee server — retrying…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Marquee-Server ist nicht erreichbar – neuer Versuch …"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se puede conectar con tu servidor Marquee: reintentando…"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible de joindre votre serveur Marquee — nouvelle tentative…"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível acessar seu servidor Marquee — tentando de novo…"
-          }
-        }
-      }
-    },
     "Can't reach your server" : {
       "localizations" : {
         "de" : {
@@ -27674,6 +27646,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionado recentemente ao Plex/Jellyfin"
+          }
+        }
+      }
+    },
+    "Reconnecting to your server…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbindung zu deinem Server wird wiederhergestellt …"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconectando con tu servidor…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnexion à votre serveur…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconectando ao seu servidor…"
           }
         }
       }

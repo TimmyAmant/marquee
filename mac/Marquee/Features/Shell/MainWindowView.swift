@@ -38,11 +38,11 @@ struct MainWindowView: View {
         .padding(.bottom, railInsets.bottom)
         .background(Theme.bg0)
         .safeAreaInset(edge: .top, spacing: 0) {
-            if model.live.isOffline {
+            if model.live.isReconnecting {
                 OfflineStrip()
             }
         }
-        .animation(.easeOut(duration: 0.2), value: model.live.isOffline)
+        .animation(.easeOut(duration: 0.2), value: model.live.isReconnecting)
         .overlay {
             NavMenu()
                 .environment(\.navRailPosition, railPosition)
@@ -129,13 +129,13 @@ struct RouteDestinationView: View {
 
 // MARK: - Offline strip
 
-/// Badge polling hasn't reached the server for a few minutes. Polling carries
-/// on, and the next answer clears it.
+/// Signed in, and the server stopped answering (`LiveUpdates.isReconnecting`):
+/// checks carry on, and its first answer clears it and reloads the page.
 private struct OfflineStrip: View {
     var body: some View {
         HStack(spacing: 8) {
             ProgressView().controlSize(.mini)
-            Text("Can't reach your Marquee server — retrying…")
+            Text("Reconnecting to your server…")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
         }
