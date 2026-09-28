@@ -8,7 +8,9 @@ using Microsoft.UI.Xaml.Controls;
 namespace Marquee.Windows.Views.Settings;
 
 /// <summary>
-/// Settings › Account. The view owns the household member dialogs (Add
+/// Settings › Account, and the parts of it that are tabs of their own now
+/// (Members, your Notifications, the Blocklist): each tab makes one for its
+/// <see cref="SettingsPart"/>. The view owns the household member dialogs (Add
 /// member, Edit, the Remove confirmation, Link Jellyfin, Import), because a
 /// ContentDialog needs its XamlRoot, and lends them to the view model.
 /// </summary>
@@ -16,9 +18,9 @@ public sealed partial class AccountSettingsView : UserControl, ISettingsTabView
 {
     public AccountSettingsViewModel ViewModel { get; }
 
-    public AccountSettingsView()
+    public AccountSettingsView(SettingsPart part)
     {
-        ViewModel = new AccountSettingsViewModel(AppServices.Model);
+        ViewModel = new AccountSettingsViewModel(AppServices.Model, part);
         ViewModel.AddMemberPrompt = ShowAddMemberDialogAsync;
         ViewModel.EditMemberPrompt = ShowEditMemberDialogAsync;
         ViewModel.ProfilePrompt = ShowProfileDialogAsync;

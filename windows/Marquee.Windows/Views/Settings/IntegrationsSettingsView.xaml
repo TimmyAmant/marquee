@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Settings › Integrations (app/settings/integrations/page.tsx, the Mac's
+  Settings › General, Media servers and Services (app/settings/general, media-servers and services, the Mac's
+  IntegrationsSettingsView), the admin's, each tab its own part (ViewModel.Part), plus single
+  sign-on under Members and one household channel at a time under Notifications. Once it was all one tab:
   IntegrationsSettingsView), the admin's: Media Libraries (Plex, Jellyfin or
   Emby), Sign-in (single sign-on on a 0.44+ server), Download Clients (any number of Sonarr and Radarr servers on a
   0.43+ server; before that Sonarr, Radarr, and the 4K ones on a 0.37+
@@ -142,25 +144,23 @@
         <DataTemplate x:Key="ArrServerRowTemplate" x:DataType="vm:ArrServerRow">
             <Border Style="{StaticResource SettingsCard}">
                 <StackPanel Spacing="12">
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
-                                <controls:TonePill Text="{x:Bind DefaultBadge, Mode=OneWay}" Tone="{x:Bind DefaultTone}" VerticalAlignment="Center" />
-                                <controls:TonePill Text="{x:Bind FourKBadge, Mode=OneWay}" Tone="{x:Bind FourKTone}" VerticalAlignment="Center" />
-                                <controls:TonePill Text="{x:Bind SetupBadge, Mode=OneWay}" Tone="{x:Bind SetupTone}" VerticalAlignment="Center" />
-                            </StackPanel>
+                    <!-- A tile (Seerr's service cards): name and address, its badges, then its actions. -->
+                    <StackPanel Spacing="10">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                             <TextBlock
                                 Text="{x:Bind BaseUrl, Mode=OneWay}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="Wrap" />
+                                TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <controls:TonePill Text="{x:Bind SetupBadge, Mode=OneWay}" Tone="{x:Bind SetupTone}" VerticalAlignment="Center" />
+                            <controls:TonePill Text="{x:Bind DefaultBadge, Mode=OneWay}" Tone="{x:Bind DefaultTone}" VerticalAlignment="Center" />
+                            <controls:TonePill Text="{x:Bind FourKBadge, Mode=OneWay}" Tone="{x:Bind FourKTone}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <StackPanel
                                 Orientation="Horizontal"
                                 Spacing="8"
@@ -186,7 +186,7 @@
                                 <Button x:Uid="Arr_RowCancelRemove" Command="{x:Bind CancelRemoveCommand}" />
                             </StackPanel>
                         </StackPanel>
-                    </Grid>
+                    </StackPanel>
                     <StackPanel Spacing="6">
                         <TextBlock x:Uid="Arr_RowWebhookLabel" Style="{StaticResource FieldLabel}" />
                         <Grid ColumnSpacing="8">
@@ -294,20 +294,20 @@
 
     <StackPanel Spacing="20">
         <!-- The pane's heading, with Sync now on the right. -->
-        <Grid ColumnSpacing="16">
+        <Grid ColumnSpacing="16" Visibility="{x:Bind ViewModel.ShowsHeading, Converter={StaticResource BoolToVisibility}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Spacing="4">
-                <TextBlock x:Uid="Integrations_Heading" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="{x:Bind ViewModel.Heading}" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
-                    x:Uid="Integrations_Intro"
+                    Text="{x:Bind ViewModel.Intro}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
             </StackPanel>
-            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right">
+            <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Right" Visibility="{x:Bind ViewModel.ShowsSync, Converter={StaticResource BoolToVisibility}}">
                 <Button
                     Content="{x:Bind ViewModel.SyncLabel, Mode=OneWay}"
                     Command="{x:Bind ViewModel.SyncNowCommand}"
@@ -349,7 +349,7 @@
 
         <StackPanel Spacing="28" Visibility="{x:Bind ViewModel.HasOverview, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
             <!-- Media Libraries -->
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsMediaServersPart, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_MediaLibraries" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                 <!-- components/plex-connect-card.tsx -->
@@ -473,6 +473,7 @@
               one answers GET /settings/sso with 404). The client secret is
               write-only: the card only knows whether one is saved.
             -->
+            <StackPanel Visibility="{x:Bind ViewModel.ShowsSignInPart, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Sso.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_SignInHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <Border Style="{StaticResource SettingsCard}">
@@ -664,13 +665,14 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+            </StackPanel>
 
             <!--
               Download Clients: on a 0.43+ server any number of Sonarr and
               Radarr servers, with one Add/Edit form under the lists; before
               that Sonarr, Radarr, then the 4K ones on a 0.37+ server.
             -->
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsServicesPart, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_DownloadClients" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ItemsRepeater
                     ItemsSource="{x:Bind ViewModel.ArrCards, Mode=OneWay}"
@@ -704,7 +706,7 @@
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.SonarrServers, Mode=OneWay}" ItemTemplate="{StaticResource ArrServerRowTemplate}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Vertical" Spacing="12" />
+                            <UniformGridLayout MinItemWidth="320" MinColumnSpacing="12" MinRowSpacing="12" ItemsStretch="Fill" />
                         </ItemsRepeater.Layout>
                     </ItemsRepeater>
 
@@ -724,7 +726,7 @@
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                     <ItemsRepeater ItemsSource="{x:Bind ViewModel.ArrServers.RadarrServers, Mode=OneWay}" ItemTemplate="{StaticResource ArrServerRowTemplate}">
                         <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Vertical" Spacing="12" />
+                            <UniformGridLayout MinItemWidth="320" MinColumnSpacing="12" MinRowSpacing="12" ItemsStretch="Fill" />
                         </ItemsRepeater.Layout>
                     </ItemsRepeater>
 
@@ -885,7 +887,7 @@
             </StackPanel>
 
             <!-- Metadata Sources -->
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsGeneralPart, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock x:Uid="Integrations_MetadataSources" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ContentControl
                     Content="{x:Bind ViewModel.Tmdb}"
@@ -944,14 +946,42 @@
               household's notifications are posted. Each account adds its
               own under Settings > Account > Notifications.
             -->
-            <StackPanel Spacing="12">
-                <TextBlock x:Uid="Integrations_HouseholdChannels" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsChannelsSection, Converter={StaticResource BoolToVisibility}}">
+                <!-- Notifications › Household events: what the household's channels post (0.45+). -->
+                <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsHouseholdEventsPart, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="2">
+                            <TextBlock x:Uid="HouseholdEvents_Title" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="HouseholdEvents_Intro"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.HouseholdEvents.Rows, Mode=OneWay}">
+                            <ItemsRepeater.Layout>
+                                <UniformGridLayout MinItemWidth="260" MinColumnSpacing="12" MinRowSpacing="4" ItemsStretch="Fill" />
+                            </ItemsRepeater.Layout>
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:HouseholdEventRow">
+                                    <CheckBox Content="{x:Bind Label}" IsChecked="{x:Bind IsEnabled, Mode=TwoWay}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <TextBlock
+                            Text="{x:Bind ViewModel.HouseholdEvents.Status, Mode=OneWay}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
 
                 <!--
                   components/webhook-settings-card.tsx. On a 0.43+ server each
                   Sonarr/Radarr server shows its own webhook under Download
                   Clients instead (the shared URLs keep working).
                 -->
+                <StackPanel Visibility="{x:Bind ViewModel.ShowsServicesPart, Converter={StaticResource BoolToVisibility}}">
                 <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsArrCards, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Spacing="14">
                         <Grid ColumnSpacing="12">
@@ -1013,14 +1043,17 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                </StackPanel>
 
                 <ContentControl
                     Content="{x:Bind ViewModel.Discord}"
+                    Visibility="{x:Bind ViewModel.ShowsDiscordPart, Converter={StaticResource BoolToVisibility}}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
                 <ContentControl
                     Content="{x:Bind ViewModel.Ntfy}"
+                    Visibility="{x:Bind ViewModel.ShowsNtfyPart, Converter={StaticResource BoolToVisibility}}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
@@ -1033,7 +1066,7 @@
                   connected. Admin-only, and only from a 0.36+ server.
                 -->
                 <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.Channels.IsVisible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <Border Style="{StaticResource SettingsCard}">
+                    <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsTelegramPart, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
@@ -1101,7 +1134,7 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource SettingsCard}">
+                    <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsPushoverPart, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
@@ -1169,7 +1202,7 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
-                    <Border Style="{StaticResource SettingsCard}">
+                    <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.ShowsEmailPart, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Spacing="14">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
@@ -1269,31 +1302,10 @@
 
                 <ContentControl
                     Content="{x:Bind ViewModel.GenericWebhook}"
+                    Visibility="{x:Bind ViewModel.ShowsWebhookPart, Converter={StaticResource BoolToVisibility}}"
                     ContentTemplate="{StaticResource SecretCardTemplate}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch" />
-            </StackPanel>
-
-            <!--
-              Coming from Seerr? (0.51+): components/seerr-import-card.tsx.
-              The import itself (connect, preview, run) is the website's
-              page, opened in the browser on the server's own address.
-            -->
-            <StackPanel Spacing="12">
-                <TextBlock x:Uid="Integrations_SeerrHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Border Style="{StaticResource SettingsCard}">
-                    <StackPanel Spacing="12">
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Uid="Integrations_SeerrTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock
-                                x:Uid="Integrations_SeerrBlurb"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                        <Button x:Uid="Integrations_SeerrOpen" Command="{x:Bind ViewModel.OpenSeerrImportCommand}" />
-                    </StackPanel>
-                </Border>
             </StackPanel>
 
             <!--
@@ -1303,6 +1315,7 @@
               once, with Copy, until Done. Only from a 0.47+ server (an
               older one answers GET /settings/api-keys with 404).
             -->
+            <StackPanel Visibility="{x:Bind ViewModel.ShowsGeneralPart, Converter={StaticResource BoolToVisibility}}">
             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ApiKeys.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="4">
                     <TextBlock x:Uid="Integrations_ApiKeysHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -1426,6 +1439,29 @@
                                 IsEnabled="{x:Bind ViewModel.ApiKeys.CanCreate, Mode=OneWay}"
                                 Style="{StaticResource AccentButtonStyle}" />
                         </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            </StackPanel>
+
+            <!--
+              Coming from Seerr? (0.51+): components/seerr-import-card.tsx.
+              The import itself (connect, preview, run) is the website's
+              page, opened in the browser on the server's own address.
+            -->
+            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsGeneralPart, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock x:Uid="Integrations_SeerrHeading" Style="{StaticResource BodyStrongTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Border Style="{StaticResource SettingsCard}">
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Uid="Integrations_SeerrTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Uid="Integrations_SeerrBlurb"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button x:Uid="Integrations_SeerrOpen" Command="{x:Bind ViewModel.OpenSeerrImportCommand}" />
                     </StackPanel>
                 </Border>
             </StackPanel>

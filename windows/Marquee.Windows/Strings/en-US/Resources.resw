@@ -1940,20 +1940,11 @@
   <data name="Integrations_EmailUsername.PlaceholderText" xml:space="preserve">
     <value>Leave blank if the server needs none</value>
   </data>
-  <data name="Integrations_Heading.Text" xml:space="preserve">
-    <value>Integrations</value>
-  </data>
-  <data name="Integrations_HouseholdChannels.Text" xml:space="preserve">
-    <value>Household channels</value>
-  </data>
   <data name="Integrations_Import" xml:space="preserve">
     <value>Import</value>
   </data>
   <data name="Integrations_Importing" xml:space="preserve">
     <value>Importing…</value>
-  </data>
-  <data name="Integrations_Intro.Text" xml:space="preserve">
-    <value>Connect Plex, Jellyfin, Sonarr, and Radarr so Marquee knows what you already own and can send the rest straight to your download queue. Credentials are stored encrypted on your server and only ever used on your behalf.</value>
   </data>
   <data name="Integrations_JellyfinApiKey.Header" xml:space="preserve">
     <value>API key</value>
@@ -3202,9 +3193,6 @@
   <data name="Nav_SettingsTabDiscover" xml:space="preserve">
     <value>Discover</value>
   </data>
-  <data name="Nav_SettingsTabIntegrations" xml:space="preserve">
-    <value>Integrations</value>
-  </data>
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Jobs</value>
   </data>
@@ -4158,42 +4146,6 @@
   </data>
   <data name="Server_ProbeUnknownHost" xml:space="preserve">
     <value>Couldn't find {0} on your network. Try its IP address instead.</value>
-  </data>
-  <data name="Settings_AboutTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>About</value>
-  </data>
-  <data name="Settings_AboutTabLabel.Text" xml:space="preserve">
-    <value>About</value>
-  </data>
-  <data name="Settings_AccountTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Account</value>
-  </data>
-  <data name="Settings_AccountTabLabel.Text" xml:space="preserve">
-    <value>Account</value>
-  </data>
-  <data name="Settings_ActivityTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Activity</value>
-  </data>
-  <data name="Settings_ActivityTabLabel.Text" xml:space="preserve">
-    <value>Activity</value>
-  </data>
-  <data name="Settings_DiscoverTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Discover</value>
-  </data>
-  <data name="Settings_DiscoverTabLabel.Text" xml:space="preserve">
-    <value>Discover</value>
-  </data>
-  <data name="Settings_IntegrationsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Integrations</value>
-  </data>
-  <data name="Settings_IntegrationsTabLabel.Text" xml:space="preserve">
-    <value>Integrations</value>
-  </data>
-  <data name="Settings_JobsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Jobs</value>
-  </data>
-  <data name="Settings_JobsTabLabel.Text" xml:space="preserve">
-    <value>Jobs</value>
   </data>
   <data name="Settings_Title.Text" xml:space="preserve">
     <value>Settings</value>
@@ -5309,5 +5261,74 @@
   </data>
   <data name="Profile_WatchlistEmpty" xml:space="preserve">
     <value>Nothing on the Watchlist yet.</value>
+  </data>
+  <data name="Nav_SettingsTabGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Nav_SettingsTabMembers" xml:space="preserve">
+    <value>Members</value>
+  </data>
+  <data name="Nav_SettingsTabMediaServers" xml:space="preserve">
+    <value>Media servers</value>
+  </data>
+  <data name="Nav_SettingsTabServices" xml:space="preserve">
+    <value>Services</value>
+  </data>
+  <data name="Nav_SettingsTabNotifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="Nav_SettingsTabBlocklist" xml:space="preserve">
+    <value>Blocklist</value>
+  </data>
+  <data name="Nav_NotificationsPersonal" xml:space="preserve">
+    <value>Personal</value>
+  </data>
+  <data name="Nav_NotificationsHousehold" xml:space="preserve">
+    <value>Household events</value>
+  </data>
+  <data name="Nav_NotificationsDiscord" xml:space="preserve">
+    <value>Discord</value>
+  </data>
+  <data name="Nav_NotificationsNtfy" xml:space="preserve">
+    <value>ntfy</value>
+  </data>
+  <data name="Nav_NotificationsTelegram" xml:space="preserve">
+    <value>Telegram</value>
+  </data>
+  <data name="Nav_NotificationsPushover" xml:space="preserve">
+    <value>Pushover</value>
+  </data>
+  <data name="Nav_NotificationsEmail" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Nav_NotificationsWebhook" xml:space="preserve">
+    <value>Webhook</value>
+  </data>
+  <data name="Settings_NotificationsHeading" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="Settings_NotificationsIntro" xml:space="preserve">
+    <value>Your own notifications, and the channels the whole household hears from.</value>
+  </data>
+  <data name="Settings_GeneralIntro" xml:space="preserve">
+    <value>Where Marquee gets its movie and TV details, API keys for other apps, and moving over from Seerr.</value>
+  </data>
+  <data name="Settings_MediaServersIntro" xml:space="preserve">
+    <value>Connect Plex or Jellyfin so Marquee knows what the household already owns. Credentials are stored encrypted on your server.</value>
+  </data>
+  <data name="Settings_ServicesIntro" xml:space="preserve">
+    <value>Sonarr and Radarr: where approved requests are sent. Add as many as you run; 4K ones take 4K requests.</value>
+  </data>
+  <data name="HouseholdEvents_Title.Text" xml:space="preserve">
+    <value>What the household channels post</value>
+  </data>
+  <data name="HouseholdEvents_Intro.Text" xml:space="preserve">
+    <value>The channels in these tabs are the household’s: everything picked here goes to each one that’s set up, once. Members add their own under Settings › Notifications, using the bot, app and mail server set up here.</value>
+  </data>
+  <data name="HouseholdEvents_Saving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="Account_Intro.Text" xml:space="preserve">
+    <value>Your profile, how you sign in, and how Marquee looks on this device.</value>
   </data>
 </root>

@@ -19,6 +19,9 @@ namespace Marquee.Windows.ViewModels;
 /// card but single sign-on and API keys, which have their own
 /// <c>GET /settings/sso</c> and <c>GET /settings/api-keys</c>; each card
 /// writes through its own endpoint and the overview reloads after any change.
+/// Each Settings tab shows its own <see cref="Part"/> of it: General,
+/// Media servers, Services, single sign-on (under Members) or one household
+/// channel (under Notifications).
 /// </summary>
 public sealed partial class IntegrationsSettingsViewModel : ObservableObject
 {
@@ -28,9 +31,11 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     private CancellationTokenSource? loadCancellation;
     private bool active;
 
-    public IntegrationsSettingsViewModel(AppModel model)
+    public IntegrationsSettingsViewModel(AppModel model, SettingsPart part = SettingsPart.General)
     {
         this.model = model;
+        Part = part;
+        HouseholdEvents = new HouseholdEventsViewModel(model);
         Plex = new PlexIntegrationViewModel(model);
         Jellyfin = new JellyfinIntegrationViewModel(model);
         Sso = new SsoSettingsViewModel(model);
@@ -124,6 +129,50 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
     }
 
     private readonly IReadOnlyList<ArrIntegrationViewModel> mainArrCards;
+
+    // MARK: The part on screen
+
+    /// <summary>Which Settings tab this is (or which channel, under Notifications).</summary>
+    public SettingsPart Part { get; }
+
+    /// <summary>The tab's heading and line: not for single sign-on or a channel, which sit under another tab's.</summary>
+    public bool ShowsHeading => Part is SettingsPart.General or SettingsPart.MediaServers or SettingsPart.Services;
+
+    public string Heading => Part switch
+    {
+        SettingsPart.MediaServers => Loc.Get("Nav_SettingsTabMediaServers"),
+        SettingsPart.Services => Loc.Get("Nav_SettingsTabServices"),
+        _ => Loc.Get("Nav_SettingsTabGeneral"),
+    };
+
+    public string Intro => Part switch
+    {
+        SettingsPart.MediaServers => Loc.Get("Settings_MediaServersIntro"),
+        SettingsPart.Services => Loc.Get("Settings_ServicesIntro"),
+        _ => Loc.Get("Settings_GeneralIntro"),
+    };
+
+    /// <summary>"Sync now" is Media servers'.</summary>
+    public bool ShowsSync => Part == SettingsPart.MediaServers;
+
+    public bool ShowsGeneralPart => Part == SettingsPart.General;
+    public bool ShowsMediaServersPart => Part == SettingsPart.MediaServers;
+    public bool ShowsServicesPart => Part == SettingsPart.Services;
+    public bool ShowsSignInPart => Part == SettingsPart.SignIn;
+
+    /// <summary>The household channels' section: Services keeps the older shared Sonarr/Radarr webhooks there.</summary>
+    public bool ShowsChannelsSection => Part == SettingsPart.Services || Part.IsChannel();
+
+    public bool ShowsHouseholdEventsPart => Part == SettingsPart.HouseholdEvents;
+    public bool ShowsDiscordPart => Part == SettingsPart.Discord;
+    public bool ShowsNtfyPart => Part == SettingsPart.Ntfy;
+    public bool ShowsTelegramPart => Part == SettingsPart.Telegram;
+    public bool ShowsPushoverPart => Part == SettingsPart.Pushover;
+    public bool ShowsEmailPart => Part == SettingsPart.Email;
+    public bool ShowsWebhookPart => Part == SettingsPart.Webhook;
+
+    /// <summary>"What the household channels post" (0.45+), under Notifications › Household events.</summary>
+    public HouseholdEventsViewModel HouseholdEvents { get; }
 
     // MARK: Cards
 
@@ -234,6 +283,10 @@ public sealed partial class IntegrationsSettingsViewModel : ObservableObject
         _ = LoadAsync();
         _ = Sso.LoadAsync();
         _ = ApiKeys.LoadAsync();
+        if (Part == SettingsPart.HouseholdEvents)
+        {
+            _ = HouseholdEvents.LoadAsync();
+        }
     }
 
     public void Deactivate()

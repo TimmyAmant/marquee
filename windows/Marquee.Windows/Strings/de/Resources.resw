@@ -1870,20 +1870,11 @@
   <data name="Integrations_EmailUsername.PlaceholderText" xml:space="preserve">
     <value>Leer lassen, wenn der Server keinen braucht</value>
   </data>
-  <data name="Integrations_Heading.Text" xml:space="preserve">
-    <value>Integrationen</value>
-  </data>
-  <data name="Integrations_HouseholdChannels.Text" xml:space="preserve">
-    <value>Haushaltskanäle</value>
-  </data>
   <data name="Integrations_Import" xml:space="preserve">
     <value>Importieren</value>
   </data>
   <data name="Integrations_Importing" xml:space="preserve">
     <value>Wird importiert …</value>
-  </data>
-  <data name="Integrations_Intro.Text" xml:space="preserve">
-    <value>Verbinde Plex, Jellyfin, Sonarr und Radarr, damit Marquee weiß, was du schon hast, und den Rest direkt in deine Download-Warteschlange schicken kann. Zugangsdaten werden verschlüsselt auf deinem Server gespeichert und nur in deinem Auftrag verwendet.</value>
   </data>
   <data name="Integrations_JellyfinApiKey.Header" xml:space="preserve">
     <value>API-Schlüssel</value>
@@ -3076,9 +3067,6 @@
   <data name="Nav_SettingsTabDiscover" xml:space="preserve">
     <value>Entdecken</value>
   </data>
-  <data name="Nav_SettingsTabIntegrations" xml:space="preserve">
-    <value>Integrationen</value>
-  </data>
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Aufgaben</value>
   </data>
@@ -3990,42 +3978,6 @@
   </data>
   <data name="Server_ProbeUnknownHost" xml:space="preserve">
     <value>{0} wurde in deinem Netzwerk nicht gefunden. Versuch es stattdessen mit der IP-Adresse.</value>
-  </data>
-  <data name="Settings_AboutTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Über</value>
-  </data>
-  <data name="Settings_AboutTabLabel.Text" xml:space="preserve">
-    <value>Über</value>
-  </data>
-  <data name="Settings_AccountTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Konto</value>
-  </data>
-  <data name="Settings_AccountTabLabel.Text" xml:space="preserve">
-    <value>Konto</value>
-  </data>
-  <data name="Settings_ActivityTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Aktivität</value>
-  </data>
-  <data name="Settings_ActivityTabLabel.Text" xml:space="preserve">
-    <value>Aktivität</value>
-  </data>
-  <data name="Settings_DiscoverTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Entdecken</value>
-  </data>
-  <data name="Settings_DiscoverTabLabel.Text" xml:space="preserve">
-    <value>Entdecken</value>
-  </data>
-  <data name="Settings_IntegrationsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Integrationen</value>
-  </data>
-  <data name="Settings_IntegrationsTabLabel.Text" xml:space="preserve">
-    <value>Integrationen</value>
-  </data>
-  <data name="Settings_JobsTab.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Aufgaben</value>
-  </data>
-  <data name="Settings_JobsTabLabel.Text" xml:space="preserve">
-    <value>Aufgaben</value>
   </data>
   <data name="Settings_Title.Text" xml:space="preserve">
     <value>Einstellungen</value>
@@ -5121,5 +5073,74 @@
   </data>
   <data name="Profile_WatchlistEmpty" xml:space="preserve">
     <value>Noch nichts auf der Watchlist.</value>
+  </data>
+  <data name="Nav_SettingsTabGeneral" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="Nav_SettingsTabMembers" xml:space="preserve">
+    <value>Mitglieder</value>
+  </data>
+  <data name="Nav_SettingsTabMediaServers" xml:space="preserve">
+    <value>Medienserver</value>
+  </data>
+  <data name="Nav_SettingsTabServices" xml:space="preserve">
+    <value>Dienste</value>
+  </data>
+  <data name="Nav_SettingsTabNotifications" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="Nav_SettingsTabBlocklist" xml:space="preserve">
+    <value>Sperrliste</value>
+  </data>
+  <data name="Nav_NotificationsPersonal" xml:space="preserve">
+    <value>Persönlich</value>
+  </data>
+  <data name="Nav_NotificationsHousehold" xml:space="preserve">
+    <value>Ereignisse im Haushalt</value>
+  </data>
+  <data name="Nav_NotificationsDiscord" xml:space="preserve">
+    <value>Discord</value>
+  </data>
+  <data name="Nav_NotificationsNtfy" xml:space="preserve">
+    <value>ntfy</value>
+  </data>
+  <data name="Nav_NotificationsTelegram" xml:space="preserve">
+    <value>Telegram</value>
+  </data>
+  <data name="Nav_NotificationsPushover" xml:space="preserve">
+    <value>Pushover</value>
+  </data>
+  <data name="Nav_NotificationsEmail" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Nav_NotificationsWebhook" xml:space="preserve">
+    <value>Webhook</value>
+  </data>
+  <data name="Settings_NotificationsHeading" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="Settings_NotificationsIntro" xml:space="preserve">
+    <value>Deine eigenen Benachrichtigungen und die Kanäle, die der ganze Haushalt bekommt.</value>
+  </data>
+  <data name="Settings_GeneralIntro" xml:space="preserve">
+    <value>Woher Marquee die Infos zu Filmen und Serien bekommt, API-Schlüssel für andere Apps und der Umzug von Seerr.</value>
+  </data>
+  <data name="Settings_MediaServersIntro" xml:space="preserve">
+    <value>Verbinde Plex oder Jellyfin, damit Marquee weiß, was der Haushalt schon hat. Zugangsdaten werden verschlüsselt auf deinem Server gespeichert.</value>
+  </data>
+  <data name="Settings_ServicesIntro" xml:space="preserve">
+    <value>Sonarr und Radarr: Hierhin gehen genehmigte Anfragen. Füge so viele hinzu, wie du betreibst; 4K-Server bekommen 4K-Anfragen.</value>
+  </data>
+  <data name="HouseholdEvents_Title.Text" xml:space="preserve">
+    <value>Was die Kanäle des Haushalts posten</value>
+  </data>
+  <data name="HouseholdEvents_Intro.Text" xml:space="preserve">
+    <value>Die Kanäle in diesen Tabs gehören dem Haushalt: Alles, was hier gewählt ist, geht einmal an jeden eingerichteten Kanal. Mitglieder fügen ihre eigenen unter Einstellungen › Benachrichtigungen hinzu – mit dem Bot, der App und dem Mailserver, die hier eingerichtet sind.</value>
+  </data>
+  <data name="HouseholdEvents_Saving" xml:space="preserve">
+    <value>Wird gespeichert …</value>
+  </data>
+  <data name="Account_Intro.Text" xml:space="preserve">
+    <value>Dein Profil, wie du dich anmeldest und wie Marquee auf diesem Gerät aussieht.</value>
   </data>
 </root>

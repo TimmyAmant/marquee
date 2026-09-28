@@ -842,7 +842,7 @@ public sealed partial class LibraryViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() => model.OpenSettings(SettingsTab.Integrations);
+    private void OpenSettings() => model.OpenSettings(SettingsTab.MediaServers);
 
     // MARK: Reload triggers
 

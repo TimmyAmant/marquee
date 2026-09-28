@@ -32605,30 +32605,30 @@
         }
       }
     },
-    "The channels below are the household's: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Account › Notifications, using the bot, app and mail server set up here." : {
+    "The channels below are the household's: everything picked here goes to each one that's set up, once. Members can add their own Telegram, Pushover, email, Discord, ntfy or webhook under Settings › Notifications, using the bot, app and mail server set up here." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Kanäle unten gehören dem Haushalt: Alles, was hier gewählt ist, geht einmal an jeden eingerichteten Kanal. Mitglieder können unter Einstellungen › Konto › Benachrichtigungen ihr eigenes Telegram, Pushover, E-Mail, Discord, ntfy oder einen Webhook hinzufügen – mit dem Bot, der App und dem Mailserver, die hier eingerichtet sind."
+            "value" : "Die Kanäle unten gehören dem Haushalt: Alles, was hier gewählt ist, geht einmal an jeden eingerichteten Kanal. Mitglieder können unter Einstellungen › Benachrichtigungen ihr eigenes Telegram, Pushover, E-Mail, Discord, ntfy oder einen Webhook hinzufügen – mit dem Bot, der App und dem Mailserver, die hier eingerichtet sind."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Los canales de abajo son del hogar: todo lo que elijas aquí llega una vez a cada uno que esté configurado. Los miembros pueden añadir su propio Telegram, Pushover, correo, Discord, ntfy o webhook en Ajustes › Cuenta › Notificaciones, usando el bot, la app y el servidor de correo configurados aquí."
+            "value" : "Los canales de abajo son del hogar: todo lo que elijas aquí llega una vez a cada uno que esté configurado. Los miembros pueden añadir su propio Telegram, Pushover, correo, Discord, ntfy o webhook en Ajustes › Notificaciones, usando el bot, la app y el servidor de correo configurados aquí."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les canaux ci-dessous sont ceux du foyer : tout ce qui est choisi ici est envoyé une fois à chacun de ceux qui sont configurés. Les membres peuvent ajouter leur propre Telegram, Pushover, e-mail, Discord, ntfy ou webhook dans Paramètres › Compte › Notifications, avec le bot, l’application et le serveur de messagerie configurés ici."
+            "value" : "Les canaux ci-dessous sont ceux du foyer : tout ce qui est choisi ici est envoyé une fois à chacun de ceux qui sont configurés. Les membres peuvent ajouter leur propre Telegram, Pushover, e-mail, Discord, ntfy ou webhook dans Paramètres › Notifications, avec le bot, l’application et le serveur de messagerie configurés ici."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Os canais abaixo são da casa: tudo o que for escolhido aqui vai uma vez para cada um que estiver configurado. Os membros podem adicionar o próprio Telegram, Pushover, e-mail, Discord, ntfy ou webhook em Configurações › Conta › Notificações, usando o bot, o app e o servidor de e-mail configurados aqui."
+            "value" : "Os canais abaixo são da casa: tudo o que for escolhido aqui vai uma vez para cada um que estiver configurado. Os membros podem adicionar o próprio Telegram, Pushover, e-mail, Discord, ntfy ou webhook em Configurações › Notificações, usando o bot, o app e o servidor de e-mail configurados aqui."
           }
         }
       }

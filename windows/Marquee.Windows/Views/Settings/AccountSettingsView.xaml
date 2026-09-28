@@ -7,7 +7,8 @@
   (household-members-list.tsx, each row with its photo) with the admin's
   Add member, the admin's Plex/Jellyfin import and sign-in setting, and the
   request blocklist. Each card is a Border with the card brushes. The member
-  dialogs are shown by the code-behind.
+  dialogs are shown by the code-behind. Settings' tabs each show one part
+  (ViewModel.Part): Account, Members, Notifications (Personal) or Blocklist.
 -->
 <UserControl
     x:Class="Marquee.Windows.Views.Settings.AccountSettingsView"
@@ -54,8 +55,17 @@
     </UserControl.Resources>
 
     <StackPanel Spacing="20">
+        <!-- Account: your details, linked accounts and Trakt lists. -->
+        <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsAccountPart, Converter={StaticResource BoolToVisibility}}">
         <!-- Account -->
-        <TextBlock x:Uid="Account_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
+        <StackPanel Spacing="4">
+            <TextBlock x:Uid="Account_Title" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock
+                x:Uid="Account_Intro"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
         <Border Style="{StaticResource SettingsCard}">
             <StackPanel Spacing="14">
                 <StackPanel Spacing="2">
@@ -470,7 +480,10 @@
                 </StackPanel>
             </Border>
         </StackPanel>
+        </StackPanel>
 
+        <!-- Notifications, the Personal sub-tab: this PC, your channels, what you hear about. -->
+        <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsNotificationsPart, Converter={StaticResource BoolToVisibility}}">
         <!--
           Notifications (Settings > Account > Notifications on the
           website): Windows notifications straight from the server's
@@ -770,7 +783,10 @@
                 </Border>
             </StackPanel>
         </StackPanel>
+        </StackPanel>
 
+        <!-- Account: the menu on this PC. -->
+        <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsAccountPart, Converter={StaticResource BoolToVisibility}}">
         <!--
           Menu position: which edge of the window the navigation bar sits on,
           for this PC only (the app's local settings). The window moves it as
@@ -833,7 +849,10 @@
                 </StackPanel>
             </StackPanel>
         </Border>
+        </StackPanel>
 
+        <!-- Members: every account, and adding them. -->
+        <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsMembersPart, Converter={StaticResource BoolToVisibility}}">
         <!-- Household members: every account for the admin, only your own for a member -->
         <Grid ColumnSpacing="12">
             <Grid.ColumnDefinitions>
@@ -1006,7 +1025,10 @@
                 </StackPanel>
             </Border>
         </StackPanel>
+        </StackPanel>
 
+        <!-- Blocklist. -->
+        <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsBlocklistPart, Converter={StaticResource BoolToVisibility}}">
         <!--
           Request blocklist (app/settings/blocklist-settings.tsx, 0.41+):
           titles blocked from their page and TMDb keywords/genres nobody
@@ -1109,6 +1131,7 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
+        </StackPanel>
         </StackPanel>
     </StackPanel>
 </UserControl>
