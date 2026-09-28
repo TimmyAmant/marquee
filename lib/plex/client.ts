@@ -10,6 +10,7 @@ import {
   normalizeVideoCodec,
 } from "@/lib/media-info";
 import type { MediaDetail } from "@/lib/media-info";
+import { regularEpisodeCount } from "@/lib/library/episode-counts";
 
 const PLEX_TV_BASE = "https://plex.tv";
 const PRODUCT = "Marquee";
@@ -191,6 +192,8 @@ export interface PlexMetadataItem {
   // per-item request needed, unlike file size for shows.
   viewCount?: number;
   lastViewedAt?: number;
+  /** An episode's season number (0 for specials); allLeaves entries only. */
+  parentIndex?: number;
 }
 
 export function getFileSize(item: PlexMetadataItem): number | null {
@@ -304,6 +307,20 @@ export function commonFolder(filePaths: string[]): string | null {
   return path || null;
 }
 
+export type ShowFileInfo = {
+  sizeBytes: number | null;
+  folderPath: string | null;
+  /** Episode files on disk, specials included (the Library page's count). */
+  episodeCount: number | null;
+  /** The same, specials (season 0) left out — a series poster's "have". */
+  episodesHave: number | null;
+  detail: MediaDetail;
+};
+
+export function emptyShowFileInfo(): ShowFileInfo {
+  return { sizeBytes: null, folderPath: null, episodeCount: null, episodesHave: null, detail: { ...EMPTY_MEDIA_DETAIL } };
+}
+
 /** A show's own library-section entry has no Media/Part — only individual
  * episodes carry a file — so total size, a location and the media detail all
  * have to be derived from all of a show's episodes via Plex's "all leaves"
@@ -316,12 +333,12 @@ export async function getShowFileInfo(
   serverUri: string,
   token: string,
   ratingKey: string,
-): Promise<{ sizeBytes: number | null; folderPath: string | null; episodeCount: number | null; detail: MediaDetail }> {
+): Promise<ShowFileInfo> {
   const res = await fetch(`${serverUri}/library/metadata/${ratingKey}/allLeaves`, {
     headers: { Accept: "application/json", "X-Plex-Token": token },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
-  if (!res.ok) return { sizeBytes: null, folderPath: null, episodeCount: null, detail: { ...EMPTY_MEDIA_DETAIL } };
+  if (!res.ok) return emptyShowFileInfo();
   const body = await res.json();
   const episodes: PlexMetadataItem[] = body.MediaContainer?.Metadata ?? [];
   const total = episodes.reduce((sum, ep) => sum + (getFileSize(ep) ?? 0), 0);
@@ -333,6 +350,7 @@ export async function getShowFileInfo(
     // Every leaf Plex lists carries a file, so this is the episode files on
     // disk — what the Library page counts as episodes.
     episodeCount: withFiles.length,
+    episodesHave: regularEpisodeCount(withFiles.map((ep) => ({ seasonNumber: ep.parentIndex }))),
     detail: aggregateMediaDetail(withFiles.map(parseMediaDetail)),
   };
 }

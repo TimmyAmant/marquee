@@ -83,7 +83,7 @@ export async function DiscoverView({
       fetchDiscoverItems({ lockedType, sort, genreId, year, networkId, hideOwned, page: 1 }, viewer),
     ]);
 
-  const { becauseYouWatched, statusMap, favoritedIds, arrConfigured } = await loadBecauseYouWatched(
+  const { becauseYouWatched, statusMap, episodeCounts, favoritedIds, arrConfigured } = await loadBecauseYouWatched(
     viewer,
     lockedType,
     { genreId, year },
@@ -117,6 +117,7 @@ export async function DiscoverView({
                     year={item.year}
                     badge={status && <StatusBadge status={status} compact />}
                     status={status}
+                    episodes={episodeCounts.get(`${item.mediaType}:${item.tmdbId}`)}
                     favoriteAction={
                       viewer.session && (
                         <FavoriteButton

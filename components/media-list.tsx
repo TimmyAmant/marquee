@@ -14,6 +14,7 @@ import { formatBytes } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 import { resolutionTierOf } from "@/lib/quality";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 
 export type MediaEntry = {
   titleId: string;
@@ -24,6 +25,8 @@ export type MediaEntry = {
   year: string | null;
   subtitle?: string | null;
   status?: LibraryStatus;
+  /** Series in the library: have/total aired episodes. */
+  episodes?: EpisodeCounts | null;
   source?: "plex" | "jellyfin" | "sonarr" | "radarr";
   sizeBytes?: number | null;
   addedAt?: string | null;
@@ -406,6 +409,7 @@ export function MediaList({
                   )
                 }
                 status={entry.status}
+                episodes={entry.episodes}
                 filePath={entry.filePath}
                 favoriteAction={
                   showFavorite && (

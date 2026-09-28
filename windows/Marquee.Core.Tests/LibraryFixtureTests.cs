@@ -52,6 +52,14 @@ public sealed class LibraryFixtureTests
         Assert.Null(thrones.Resolution);
         Assert.Equal(61, thrones.EpisodeCount);
 
+        // The series poster's have/total aired episodes, carried onto its card.
+        Assert.Equal(new EpisodeCounts { Have = 61, Total = 73 }, thrones.Episodes);
+        Assert.Equal(thrones.Episodes, thrones.ToTitleCard().Episodes);
+        Assert.Equal("61/73", thrones.Episodes?.ShortLabel);
+        Assert.Equal("61 of 73 episodes", thrones.Episodes?.SpokenLabel);
+        Assert.False(thrones.Episodes?.IsComplete);
+        Assert.Null(matrix.Episodes);
+
         Assert.Equal(640, page.Summary.Movies);
         Assert.Equal(172, page.Summary.Series);
         Assert.Equal(9840, page.Summary.Episodes);

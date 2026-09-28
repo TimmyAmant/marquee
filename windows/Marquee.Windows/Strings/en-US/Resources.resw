@@ -1074,6 +1074,10 @@
     <value>{0}: {1}</value>
     <comment>Color key row for a screen reader: {0} the status name, {1} what it means.</comment>
   </data>
+  <data name="Card_EpisodesOfTotal" xml:space="preserve">
+    <value>{0} of {1} episodes</value>
+    <comment>A series poster's episode count for a screen reader: {0} episodes on disk, {1} episodes aired.</comment>
+  </data>
   <data name="Card_TypeMovie" xml:space="preserve">
     <value>MOVIE</value>
     <comment>Corner pill on a poster, in capitals.</comment>

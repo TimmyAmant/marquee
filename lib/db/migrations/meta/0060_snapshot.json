@@ -1,6 +1,6 @@
 {
-  "id": "f67d87a6-572c-4ba9-82b1-535e7273068f",
-  "prevId": "785a275a-259a-445b-b7b2-87cf4202743a",
+  "id": "740315ea-1e37-4476-b21c-59c659e7475d",
+  "prevId": "f67d87a6-572c-4ba9-82b1-535e7273068f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2681,6 +2681,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "known_for_title_id": {
+          "name": "known_for_title_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "raw_tmdb": {
           "name": "raw_tmdb",
           "type": "jsonb",
@@ -2696,7 +2702,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "people_known_for_title_id_titles_id_fk": {
+          "name": "people_known_for_title_id_titles_id_fk",
+          "tableFrom": "people",
+          "tableTo": "titles",
+          "columnsFrom": [
+            "known_for_title_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "people_tmdb_id_unique": {
@@ -4122,6 +4142,12 @@
         "status": {
           "name": "status",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vote_count": {
+          "name": "vote_count",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },

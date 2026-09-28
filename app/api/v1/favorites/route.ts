@@ -9,7 +9,7 @@ import type { FavoritesResponse } from "@/lib/api/types";
  * as on the website. */
 export const GET = withApi(async (request): Promise<FavoritesResponse> => {
   const ctx = await requireApiUser(request);
-  const data = await loadFavoritesPage(ctx.user.id);
+  const data = await loadFavoritesPage(ctx.user.id, await ctx.libraryOwnerId());
 
   return {
     movies: data.favoriteMovies.map((title) =>
@@ -21,7 +21,7 @@ export const GET = withApi(async (request): Promise<FavoritesResponse> => {
     tv: data.favoriteShows.map((title) =>
       titleCard(
         { mediaType: "tv", tmdbId: title.tmdbId, name: title.name, posterPath: title.posterPath, year: yearOf(title.firstAirDate) },
-        { favorited: true },
+        { favorited: true, episodes: data.episodeCounts.get(`tv:${title.tmdbId}`) },
       ),
     ),
     collections: data.collections.map((collection) => ({

@@ -54,6 +54,10 @@
       "requested": null,
       "canQuickAdd": false,
       "canRequest": false,
+      "episodes": {
+        "have": 61,
+        "total": 73
+      },
       "tvdbId": 121361,
       "source": "sonarr",
       "sizeBytes": 98765432100,

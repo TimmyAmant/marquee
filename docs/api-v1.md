@@ -270,7 +270,8 @@ computed against `libraryOwnerId` (from `/me`), exactly like the website.
   "favorited": false,
   "requested": null,
   "canQuickAdd": false,
-  "canRequest": false
+  "canRequest": false,
+  "episodes": null
 }
 ```
 
@@ -288,6 +289,7 @@ computed against `libraryOwnerId` (from `/me`), exactly like the website.
 | `requested` | bool \| null | You already have a pending or approved request; null on lists that offer no quick action (Favorites) |
 | `canQuickAdd` | bool | Show the "+ Add" quick action (`POST /titles/{type}/{id}/add`): the admin, with Radarr/Sonarr set up for the type, on a title not in the library |
 | `canRequest` | bool | Show the "Request" quick action: a member with the request permission for the type, on a title not in the library, not blocked, not already requested — when `requested` is true, show "Requested" instead |
+| `episodes` | `{ "have": int, "total": int }` \| null | Series in the library only (newer servers; older ones leave it out, so decode it as optional): aired episodes with a file on disk (`have`) against episodes aired so far (`total`), specials (season 0) left out — the poster's "96/96" on the right of its title line (`have` never exceeds `total`), muted when they're equal, in the Downloading tone while some are missing. From Sonarr where it tracks the show, else the media server's files against TMDb's aired count. Null for a movie, a show the library doesn't have, or when no source counts it |
 
 Every list that returns TitleCards fills these three in the same way (newer servers;
 older servers left them false/null on Discover's shelves and never sent
@@ -4678,7 +4680,7 @@ page.
       "upgradeAvailable": false, "possibleDuplicate": false, "arrTracking": { "arrId": 12, "monitored": true } },
     { "mediaType": "tv", "tmdbId": 1399, "name": "Game of Thrones", "posterPath": "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg", "year": "2011",
       "subtitle": null, "overview": null, "rating": null, "status": "tracked_downloading", "favorited": false, "requested": null,
-      "canQuickAdd": false, "canRequest": false,
+      "canQuickAdd": false, "canRequest": false, "episodes": { "have": 61, "total": 73 },
       "tvdbId": 121361, "source": "sonarr", "sizeBytes": 98765432100, "addedAt": null,
       "genres": ["Drama", "Sci-Fi & Fantasy"], "resolution": null, "hdr": null,
       "videoCodec": null, "audioCodec": null, "quality": null,

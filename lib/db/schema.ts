@@ -379,6 +379,9 @@ export const plexLibraryItems = pgTable(
     // for the Library page's episode count. Null for a movie, and from a
     // sync older than the column.
     episodeCount: integer("episode_count"),
+    // Shows only: the same, specials (season 0) left out — a series poster's
+    // "have" when Sonarr doesn't track the show (lib/library/episode-counts.ts).
+    episodesHave: integer("episodes_have"),
   },
   (table) => [
     unique().on(table.plexServerId, table.ratingKey),
@@ -438,6 +441,11 @@ export const jellyfinLibraryItems = pgTable(
     audioChannels: integer("audio_channels"),
     container: text("container"),
     bitrateKbps: integer("bitrate_kbps"),
+    // Shows only: episodes with a file, specials (season 0) left out — a
+    // series poster's "have" when Sonarr doesn't track the show
+    // (lib/library/episode-counts.ts). Null for movies, and from a sync
+    // older than the column.
+    episodesHave: integer("episodes_have"),
   },
   (table) => [
     unique().on(table.jellyfinServerId, table.itemId),
@@ -515,6 +523,11 @@ export const arrStatusCache = pgTable(
     // Sonarr only: episode files on disk (statistics.episodeFileCount), for
     // the Library page's episode count. Null for Radarr rows.
     episodeCount: integer("episode_count"),
+    // Sonarr only: a series poster's "have/total" — episodes on disk and
+    // episodes aired, specials left out (lib/library/episode-counts.ts).
+    // Null for Radarr rows, and from a sync older than the columns.
+    episodesHave: integer("episodes_have"),
+    episodesAired: integer("episodes_aired"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],

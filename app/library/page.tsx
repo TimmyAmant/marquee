@@ -101,7 +101,11 @@ async function AllTab({
   const t = await getT();
   const data = await loadLibraryPage(viewer, query);
   const entries = data.page.results.map((item) =>
-    libraryEntry(item, { favorited: data.favoritedKeys.has(statusKey(item.mediaType, item.tmdbId)), isAdmin: viewer.isAdmin }),
+    libraryEntry(item, {
+      favorited: data.favoritedKeys.has(statusKey(item.mediaType, item.tmdbId)),
+      isAdmin: viewer.isAdmin,
+      episodes: data.episodeCounts.get(statusKey(item.mediaType, item.tmdbId)),
+    }),
   );
   const { summary } = data;
   const hasAnything = data.page.totalResults > 0 || libraryQueryParams(query).toString() !== "";
@@ -182,6 +186,7 @@ async function CollectionsTab({ viewer }: { viewer: SignedIn }) {
           title={`${collection.title} · ${t("library.missingCount", { count: collection.missing.length })}`}
           items={collection.items}
           statusMap={collection.statusMap}
+          episodeCounts={collection.episodeCounts}
           requestStatusMap={collection.requestStatusMap}
           blockedKeys={data.blockedKeys}
           favoritedIds={collection.favoritedIds}

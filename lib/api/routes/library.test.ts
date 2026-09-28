@@ -109,6 +109,10 @@ describe("GET /library", () => {
     });
     expect(body.results.find((r) => r.tmdbId === 1399)).toMatchObject({ episodeCount: 61, resolution: "1080p", hdr: null, arrTracking: { arrId: 7, monitored: true } });
     expect(body.results.find((r) => r.tmdbId === 949)).toMatchObject({ hdr: "HDR10", arrTracking: null, addedAt: "2026-09-25T18:00:00.000Z" });
+    // A series poster's have/aired, from Sonarr; never a movie's.
+    expect(body.results.find((r) => r.tmdbId === 1399)?.episodes).toEqual({ have: 73, total: 73 });
+    expect(body.results.find((r) => r.tmdbId === 95396)?.episodes).toEqual({ have: 3, total: 19 });
+    expect(matrix.episodes).toBeNull();
     expect(body.results.find((r) => r.tmdbId === 27205)).toMatchObject({ status: "tracked_monitored", resolution: null, addedAt: null });
   });
 

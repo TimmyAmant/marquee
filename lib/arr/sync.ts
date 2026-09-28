@@ -14,6 +14,7 @@ import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
 import { arrConfig, listLibraryServers, ownersWithLibraryServers, type ArrServer } from "@/lib/arr/servers";
 import { mergeServerCopies, type ServerCopy } from "@/lib/arr/merge";
 import { statusRank } from "@/lib/arr/fan-out";
+import { sonarrEpisodeCounts } from "@/lib/library/episode-counts";
 
 // The library cache (arr_status_cache) for Sonarr/Radarr: one row per title
 // across every standard (non-4K) server of that kind. Each server is listed
@@ -37,6 +38,9 @@ type RowFields = {
   audioCodec?: string | null;
   /** Sonarr: episode files on disk. */
   episodeCount?: number | null;
+  /** Sonarr: a series poster's have/aired, specials left out. */
+  episodesHave?: number | null;
+  episodesAired?: number | null;
 };
 
 /** Throws when this kind's standard servers are no longer the ones this run
@@ -146,6 +150,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
         // The queue is real-time; episode-file-count statistics only reflect
         // the last sync and don't move until an episode finishes importing.
         const status = listing.queued.has(series.id) ? "tracked_downloading" : deriveSonarrStatus(series);
+        const counts = sonarrEpisodeCounts(series.seasons, series.monitored);
         copies.push({
           serverId: listing.server.id,
           tmdbId,
@@ -156,6 +161,8 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
             sizeBytes: series.statistics?.sizeOnDisk ?? null,
             filePath: series.path ?? null,
             episodeCount: series.statistics?.episodeFileCount ?? null,
+            episodesHave: counts?.have ?? null,
+            episodesAired: counts?.total ?? null,
           },
         });
       }

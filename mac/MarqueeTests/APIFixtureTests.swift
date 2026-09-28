@@ -470,6 +470,24 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertNotNil(person.age)
     }
 
+    func testSeriesEpisodeCounts() throws {
+        // A series in the library: have/total aired episodes.
+        let library = try decode(API.LibraryPageResponse.self, "library-page")
+        let thrones = try XCTUnwrap(library.results.first { $0.tmdbId == 1399 })
+        XCTAssertEqual(thrones.episodes, API.EpisodeCounts(have: 61, total: 73))
+        XCTAssertEqual(thrones.card.episodes?.shortLabel, "61/73")
+        XCTAssertEqual(thrones.card.episodes?.isComplete, false)
+        XCTAssertNil(library.results.first { $0.tmdbId == 603 }?.episodes)
+        XCTAssertTrue(API.EpisodeCounts(have: 96, total: 96).isComplete)
+
+        // null, and an older server that leaves the field out, both decode as nil.
+        XCTAssertNil(try decode(API.TitleCard.self, "title-card").episodes)
+        var older = try XCTUnwrap(JSONSerialization.jsonObject(with: fixture("title-card")) as? [String: Any])
+        older.removeValue(forKey: "episodes")
+        let card = try APIClient.decoder.decode(API.TitleCard.self, from: JSONSerialization.data(withJSONObject: older))
+        XCTAssertNil(card.episodes)
+    }
+
     func testProfilePhotoURLs() throws {
         let me = try decode(API.Me.self, "me")
         XCTAssertEqual(me.avatarUrl, "/api/v1/users/54caac33-73d6-4864-8e12-1ea6b212d2f1/avatar?v=1790334036549")

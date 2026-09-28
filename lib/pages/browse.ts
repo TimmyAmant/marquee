@@ -6,7 +6,8 @@ import {
   type TmdbTvDetails,
 } from "@/lib/tmdb/client";
 import { getFavoritedTmdbIds } from "@/lib/favorites/query";
-import { getLibraryStatusMap } from "@/lib/library/query";
+import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
+import type { EpisodeCounts } from "@/lib/library/episode-counts";
 import { getArrCredential, isArrFullyConfigured } from "@/lib/integrations/credentials";
 import { getRecentlyWatched } from "@/lib/plex/sync";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
@@ -115,13 +116,13 @@ export async function loadBecauseYouWatched(
     }
   }
 
-  const statusMap: Map<string, LibraryStatus> =
+  const [statusMap, episodeCounts]: [Map<string, LibraryStatus>, Map<string, EpisodeCounts>] =
     becauseYouWatched && viewer.libraryOwnerId
-      ? await getLibraryStatusMap(
-          viewer.libraryOwnerId,
-          becauseYouWatched.items.map((i) => ({ mediaType: i.mediaType, tmdbId: i.tmdbId })),
-        )
-      : new Map();
+      ? await Promise.all([
+          getLibraryStatusMap(viewer.libraryOwnerId, becauseYouWatched.items),
+          getEpisodeCountMap(viewer.libraryOwnerId, becauseYouWatched.items),
+        ])
+      : [new Map(), new Map()];
 
   const [radarrCredential, sonarrCredential, favoritedIds] =
     becauseYouWatched && viewer.userId
@@ -139,5 +140,5 @@ export async function loadBecauseYouWatched(
   const arrConfigured =
     lockedType === "movie" ? isArrFullyConfigured(radarrCredential) : isArrFullyConfigured(sonarrCredential);
 
-  return { becauseYouWatched, statusMap, favoritedIds, arrConfigured };
+  return { becauseYouWatched, statusMap, episodeCounts, favoritedIds, arrConfigured };
 }

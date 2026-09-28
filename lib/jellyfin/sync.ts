@@ -50,6 +50,11 @@ async function runSyncJellyfinLibrary(
     console.error(`[jellyfin-sync] getLibraryItems failed for user ${userId}:`, err);
     return { itemCount: 0 };
   }
+  // Best-effort: without it a Jellyfin-only show just has no episode count
+  // on its poster.
+  const episodesBySeries = items.some((i) => i.Type === "Series")
+    ? await jellyfin.getEpisodeFileCountsBySeries(credential).catch(() => null)
+    : null;
   let itemCount = 0;
   const seenItemIds = new Set<string>();
 
@@ -88,6 +93,7 @@ async function runSyncJellyfinLibrary(
     // request), and a Series entry simply has neither.
     const detail: MediaDetail =
       mediaType === "movie" ? jellyfin.parseMediaDetail(item) : { ...EMPTY_MEDIA_DETAIL };
+    const episodesHave = mediaType === "tv" && episodesBySeries ? (episodesBySeries.get(item.Id) ?? 0) : null;
 
     await db
       .insert(jellyfinLibraryItems)
@@ -103,6 +109,7 @@ async function runSyncJellyfinLibrary(
         sizeBytes,
         filePath: item.Path ?? null,
         ...detail,
+        episodesHave,
       })
       .onConflictDoUpdate({
         target: [jellyfinLibraryItems.jellyfinServerId, jellyfinLibraryItems.itemId],
@@ -116,6 +123,7 @@ async function runSyncJellyfinLibrary(
           sizeBytes,
           filePath: item.Path ?? null,
           ...detail,
+          episodesHave,
         },
       });
     itemCount++;

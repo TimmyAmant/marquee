@@ -20,7 +20,11 @@ export async function loadMoreLibraryAction(
   const data = await loadLibraryPage(viewer, query);
   return {
     entries: data.page.results.map((item) =>
-      libraryEntry(item, { favorited: data.favoritedKeys.has(statusKey(item.mediaType, item.tmdbId)), isAdmin: viewer.isAdmin }),
+      libraryEntry(item, {
+        favorited: data.favoritedKeys.has(statusKey(item.mediaType, item.tmdbId)),
+        isAdmin: viewer.isAdmin,
+        episodes: data.episodeCounts.get(statusKey(item.mediaType, item.tmdbId)),
+      }),
     ),
     page: data.page.page,
     totalPages: data.page.totalPages,

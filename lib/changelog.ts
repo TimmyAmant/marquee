@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.60.0",
+    date: "2026-09-27",
+    changes: [
+      "Show posters now show how many episodes you have on the right of the title, like 96/96 — grey when every aired episode is there, purple (like Downloading) while some are still missing (120/125). Specials and episodes that haven't aired yet aren't counted. On the website, Mac, Windows and iPhone; counts appear after the next library sync.",
+    ],
+  },
+  {
     version: "0.59.5",
     date: "2026-09-27",
     changes: [
