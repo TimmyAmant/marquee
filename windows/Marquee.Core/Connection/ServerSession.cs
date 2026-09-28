@@ -75,6 +75,13 @@ public sealed class ServerSession
     /// <summary>Raised after an authenticated call was answered with 401 <c>unauthorized</c> and the token has been dropped.</summary>
     public event EventHandler? Unauthorized;
 
+    /// <summary>
+    /// A call made with <see cref="Client"/> couldn't reach the server at
+    /// all, so the app can check whether it went away. Raised on whatever
+    /// thread the call completed on.
+    /// </summary>
+    public event EventHandler? ServerUnreachable;
+
     /// <param name="handler">Tests pass a stub; the app leaves it null for <see cref="ApiClient.DefaultHandler"/>.</param>
     public ServerSession(ISettingsStore settings, ITokenStore tokenStore, HttpMessageHandler? handler = null, string? deviceName = null)
     {
@@ -110,7 +117,8 @@ public sealed class ServerSession
                 server.BaseUrl,
                 current,
                 handler,
-                current == null ? null : () => HandleUnauthorizedAsync(current));
+                current == null ? null : () => HandleUnauthorizedAsync(current),
+                current == null ? null : () => ServerUnreachable?.Invoke(this, EventArgs.Empty));
         }
     }
 

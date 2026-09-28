@@ -108,12 +108,20 @@ public sealed partial class AppModel : ObservableObject
     private AppPhase phase = AppPhase.Launching;
 
     /// <summary>Leaving the waiting and can't-reach cards (signed in, another server, sign-in) ends the outage.</summary>
-    partial void OnPhaseChanged(AppPhase value)
+    partial void OnPhaseChanged(AppPhase oldValue, AppPhase newValue)
     {
-        if (value is not (AppPhase.Waiting or AppPhase.Unreachable))
+        if (newValue is not (AppPhase.Waiting or AppPhase.Unreachable))
         {
             reconnect.Reset();
             StopReconnectTimer();
+        }
+        if (newValue == AppPhase.Unreachable && oldValue != AppPhase.Unreachable)
+        {
+            StartQuietRetries();
+        }
+        else if (newValue != AppPhase.Unreachable)
+        {
+            StopQuietRetries();
         }
     }
 
@@ -170,6 +178,14 @@ public sealed partial class AppModel : ObservableObject
     [ObservableProperty]
     private bool isRetryingConnection;
 
+    /// <summary>
+    /// Signed in, and the server stopped answering (a check after a failed
+    /// call couldn't reach it either): the window shows a slim "Reconnecting
+    /// to your server…" strip, and the page reloads once it answers.
+    /// </summary>
+    [ObservableProperty]
+    private bool isReconnecting;
+
     /// <summary>Unread notifications and pending requests from <c>/badges</c>.</summary>
     [ObservableProperty]
     private Badges badges = Badges.Zero;
@@ -221,6 +237,15 @@ public sealed partial class AppModel : ObservableObject
     /// <summary>The next automatic attempt while <see cref="AppPhase.Waiting"/>.</summary>
     private DispatcherQueueTimer? reconnectTimer;
 
+    /// <summary>The can't-reach card's quiet attempts, every <see cref="ReconnectSchedule.QuietRetryInterval"/>.</summary>
+    private DispatcherQueueTimer? quietRetryTimer;
+
+    /// <summary>The checks while the server is down and this PC is signed in.</summary>
+    private readonly SignedInOutage outage = new();
+
+    /// <summary>The next outage check.</summary>
+    private DispatcherQueueTimer? outageTimer;
+
     /// <summary>Debounces network changes: several in a row (Wi-Fi rejoining) make one attempt after things settle.</summary>
     private DispatcherQueueTimer? networkTimer;
 
@@ -245,6 +270,7 @@ public sealed partial class AppModel : ObservableObject
         ShowMenuLabels = MenuLabelsSetting.Read(settings);
         session.StateChanged += OnSessionStateChanged;
         session.Unauthorized += OnSessionUnauthorized;
+        session.ServerUnreachable += OnSessionServerUnreachable;
         Events.Changed += OnServerChanged;
         TitleState.Changed += OnTitleStateChanged;
     }
@@ -371,6 +397,49 @@ public sealed partial class AppModel : ObservableObject
         if (Phase == AppPhase.Waiting)
         {
             _ = RetryConnectionAsync();
+        }
+    }
+
+    /// <summary>
+    /// Behind the can't-reach card, a try every
+    /// <see cref="ReconnectSchedule.QuietRetryInterval"/> without the Retry
+    /// button's spinner, so a server that comes back later (after a longer
+    /// update, or a reboot) is picked up without a click.
+    /// </summary>
+    private void StartQuietRetries()
+    {
+        StopQuietRetries();
+        var timer = Dispatcher.CreateTimer();
+        timer.Interval = ReconnectSchedule.QuietRetryInterval;
+        timer.IsRepeating = true;
+        timer.Tick += OnQuietRetryTick;
+        timer.Start();
+        quietRetryTimer = timer;
+    }
+
+    private void StopQuietRetries()
+    {
+        if (quietRetryTimer != null)
+        {
+            quietRetryTimer.Stop();
+            quietRetryTimer.Tick -= OnQuietRetryTick;
+            quietRetryTimer = null;
+        }
+    }
+
+    private async void OnQuietRetryTick(DispatcherQueueTimer sender, object args)
+    {
+        if (Phase != AppPhase.Unreachable || IsRetryingConnection)
+        {
+            return;
+        }
+        try
+        {
+            await ConnectToSavedServerAsync();
+        }
+        catch (Exception)
+        {
+            // Stays on the card; the next tick tries again.
         }
     }
 
@@ -846,6 +915,9 @@ public sealed partial class AppModel : ObservableObject
     private void StopBadgePolling()
     {
         badgeGeneration++;
+        StopOutageTimer();
+        _ = outage.Answered();
+        IsReconnecting = false;
         if (badgeTimer != null)
         {
             badgeTimer.Stop();
@@ -891,6 +963,7 @@ public sealed partial class AppModel : ObservableObject
             {
                 return;
             }
+            ServerAnswered();
             var previous = lastBadges;
             lastBadges = fresh;
             if (fresh != Badges)
@@ -915,10 +988,15 @@ public sealed partial class AppModel : ObservableObject
                 }
             }
         }
-        catch (ApiException)
+        catch (ApiException error)
         {
             // The next poll tries again; a rejected token has already signed
-            // the session out through the session's Unauthorized event.
+            // the session out through the session's Unauthorized event, and a
+            // server that didn't answer at all started the outage checks.
+            if (!error.IsConnectivityFailure && generation == badgeGeneration)
+            {
+                ServerAnswered();
+            }
         }
         finally
         {
@@ -934,6 +1012,100 @@ public sealed partial class AppModel : ObservableObject
             }
         }
     }
+
+    // MARK: Outages
+
+    /// <summary>
+    /// A call couldn't reach the server at all while signed in: check it on
+    /// <see cref="ReconnectSchedule.SignedIn"/> until it answers. Nothing
+    /// shows until a check fails too.
+    /// </summary>
+    private void SuspectOutage()
+    {
+        if (Phase == AppPhase.Ready && outage.Suspect() is { } wait)
+        {
+            ScheduleOutageCheck(wait);
+        }
+    }
+
+    private void ScheduleOutageCheck(TimeSpan wait)
+    {
+        StopOutageTimer();
+        var timer = Dispatcher.CreateTimer();
+        timer.Interval = wait;
+        timer.IsRepeating = false;
+        timer.Tick += OnOutageTick;
+        timer.Start();
+        outageTimer = timer;
+    }
+
+    private void StopOutageTimer()
+    {
+        if (outageTimer != null)
+        {
+            outageTimer.Stop();
+            outageTimer.Tick -= OnOutageTick;
+            outageTimer = null;
+        }
+    }
+
+    private async void OnOutageTick(DispatcherQueueTimer sender, object args)
+    {
+        StopOutageTimer();
+        if (Phase != AppPhase.Ready)
+        {
+            return;
+        }
+        var generation = badgeGeneration;
+        try
+        {
+            await Api.BadgesAsync();
+        }
+        catch (ApiException error) when (error.IsConnectivityFailure && !error.IsCancellation)
+        {
+            if (generation != badgeGeneration || Phase != AppPhase.Ready)
+            {
+                return;
+            }
+            var next = outage.CheckFailed();
+            IsReconnecting = true;
+            if (next is { } wait)
+            {
+                ScheduleOutageCheck(wait);
+            }
+            return;
+        }
+        catch (ApiException)
+        {
+            // It answered, even if with an error: it's back.
+        }
+        if (generation == badgeGeneration && Phase == AppPhase.Ready)
+        {
+            ServerAnswered();
+        }
+    }
+
+    /// <summary>
+    /// Any answer from the server ends an outage; one that had the strip up
+    /// reloads the page and the counts.
+    /// </summary>
+    private void ServerAnswered()
+    {
+        if (!outage.IsChecking)
+        {
+            return;
+        }
+        StopOutageTimer();
+        var wasReconnecting = outage.Answered();
+        IsReconnecting = false;
+        if (wasReconnecting)
+        {
+            Reload();
+        }
+    }
+
+    private void OnSessionServerUnreachable(object? sender, EventArgs e) =>
+        Dispatcher.TryEnqueue(SuspectOutage);
 
     // MARK: Poster quick actions
 

@@ -693,6 +693,9 @@ public sealed partial class MainWindow : Window, INavigator
             case nameof(AppModel.Badges):
                 UpdateBadges();
                 break;
+            case nameof(AppModel.IsReconnecting):
+                ReconnectingBar.IsOpen = model.IsReconnecting;
+                break;
             case nameof(AppModel.MenuPosition):
             case nameof(AppModel.ShowMenuLabels):
                 ApplyMenuPosition();

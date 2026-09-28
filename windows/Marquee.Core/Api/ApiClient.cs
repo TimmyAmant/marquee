@@ -73,16 +73,24 @@ public sealed class ApiClient
     /// </summary>
     public Func<Task>? OnUnauthorized { get; }
 
+    /// <summary>
+    /// Called before a call throws because the server couldn't be reached at
+    /// all (refused, no answer, a proxy's 502-504), so the app can check
+    /// whether it went away. Not for a cancelled call.
+    /// </summary>
+    public Action? OnUnreachable { get; }
+
     private readonly HttpClient http;
 
     /// <param name="baseUrl">The server root, e.g. <c>http://192.168.1.20:3000</c>; <see cref="BasePath"/> is appended.</param>
     /// <param name="token">The bearer token, or null for the public endpoints.</param>
     /// <param name="handler">Tests pass a stub; the app leaves it null for <see cref="DefaultHandler"/>.</param>
-    public ApiClient(Uri baseUrl, string? token = null, HttpMessageHandler? handler = null, Func<Task>? onUnauthorized = null)
+    public ApiClient(Uri baseUrl, string? token = null, HttpMessageHandler? handler = null, Func<Task>? onUnauthorized = null, Action? onUnreachable = null)
     {
         BaseUrl = baseUrl;
         Token = token;
         OnUnauthorized = onUnauthorized;
+        OnUnreachable = onUnreachable;
         // Per-request timeouts are applied through a cancellation token, so
         // the client's own timer is off; it would otherwise cap long calls
         // ("Run now", Plex's first sync) at its default 100 seconds.
@@ -136,9 +144,21 @@ public sealed class ApiClient
         TimeSpan? timeout = null,
         CancellationToken ct = default)
     {
-        var raw = await SendRawAsync(method, path, query, body, timeout, ct).ConfigureAwait(false);
-        return await DecodeAsync<T>(raw).ConfigureAwait(false);
+        try
+        {
+            var raw = await SendRawAsync(method, path, query, body, timeout, ct).ConfigureAwait(false);
+            return await DecodeAsync<T>(raw).ConfigureAwait(false);
+        }
+        catch (ApiException error) when (IsOutage(error))
+        {
+            OnUnreachable?.Invoke();
+            throw;
+        }
     }
+
+    /// <summary>No answer at all (a proxy saying the server is down counts), rather than a cancelled call or an error answer.</summary>
+    private bool IsOutage(ApiException error) =>
+        OnUnreachable != null && error.Kind == ApiErrorKind.Network && !error.IsCancellation;
 
     /// <summary>
     /// Sends a raw body (a photo for <c>PUT /users/{id}/avatar</c>) with its

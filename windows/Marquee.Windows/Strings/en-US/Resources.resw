@@ -4262,6 +4262,9 @@
   <data name="Shell_AskNotificationsTurnOn" xml:space="preserve">
     <value>Turn on</value>
   </data>
+  <data name="Shell_ReconnectingBar.Title" xml:space="preserve">
+    <value>Reconnecting to your server…</value>
+  </data>
   <data name="Shell_AuthUpdateButton.Content" xml:space="preserve">
     <value>Update</value>
   </data>

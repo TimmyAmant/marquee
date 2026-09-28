@@ -219,6 +219,22 @@
             <Frame x:Name="ContentFrame" Margin="72,0,0,0" Navigated="OnContentNavigated" />
 
             <!--
+              Signed in, and the server stopped answering (AppModel.IsReconnecting):
+              a slim strip over the top of the page, which stays as it is and
+              reloads once the server answers again.
+            -->
+            <InfoBar
+                x:Name="ReconnectingBar"
+                x:Uid="Shell_ReconnectingBar"
+                Margin="0,8,0,0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Canvas.ZIndex="10"
+                Severity="Informational"
+                IsClosable="False"
+                IsOpen="False" />
+
+            <!--
               The rail is the menu: every destination, one click away, in
               the menu's order (profile and notifications; Search, Discover;
               Movies, Series, Library; Favorites, Calendar, Requests), groups split by a short

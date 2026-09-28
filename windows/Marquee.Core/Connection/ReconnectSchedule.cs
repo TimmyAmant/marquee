@@ -15,6 +15,21 @@ public sealed record ReconnectSchedule(IReadOnlyList<TimeSpan> Steps, TimeSpan I
         TimeSpan.FromMinutes(2));
 
     /// <summary>
+    /// Signed in, and the server stopped answering ("Reconnecting to your
+    /// server…"): 1, 2, 3, 5 s, then every 10 s for as long as it takes.
+    /// </summary>
+    public static readonly ReconnectSchedule SignedIn = new(
+        [TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5)],
+        TimeSpan.FromSeconds(10),
+        TimeSpan.MaxValue);
+
+    /// <summary>
+    /// How often the can't-reach card tries again by itself, quietly (no
+    /// spinner), so a server that comes back later is picked up without a click.
+    /// </summary>
+    public static readonly TimeSpan QuietRetryInterval = TimeSpan.FromSeconds(30);
+
+    /// <summary>
     /// The wait before attempt <paramref name="attempt"/> (0 = the first
     /// retry), or null when that attempt would start after
     /// <see cref="Limit"/>: time to stop waiting.
@@ -23,7 +38,7 @@ public sealed record ReconnectSchedule(IReadOnlyList<TimeSpan> Steps, TimeSpan I
     public TimeSpan? DelayBeforeAttempt(int attempt, TimeSpan elapsed)
     {
         var wait = attempt < Steps.Count ? Steps[Math.Max(attempt, 0)] : Interval;
-        return elapsed + wait <= Limit ? wait : null;
+        return Limit == TimeSpan.MaxValue || elapsed + wait <= Limit ? wait : null;
     }
 }
 
@@ -83,5 +98,84 @@ public sealed class ReconnectTracker(ReconnectSchedule schedule, Func<DateTimeOf
     {
         started = null;
         attempts = 0;
+    }
+}
+
+/// <summary>
+/// The signed-in outage's bookkeeping ("Reconnecting to your server…" at the
+/// top of the window, the Mac's SignedInOutage), apart from any timer so it
+/// can be tested. A call that couldn't reach the server starts checks on
+/// <see cref="Schedule"/>; the strip goes up once a check fails too (so one
+/// dropped request doesn't flash it), and any answer from the server ends it.
+/// </summary>
+public sealed class SignedInOutage(ReconnectSchedule schedule)
+{
+    private int attempts;
+    private TimeSpan elapsed;
+
+    public SignedInOutage()
+        : this(ReconnectSchedule.SignedIn)
+    {
+    }
+
+    public ReconnectSchedule Schedule { get; } = schedule;
+
+    /// <summary>Checks are under way.</summary>
+    public bool IsChecking { get; private set; }
+
+    /// <summary>A check failed as well: the strip is up.</summary>
+    public bool IsReconnecting { get; private set; }
+
+    /// <summary>
+    /// A call couldn't reach the server: the wait before the first check, or
+    /// null when checks are already under way.
+    /// </summary>
+    public TimeSpan? Suspect()
+    {
+        if (IsChecking)
+        {
+            return null;
+        }
+        IsChecking = true;
+        attempts = 0;
+        elapsed = TimeSpan.Zero;
+        return Next();
+    }
+
+    /// <summary>A check couldn't reach it either: the strip goes up, and the wait before the next check.</summary>
+    public TimeSpan? CheckFailed()
+    {
+        if (!IsChecking)
+        {
+            return null;
+        }
+        IsReconnecting = true;
+        return Next();
+    }
+
+    /// <summary>
+    /// The server answered. True when the strip was up, so the pages should
+    /// reload what they couldn't load meanwhile.
+    /// </summary>
+    public bool Answered()
+    {
+        var wasReconnecting = IsReconnecting;
+        IsChecking = false;
+        IsReconnecting = false;
+        attempts = 0;
+        elapsed = TimeSpan.Zero;
+        return wasReconnecting;
+    }
+
+    private TimeSpan? Next()
+    {
+        if (Schedule.DelayBeforeAttempt(attempts, elapsed) is not { } wait)
+        {
+            IsChecking = false;
+            return null;
+        }
+        attempts++;
+        elapsed += wait;
+        return wait;
     }
 }
