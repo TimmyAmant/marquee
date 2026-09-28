@@ -131,6 +131,73 @@ const SCHEMAS: Record<string, Json> = {
       canRequest: { type: "boolean" },
     },
   },
+  KnownForTitle: {
+    type: "object",
+    description: "The title a person or studio is best known for: its backdrop goes behind the page's header, with a \"From {name}\" link to it.",
+    required: ["mediaType", "tmdbId", "name", "backdropPath"],
+    properties: {
+      mediaType: { type: "string", enum: ["movie", "tv"] },
+      tmdbId: { type: "integer" },
+      name: { type: "string" },
+      backdropPath: { type: "string" },
+    },
+  },
+  ExternalLink: {
+    type: "object",
+    description: "An official link, in display order. The label is the brand name, or \"Website\" for homepage.",
+    required: ["kind", "url"],
+    properties: {
+      kind: { type: "string", enum: ["imdb", "instagram", "twitter", "facebook", "tiktok", "youtube", "homepage"] },
+      url: { type: "string", format: "uri" },
+    },
+  },
+  PersonDetail: {
+    type: "object",
+    required: ["tmdbId", "name", "alsoKnownAs", "biography", "birthday", "deathday", "placeOfBirth", "profilePath", "favorited", "credits"],
+    properties: {
+      tmdbId: { type: "integer" },
+      name: { type: "string" },
+      alsoKnownAs: { type: "array", items: { type: "string" } },
+      biography: { type: ["string", "null"] },
+      birthday: { type: ["string", "null"], format: "date" },
+      deathday: { type: ["string", "null"], format: "date" },
+      placeOfBirth: { type: ["string", "null"] },
+      profilePath: { type: ["string", "null"] },
+      favorited: { type: "boolean" },
+      knownForTitle: {
+        oneOf: [{ $ref: "#/components/schemas/KnownForTitle" }, { type: "null" }],
+        description: "Null when nothing they're known for has artwork. Missing on older servers.",
+      },
+      externalLinks: {
+        type: "array",
+        items: { $ref: "#/components/schemas/ExternalLink" },
+        description: "IMDb, socials and their website, only the ones they have. Missing on older servers.",
+      },
+      credits: { type: "array", items: { $ref: "#/components/schemas/TitleCard" } },
+    },
+  },
+  CompanyDetail: {
+    type: "object",
+    required: ["tmdbId", "name", "description", "logoPath", "titleCount", "favorited", "titles"],
+    properties: {
+      tmdbId: { type: "integer" },
+      name: { type: "string" },
+      description: { type: ["string", "null"] },
+      logoPath: { type: ["string", "null"] },
+      titleCount: { type: "integer" },
+      favorited: { type: "boolean" },
+      knownForTitle: {
+        oneOf: [{ $ref: "#/components/schemas/KnownForTitle" }, { type: "null" }],
+        description: "Its most-voted title with artwork; null when none. Missing on older servers.",
+      },
+      externalLinks: {
+        type: "array",
+        items: { $ref: "#/components/schemas/ExternalLink" },
+        description: "Only its website (homepage), when TMDb lists one. Missing on older servers.",
+      },
+      titles: { type: "array", items: { $ref: "#/components/schemas/TitleCard" } },
+    },
+  },
   LibraryEntry: {
     allOf: [
       { $ref: "#/components/schemas/TitleCard" },

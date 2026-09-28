@@ -805,6 +805,23 @@ export type RequestAllMissingResult = {
 
 // ── People & companies ──────────────────────────────────────────────────────
 
+/** The title a person or studio is best known for — its backdrop sits
+ * behind the page's header, with a "From {name}" link to its page. */
+export type KnownForTitleDto = {
+  mediaType: MediaType;
+  tmdbId: number;
+  name: string;
+  backdropPath: string;
+};
+
+/** One official link on a person's or studio's page, in display
+ * order. `kind` picks the label: the brand name, or "Website" for
+ * `homepage`. */
+export type ExternalLinkDto = {
+  kind: "imdb" | "instagram" | "twitter" | "facebook" | "tiktok" | "youtube" | "homepage";
+  url: string;
+};
+
 export type PersonDetail = {
   tmdbId: number;
   name: string;
@@ -815,6 +832,9 @@ export type PersonDetail = {
   placeOfBirth: string | null;
   profilePath: string | null;
   favorited: boolean;
+  /** Null when nothing they're known for has artwork. */
+  knownForTitle: KnownForTitleDto | null;
+  externalLinks: ExternalLinkDto[];
   credits: TitleCard[];
 };
 
@@ -825,6 +845,10 @@ export type CompanyDetail = {
   logoPath: string | null;
   titleCount: number;
   favorited: boolean;
+  /** Its most-voted title with artwork; null when none. */
+  knownForTitle: KnownForTitleDto | null;
+  /** Only ever its own website (`homepage`), when TMDb lists one. */
+  externalLinks: ExternalLinkDto[];
   titles: TitleCard[];
 };
 

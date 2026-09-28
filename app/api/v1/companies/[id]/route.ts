@@ -3,7 +3,7 @@ import { requireApiUser } from "@/lib/api/auth";
 import { requireTmdbConfigured } from "@/lib/api/guards";
 import { ApiError, msg } from "@/lib/api/errors";
 import { parseIdSegment } from "@/lib/api/request";
-import { statusKey, titleCard } from "@/lib/api/mappers";
+import { externalLinkDtos, knownForTitleDto, statusKey, titleCard } from "@/lib/api/mappers";
 import { posterActions } from "@/lib/api/poster-actions";
 import { loadPosterActionRules } from "@/lib/api/poster-action-rules";
 import { loadCompanyPage } from "@/lib/pages/entities";
@@ -28,6 +28,8 @@ export const GET = withApi<{ id: string }>(async (request, params): Promise<Comp
     logoPath: data.company.logoPath,
     titleCount: data.company.count,
     favorited: data.favorited,
+    knownForTitle: knownForTitleDto(data.knownFor),
+    externalLinks: externalLinkDtos(data.links),
     titles: data.entries.map((entry) =>
       titleCard(entry, {
         status: entry.status ?? null,

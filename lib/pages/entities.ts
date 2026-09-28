@@ -6,6 +6,8 @@ import { isFavorited, getFavoritedTmdbIds } from "@/lib/favorites/query";
 import type { ViewerIdentity } from "@/lib/integrations/library-owner";
 import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, titles } from "@/lib/db/schema";
+import { pickCatalogKnownFor } from "@/lib/tmdb/known-for";
+import { buildEntityLinks, type EntityLink, type TmdbPersonExternalIds } from "@/lib/tmdb/entity-links";
 
 // Person (/person/[id]) and studio (/company/[id]) page data — shared with
 // GET /api/v1/people/[id] and GET /api/v1/companies/[id].
@@ -24,6 +26,34 @@ export type EntityMediaEntry = {
   subtitle?: string | null;
   status?: LibraryStatus;
 };
+
+/** The title a person or studio is best known for: its backdrop goes behind
+ * the page's header, with a "From …" link to it (lib/tmdb/known-for.ts). */
+export type KnownForTitle = {
+  mediaType: MediaType;
+  tmdbId: number;
+  name: string;
+  backdropPath: string;
+};
+
+function knownForTitle(title: TitleRow | null | undefined): KnownForTitle | null {
+  if (!title?.backdropPath) return null;
+  return { mediaType: title.mediaType, tmdbId: title.tmdbId, name: title.name, backdropPath: title.backdropPath };
+}
+
+/** TMDb's homepage and external_ids as saved in a person's or company's
+ * raw details. */
+function linksFromRaw(raw: unknown): EntityLink[] {
+  if (!raw || typeof raw !== "object") return [];
+  const details = raw as { homepage?: unknown; external_ids?: unknown };
+  return buildEntityLinks({
+    homepage: typeof details.homepage === "string" ? details.homepage : null,
+    externalIds:
+      details.external_ids && typeof details.external_ids === "object"
+        ? (details.external_ids as TmdbPersonExternalIds)
+        : null,
+  });
+}
 
 async function enrichEntries(viewer: ViewerIdentity, entries: EntityMediaEntry[]) {
   const [favoritedMovieIds, favoritedTvIds] = viewer.userId
@@ -48,9 +78,10 @@ async function enrichEntries(viewer: ViewerIdentity, entries: EntityMediaEntry[]
 
 /** Returns null when TMDb has no such person (the page's notFound()). */
 export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
-  const { person, filmography } = await getOrFetchPersonWithCredits(tmdbId).catch(() => ({
+  const { person, filmography, knownFor } = await getOrFetchPersonWithCredits(tmdbId).catch(() => ({
     person: undefined,
     filmography: [],
+    knownFor: null,
   }));
 
   if (!person) return null;
@@ -82,6 +113,8 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
 
   return {
     person,
+    knownFor: knownForTitle(knownFor),
+    links: linksFromRaw(person.rawTmdb),
     entries,
     favorited: favorited as boolean,
     favoritedKeys,
@@ -99,6 +132,7 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
   let name: string;
   let description: string | null;
   let logoPath: string | null;
+  let rawTmdb: unknown;
   let catalog: TitleRow[];
 
   if (group) {
@@ -113,6 +147,7 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
     name = group.displayName;
     description = primary.company.description;
     logoPath = primary.company.logoPath;
+    rawTmdb = primary.company.rawTmdb;
 
     const seen = new Set<string>();
     catalog = [];
@@ -133,6 +168,7 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
     name = solo.company.name;
     description = solo.company.description;
     logoPath = solo.company.logoPath;
+    rawTmdb = solo.company.rawTmdb;
     catalog = solo.catalog;
   }
 
@@ -162,6 +198,9 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
 
   return {
     company: { name, description, logoPath, count: catalog.length },
+    knownFor: knownForTitle(pickCatalogKnownFor(catalog)),
+    // A studio has no socials on TMDb; only its own website, when listed.
+    links: linksFromRaw(rawTmdb).filter((link) => link.kind === "homepage"),
     entries,
     favorited: favorited as boolean,
     favoritedKeys,

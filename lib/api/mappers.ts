@@ -495,3 +495,17 @@ export function blocklistEntryDto(row: BlocklistRow): Dto.BlocklistEntry {
     createdAt: isoRequired(row.createdAt),
   };
 }
+
+/** A person's or studio's best-known title (lib/pages/entities.ts) for
+ * `knownForTitle`: only with artwork, since the backdrop is what it's for. */
+export function knownForTitleDto(
+  title: { mediaType: MediaType; tmdbId: number; name: string; backdropPath: string | null } | null | undefined,
+): Dto.KnownForTitleDto | null {
+  if (!title?.backdropPath) return null;
+  return { mediaType: title.mediaType, tmdbId: title.tmdbId, name: title.name, backdropPath: title.backdropPath };
+}
+
+/** Official links (lib/tmdb/entity-links.ts) for `externalLinks`, in order. */
+export function externalLinkDtos(links: { kind: Dto.ExternalLinkDto["kind"]; url: string }[]): Dto.ExternalLinkDto[] {
+  return links.map(({ kind, url }) => ({ kind, url }));
+}

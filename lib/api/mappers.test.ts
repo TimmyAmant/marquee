@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   fileDetails,
   fourKViewerState,
+  externalLinkDtos,
   iso,
+  knownForTitleDto,
   myRequest,
   notFoundRequest,
   requestPerson,
@@ -342,5 +344,27 @@ describe("Can't find mapping", () => {
       notFoundSince: new Date("2026-09-02T01:20:00Z"),
     });
     expect(viewer.notFoundSince).toBe("2026-09-02T01:20:00.000Z");
+  });
+});
+
+describe("knownForTitleDto / externalLinkDtos", () => {
+  it("maps a best-known title with artwork and drops one without", () => {
+    expect(
+      knownForTitleDto({ mediaType: "tv", tmdbId: 1100, name: "How I Met Your Mother", backdropPath: "/himym.jpg" }),
+    ).toEqual({ mediaType: "tv", tmdbId: 1100, name: "How I Met Your Mother", backdropPath: "/himym.jpg" });
+    expect(knownForTitleDto({ mediaType: "movie", tmdbId: 1, name: "No art", backdropPath: null })).toBeNull();
+    expect(knownForTitleDto(null)).toBeNull();
+  });
+
+  it("keeps links in order with only kind and url", () => {
+    expect(
+      externalLinkDtos([
+        { kind: "imdb", url: "https://www.imdb.com/name/nm0000439" },
+        { kind: "homepage", url: "https://example.com/" },
+      ]),
+    ).toEqual([
+      { kind: "imdb", url: "https://www.imdb.com/name/nm0000439" },
+      { kind: "homepage", url: "https://example.com/" },
+    ]);
   });
 });

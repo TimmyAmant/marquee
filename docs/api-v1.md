@@ -184,6 +184,12 @@ where the real server needed something the core contract didn't spell out.
     studios and networks. A server older than this omits `sections` — fall
     back to the old fields — answers `404` on `/search/{section}` (hide See
     all), and ignores `include`.
+23. **Person and studio headers (additive).** `GET /people/{tmdbId}` and
+    `GET /companies/{tmdbId}` gain `knownForTitle` — the title they're best
+    known for, whose backdrop goes behind the header with a "From {name}"
+    link to its page — and `externalLinks` (a person's IMDb, socials and
+    website; a studio's website). A server older than this omits both — keep
+    the plain header and show no links.
 
 ---
 
@@ -1800,6 +1806,11 @@ Errors: `409 conflict` "Not tracked in Radarr/Sonarr.", `502 upstream`
   "placeOfBirth": "Beirut, Lebanon",
   "profilePath": "/8RZLOyYGsoRe9p44q3xin9QkMHv.jpg",
   "favorited": true,
+  "knownForTitle": { "mediaType": "movie", "tmdbId": 603, "name": "The Matrix", "backdropPath": "/tlm8UkiQsitc8rSuIAscQDCnP8d.jpg" },
+  "externalLinks": [
+    { "kind": "imdb", "url": "https://www.imdb.com/name/nm0000206" },
+    { "kind": "instagram", "url": "https://www.instagram.com/keanureeves" }
+  ],
   "credits": [
     { "mediaType": "movie", "tmdbId": 1638103, "name": "Constantine 2", "posterPath": "/aAcC.jpg", "year": null,
       "subtitle": "John Constantine", "overview": null, "rating": null, "status": null,
@@ -1807,6 +1818,18 @@ Errors: `409 conflict` "Not tracked in Radarr/Sonarr.", `502 upstream`
   ]
 }
 ```
+
+The header: the profile picture, name, birth date and place, the biography
+and, under it, `externalLinks` as a row of pills in the order given —
+labelled "IMDb", "Instagram", "X / Twitter", "Facebook", "TikTok", "YouTube"
+and "Website" (`homepage`), each opening `url`. `knownForTitle` (null when
+nothing they're known for has artwork) is the title they're best known for —
+for an actor, their lead or main-cast part with the most TMDb votes (a series
+regular's show counts ahead of a bit part in a bigger film); for a director
+or writer, what they directed or wrote. Its `backdropPath` fills a
+full-width band behind the header with the title page's fades, and a small
+"From {name}" link at the band's bottom right opens that title. Without it,
+keep the plain header.
 
 `credits` is the acting filmography (`subtitle` = character) with status,
 favorites and quick-add. The website's list defaults to **"Newest first"
@@ -1825,12 +1848,16 @@ for this person yet." Errors: `404` (unknown person), `502 upstream`.
   "logoPath": "/hUzeosd33nzE5MCNsZxCGEKTXaQ.png",
   "titleCount": 137,
   "favorited": false,
+  "knownForTitle": { "mediaType": "movie", "tmdbId": 299536, "name": "Avengers: Infinity War", "backdropPath": "/mDfJG3LC3Dqb67AZ52x3Z0jU0uB.jpg" },
+  "externalLinks": [{ "kind": "homepage", "url": "https://www.marvel.com/movies" }],
   "titles": [ /* TitleCard with status, favorited, requested, canQuickAdd, canRequest */ ]
 }
 ```
 
 Header: "{titleCount} titles in the catalog"; the website truncates
-`description` at 400 characters. Same client-side list controls as a person.
+`description` at 400 characters. `knownForTitle` (its most-voted title with
+artwork, null when none) and `externalLinks` (only ever its website) work
+as on a person's page. Same client-side list controls as a person.
 Empty → "No titles found for this studio yet." Errors: `404`, `502 upstream`.
 
 ---
