@@ -44,8 +44,6 @@ extension MarqueeAPI {
         /// Removing it falls back to the server's environment variables, if set.
         var tmdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "tmdb", field: "accessToken", changes: [.settings, .library, .catalog]) }
         var trakt: TraktEndpoints { TraktEndpoints(transport: transport) }
-        /// Import from Seerr / Overseerr / Jellyseerr (0.51+; `.notFound` from an older server).
-        var seerrImport: SeerrImportEndpoints { SeerrImportEndpoints(transport: transport) }
         /// Body `{apiKey}` (0.53+): an OMDb key, for IMDb / Rotten Tomatoes /
         /// Metacritic ratings on title pages.
         var omdb: SettingEndpoints { SettingEndpoints(transport: transport, name: "omdb", field: "apiKey", changes: [.settings, .catalog]) }
@@ -267,37 +265,6 @@ extension MarqueeAPI {
                 .post, "/settings/integrations/trakt/import", body: ["url": url],
                 timeout: Timeout.longRunning, changes: [.requests, .settings]
             )
-        }
-    }
-
-    /// `/settings/import/seerr/*` (docs/api-v1.md §12, "Import from Seerr"):
-    /// admin only, never with an API key. The Seerr key travels in each
-    /// body and is never stored by the server. The app's Settings card
-    /// opens the website's importer; these are for scripts and tests.
-    struct SeerrImportEndpoints: Sendable {
-        let transport: Transport
-
-        /// `POST /settings/import/seerr/test`: the address answers like Seerr and the key is an admin's.
-        func test(_ request: API.SeerrImportRequest) async throws -> API.SeerrTestResult {
-            try await transport.post("/settings/import/seerr/test", body: request, timeout: Timeout.longRunning)
-        }
-
-        /// `POST /settings/import/seerr/preview`: what an import would do; changes nothing.
-        func preview(_ request: API.SeerrImportRequest) async throws -> API.SeerrImportPreview {
-            try await transport.post("/settings/import/seerr/preview", body: request, timeout: Timeout.longRunning)
-        }
-
-        /// `POST /settings/import/seerr/run`: starts the import (202) — poll `job(_:)`.
-        func run(_ request: API.SeerrImportRequest) async throws -> API.SeerrImportJob {
-            try await transport.mutate(
-                .post, "/settings/import/seerr/run", body: request,
-                timeout: Timeout.longRunning, changes: [.requests, .settings]
-            )
-        }
-
-        /// `GET /settings/import/seerr/jobs/{id}`: progress, then the report.
-        func job(_ id: String) async throws -> API.SeerrImportJob {
-            try await transport.get("/settings/import/seerr/jobs/\(id)")
         }
     }
 

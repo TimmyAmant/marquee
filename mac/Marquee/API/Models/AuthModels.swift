@@ -447,11 +447,6 @@ extension API {
         }
     }
 
-    /// `{"count": 3}` from `/requests/pending-count` and `/notifications/unread-count`.
-    struct Count: Codable, Hashable, Sendable {
-        let count: Int
-    }
-
     /// `{"results": [...]}`: the lists the website shows whole (deviation 6).
     struct ListResponse<Item: Codable & Sendable>: Codable, Sendable {
         let results: [Item]

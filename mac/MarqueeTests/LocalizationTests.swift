@@ -218,7 +218,6 @@ final class LocalizationTests: XCTestCase {
             let source = Self.macRoot.appendingPathComponent(folder)
             let enumerator = try XCTUnwrap(FileManager.default.enumerator(at: source, includingPropertiesForKeys: nil))
             for case let file as URL in enumerator where file.pathExtension == "swift" {
-                if file.path.contains("Preview Content") { continue }
                 let text = try String(contentsOf: file, encoding: .utf8)
                 for finding in UntranslatedTextLint.scan(text) {
                     findings.append("\(file.lastPathComponent):\(finding.line): \"\(finding.text)\"")

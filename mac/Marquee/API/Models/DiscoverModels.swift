@@ -37,11 +37,6 @@ extension API {
         var episodes: EpisodeCounts? = nil
 
         var id: TitleID { TitleID(mediaType, tmdbId) }
-
-        /// Subtitle and year joined the way the card footer shows them: "Neo · 1999".
-        var footerLine: String {
-            [subtitle, year].compactMap(\.nonBlank).joined(separator: " · ")
-        }
     }
 
     /// A series poster's "have/total" (`TitleCard.episodes`).

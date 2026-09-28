@@ -27,7 +27,8 @@ settings:
     DEAD_CODE_STRIPPING: YES
     # Localization (Resources/Localizable.xcstrings, docs/i18n-glossary.md):
     # the compiler extracts every localizable literal into .stringsdata, which
-    # Scripts/check-strings.sh compares with the catalog in CI.
+    # MarqueeTests/LocalizationTests.swift compares with the catalog in CI
+    # (Scripts/sync-strings.sh adds new ones to it).
     SWIFT_EMIT_LOC_STRINGS: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
   configs:
@@ -91,7 +92,6 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: NO
-        DEVELOPMENT_ASSET_PATHS: "\"Marquee/Preview Content\""
         ENABLE_PREVIEWS: YES
         COMBINE_HIDPI_IMAGES: YES
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
@@ -120,7 +120,6 @@ targets:
           - Resources/Assets.xcassets/**
           - Resources/Info.plist
           - Resources/InfoPlist.xcstrings
-          - Preview Content/**
       # The few Mac-folder files the iPhone app needs from excluded folders.
       - path: Marquee/App/Updates/UpdateModels.swift
       - path: Marquee/Features/Settings/LastActiveLabel.swift

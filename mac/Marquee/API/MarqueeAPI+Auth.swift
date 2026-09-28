@@ -128,10 +128,5 @@ extension MarqueeAPI {
             guard let done = try PlexPoll.step(status: status, body: body, expired: .ssoExpired) else { return nil }
             return try APIClient.decode(API.AuthResponse.self, from: done, path: "/auth/sso/poll")
         }
-
-        /// `POST /auth/logout` — revokes this token only.
-        func logout() async throws {
-            let _: API.OK = try await transport.mutate(.post, "/auth/logout", changes: [])
-        }
     }
 }

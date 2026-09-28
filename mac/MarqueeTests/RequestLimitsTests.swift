@@ -120,10 +120,6 @@ final class RequestLimitsTests: XCTestCase {
     // MARK: Role gating
 
     func testOnlyAdminAndTrustedReviewRequests() {
-        XCTAssertTrue(API.UserRole.admin.canReviewRequests)
-        XCTAssertTrue(API.UserRole.trusted.canReviewRequests)
-        XCTAssertFalse(API.UserRole.member.canReviewRequests)
-        XCTAssertFalse(API.UserRole(rawValue: "guest").canReviewRequests, "An unknown role acts as a member")
         XCTAssertEqual(API.UserRole(rawValue: "trusted"), .trusted)
 
         let user = User(id: UUID(), username: "kid", displayName: nil, role: .trusted, libraryOwnerId: UUID())

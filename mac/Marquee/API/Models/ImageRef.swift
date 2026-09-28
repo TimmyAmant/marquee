@@ -35,11 +35,6 @@ extension API {
 
         var description: String { path }
 
-        /// Already a full URL; `size` doesn't apply.
-        var isAbsolute: Bool {
-            path.hasPrefix("https://") || path.hasPrefix("http://")
-        }
-
         /// The image at `size`; nil for an empty path.
         func url(_ size: Size = .w500) -> URL? {
             Self.url(path, size: size)

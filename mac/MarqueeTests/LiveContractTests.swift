@@ -146,7 +146,6 @@ final class LiveContractTests: XCTestCase {
 
         // Lists
         _ = try await admin.favorites.all()
-        _ = try await admin.favorites.isFavorited(.movie, id: 603)
 
         // The Library page (0.51+): the whole library, then one filtered page.
         let library = try await admin.library.page()
@@ -178,7 +177,6 @@ final class LiveContractTests: XCTestCase {
         _ = try await admin.requests.mine()
         _ = try await admin.requests.pending()
         _ = try await admin.requests.history()
-        _ = try await admin.requests.pendingCount()
         // "Can't find" (0.46+): nothing is listed without Radarr/Sonarr, and
         // a request that isn't listed can't be searched or dismissed.
         let notFound = try await admin.requests.notFound()
@@ -186,7 +184,6 @@ final class LiveContractTests: XCTestCase {
         await assertThrowsAPIError(.notFound) { try await self.admin.requests.searchNotFound(UUID()) }
         await assertThrowsAPIError(.notFound) { try await self.admin.requests.dismissNotFound(UUID()) }
         _ = try await admin.notifications.list(limit: 5)
-        _ = try await admin.notifications.unreadCount()
 
         let calendar = try await admin.calendar.month()
         XCTAssertEqual(calendar.gridDays.count % 7, 0)
@@ -217,20 +214,12 @@ final class LiveContractTests: XCTestCase {
     func test2Favorites() async throws {
         var favorited = try await admin.favorites.add(.movie, id: 603)
         XCTAssertTrue(favorited)
-        favorited = try await admin.favorites.isFavorited(.movie, id: 603)
-        XCTAssertTrue(favorited)
         favorited = try await admin.favorites.add(.movie, id: 603)
         XCTAssertTrue(favorited, "Favoriting twice is idempotent")
         let withMovie = try await admin.favorites.all()
         XCTAssertTrue(withMovie.movies.contains { $0.tmdbId == 603 })
         XCTAssertEqual(withMovie.movies.first { $0.tmdbId == 603 }?.favorited, true)
 
-        // Toggle flips whatever the state happens to be.
-        let personWasFavorited = try await admin.favorites.isFavorited(.person, id: 6384)
-        favorited = try await admin.favorites.toggle(.person, id: 6384)
-        XCTAssertEqual(favorited, !personWasFavorited)
-        favorited = try await admin.favorites.toggle(.person, id: 6384)
-        XCTAssertEqual(favorited, personWasFavorited)
         favorited = try await admin.favorites.add(.company, id: 420)
         XCTAssertTrue(favorited)
         favorited = try await admin.favorites.add(.collection, id: 2344)
@@ -295,8 +284,6 @@ final class LiveContractTests: XCTestCase {
         let queued = try XCTUnwrap(queue.results.first { $0.id == requestId })
         XCTAssertEqual(queued.requestedBy.username, member.username)
         XCTAssertEqual(queued.requestedBy.userId, memberMe.id)
-        let pendingCount = try await admin.requests.pendingCount()
-        XCTAssertGreaterThanOrEqual(pendingCount, 2)
         let adminBadges = try await admin.badges()
         XCTAssertGreaterThanOrEqual(adminBadges.pendingRequests, 2)
 
@@ -346,8 +333,6 @@ final class LiveContractTests: XCTestCase {
         XCTAssertEqual(afterRead.results.first { $0.id == notification.id }?.read, true)
         await assertThrowsAPIError(.notFound) { try await memberAPI.notifications.markRead(UUID()) }
         try await memberAPI.notifications.markAllRead()
-        let unread = try await memberAPI.notifications.unreadCount()
-        XCTAssertEqual(unread, 0)
         let memberBadges = try await memberAPI.badges()
         XCTAssertEqual(memberBadges.unreadNotifications, 0)
 
@@ -452,8 +437,6 @@ final class LiveContractTests: XCTestCase {
 
         let badges = try await memberAPI.badges()
         XCTAssertEqual(badges.pendingRequests, 0, "Members never see a pending count")
-        let pendingCount = try await memberAPI.requests.pendingCount()
-        XCTAssertEqual(pendingCount, 0)
         let visible = try await memberAPI.users.list()
         XCTAssertEqual(visible.count, 1)
         XCTAssertEqual(visible.first?.isCurrentUser, true)
@@ -648,7 +631,7 @@ final class LiveContractTests: XCTestCase {
         let api = MarqueeAPI(client: client)
         let signedIn = try await api.me()
         XCTAssertEqual(signedIn.username, credentials.username)
-        try await api.auth.logout()
+        _ = try await client.send(.post, "/auth/logout", timeout: 5, as: EmptyResponse.self)
         await assertThrowsAPIError(.unauthorized) { _ = try await api.me() }
         await assertThrowsAPIError(.unauthorized) { _ = try await api.badges() }
 
@@ -706,7 +689,6 @@ final class LiveContractTests: XCTestCase {
         try await assertRoundTrips(raw, "/favorites/movie/603", API.FavoriteState.self)
         try await assertRoundTrips(raw, "/requests/history", API.ListResponse<API.ReviewedRequest>.self)
         try await assertRoundTrips(raw, "/requests/pending", API.PendingRequests.self)
-        try await assertRoundTrips(raw, "/requests/pending-count", API.Count.self)
         try await assertRoundTrips(raw, "/notifications", API.NotificationList.self)
         try await assertRoundTrips(raw, "/issues", API.IssueList.self)
         try await assertRoundTrips(raw, "/settings/blocklist", API.ListResponse<API.BlocklistEntry>.self)

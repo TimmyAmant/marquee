@@ -13,12 +13,6 @@ extension MarqueeAPI {
             try await transport.get("/notifications", query: ["limit": limit.map(String.init)])
         }
 
-        /// `GET /notifications/unread-count`.
-        func unreadCount() async throws -> Int {
-            let count: API.Count = try await transport.get("/notifications/unread-count")
-            return count.count
-        }
-
         /// `POST /notifications/read-all` — "Mark all read".
         func markAllRead() async throws {
             let _: API.OK = try await transport.mutate(.post, "/notifications/read-all", changes: .notifications)

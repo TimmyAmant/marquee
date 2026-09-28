@@ -97,12 +97,6 @@ extension MarqueeAPI {
             )
         }
 
-        /// `GET /requests/pending-count` — always 0 for members (`badges()` has it too).
-        func pendingCount() async throws -> Int {
-            let count: API.Count = try await transport.get("/requests/pending-count")
-            return count.count
-        }
-
         /// `POST /requests/{id}/approve` (admin) — adds with the admin's
         /// Radarr/Sonarr and notifies the requester. On a TV request,
         /// `error.isSonarrUnresolvable` means: offer `manuallyApprove`.

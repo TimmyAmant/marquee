@@ -1,9 +1,9 @@
 import XCTest
 @testable import Marquee
 
-// API keys (0.47+, api-v1.md §16): the fixtures, the three endpoints and
-// `/stats/summary` against a stub, and the Settings card's model — including
-// an older server that has none of it.
+// API keys (0.47+, api-v1.md §16): the fixtures, the three endpoints against
+// a stub, and the Settings card's model — including an older server that has
+// none of it.
 
 @MainActor
 final class ApiKeysTests: XCTestCase {
@@ -106,9 +106,6 @@ final class ApiKeysTests: XCTestCase {
         XCTAssertEqual(created.key.count, 46)
         XCTAssertEqual(created.apiKey.id, homepage.id)
 
-        let stats = try decode(API.StatsSummary.self, "stats-summary")
-        XCTAssertEqual(stats, API.StatsSummary(pendingRequests: 3, openIssues: 1, cantFind: 2, movies: 812, series: 164, downloading: 4))
-
         let unknown = try APIClient.decoder.decode(API.ApiKeyScope.self, from: Data(#""admin""#.utf8))
         XCTAssertFalse(unknown.isKnown)
     }
@@ -154,15 +151,6 @@ final class ApiKeysTests: XCTestCase {
         XCTAssertEqual(request.httpMethod, "DELETE")
         XCTAssertEqual(request.url?.path, "/api/v1/settings/api-keys/b3a9e0d4-8c1f-4e2b-a7d6-5f0e9c8b7a61")
         XCTAssertEqual(events.revision(of: .settings), 3)
-    }
-
-    func testStatsSummary() async throws {
-        let stats = try fixtureString("stats-summary")
-        StubURLProtocol.handler = { _ in StubURLProtocol.json(200, stats) }
-        let summary = try await stubbedAPI().stats.summary()
-        XCTAssertEqual(summary.movies, 812)
-        XCTAssertEqual(StubURLProtocol.requests.first?.httpMethod, "GET")
-        XCTAssertEqual(StubURLProtocol.requests.first?.url?.path, "/api/v1/stats/summary")
     }
 
     // MARK: The card's model

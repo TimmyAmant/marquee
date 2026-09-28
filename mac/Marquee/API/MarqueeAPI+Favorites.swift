@@ -12,12 +12,6 @@ extension MarqueeAPI {
             try await transport.get("/favorites", timeout: Timeout.tmdb)
         }
 
-        /// `GET /favorites/{entityType}/{tmdbId}`.
-        func isFavorited(_ type: API.FavoriteEntityType, id tmdbId: Int) async throws -> Bool {
-            let state: API.FavoriteState = try await transport.get(Self.path(type, tmdbId))
-            return state.favorited
-        }
-
         /// `PUT /favorites/{entityType}/{tmdbId}` — favorite (idempotent).
         @discardableResult
         func add(_ type: API.FavoriteEntityType, id tmdbId: Int) async throws -> Bool {
@@ -29,13 +23,6 @@ extension MarqueeAPI {
         @discardableResult
         func remove(_ type: API.FavoriteEntityType, id tmdbId: Int) async throws -> Bool {
             let state: API.FavoriteState = try await transport.mutate(.delete, Self.path(type, tmdbId), changes: .favorites)
-            return state.favorited
-        }
-
-        /// `POST /favorites/{entityType}/{tmdbId}/toggle` — the star button.
-        @discardableResult
-        func toggle(_ type: API.FavoriteEntityType, id tmdbId: Int) async throws -> Bool {
-            let state: API.FavoriteState = try await transport.mutate(.post, Self.path(type, tmdbId) + "/toggle", timeout: Timeout.tmdb, changes: .favorites)
             return state.favorited
         }
 
