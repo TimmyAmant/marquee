@@ -3,7 +3,7 @@
   app/settings/layout.tsx with components/settings-nav.tsx (the Mac's
   SettingsRootView): "Settings", the tabs across the top as pills (solid for
   the current one, like the rail), and the chosen tab below, all in one
-  centered column up to 820 wide. Account, Notifications and About are
+  centered column up to 1024 wide (the website's). Account, Notifications and About are
   everyone's; Blocklist whoever may manage it; the rest the admin's. Each tab
   is its own view under Views/Settings, made the first time it's picked; the
   code-behind makes the pills and swaps the views.
@@ -132,8 +132,8 @@
     </Page.Resources>
 
     <ScrollViewer>
-        <!-- The Mac's Settings column (SettingsLayout.columnWidth): up to 820 wide; a Stretch element under its MaxWidth is centered in the page. -->
-        <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="820" HorizontalAlignment="Stretch">
+        <!-- The Mac's Settings column (SettingsLayout.columnWidth): up to 1024 wide, like the website's, so the tabs fit on one line; a Stretch element under its MaxWidth is centered in the page. -->
+        <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="1024" HorizontalAlignment="Stretch">
             <StackPanel Spacing="14">
                 <TextBlock x:Uid="Settings_Title" Style="{StaticResource TitleTextBlockStyle}" />
 

@@ -13,9 +13,9 @@ import { avatarPath } from "@/lib/users/avatar-path";
 
 /**
  * The site's navigation (components/nav-menu.tsx): the floating rail on
- * desktop and the menu it opens, which is also the drawer on narrow
- * screens. Server component: reads the session directly, then hands the
- * client menu only what it shows.
+ * desktop, and the tab bar along the bottom on phone-sized windows. Server
+ * component: reads the session directly, then hands the client menu only
+ * what it shows.
  */
 export async function Sidebar() {
   const session = await auth();

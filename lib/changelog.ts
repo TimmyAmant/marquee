@@ -11,6 +11,20 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.59.1",
+    date: "2026-09-27",
+    changes: [
+      "Mac and Windows: Settings is as wide as on the website, so all its tabs sit on one line. In a narrow window the Mac tightens them first and only wraps as a last resort.",
+    ],
+  },
+  {
+    version: "0.59.0",
+    date: "2026-09-27",
+    changes: [
+      "On phones the website has a tab bar along the bottom, like the iPhone app: Discover, Search, Requests (with the number waiting for review), Calendar and More. More holds Movies, Series, Library, Favorites, Settings and Releases. Computers and tablets are unchanged.",
+    ],
+  },
+  {
     version: "0.58.0",
     date: "2026-09-27",
     changes: [
