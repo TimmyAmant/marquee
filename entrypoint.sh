@@ -88,6 +88,13 @@ fi
 URL_PASSWORD=$(node -e 'process.stdout.write(encodeURIComponent(process.env.POSTGRES_PASSWORD))')
 export DATABASE_URL="postgres://$POSTGRES_USER:$URL_PASSWORD@localhost:5432/$POSTGRES_DB"
 
+# The rolling log file (Settings › Logs, MARQUEE_LOG_DIR): a folder mounted
+# from the host arrives owned by whoever made it, so hand it to the app.
+if [ -n "$MARQUEE_LOG_DIR" ]; then
+  mkdir -p "$MARQUEE_LOG_DIR"
+  chown -R node:node "$MARQUEE_LOG_DIR" 2>/dev/null || echo "[entrypoint] Couldn't take ownership of $MARQUEE_LOG_DIR; the log may not be saved there." >&2
+fi
+
 # Everything from here on runs as the unprivileged `node` user, not root:
 # the app never needs root, and shouldn't hold it if it's ever compromised.
 # What it writes at runtime (.next's caches) is owned by node in the image.

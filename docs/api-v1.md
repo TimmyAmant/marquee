@@ -4384,8 +4384,9 @@ to the default", and "Next run Sep 27, 10:00 PM · last ran Sep 27, 8:00 PM".
 ### `GET /settings/logs` — admin, never an API key (0.58+)
 
 Settings › Logs: the server's recent log lines (the last 2,000 kept in
-memory, and on disk across restarts in `MARQUEE_LOG_DIR`, the system's
-temporary folder by default), oldest first. Keys, tokens, passwords, webhook
+memory, and on disk across restarts in `MARQUEE_LOG_DIR`: `/var/log/marquee` in the
+Docker image, mounted by the Unraid template and `docker-compose.yml` so it
+outlives the container; the system's temporary folder outside Docker), oldest first. Keys, tokens, passwords, webhook
 addresses and the like are masked (`[redacted]`) before they're kept.
 Query: `level` the least severe to include (`debug`, `info`, `warn`,
 `error`), `q` text in the message or source, `after` only lines newer than

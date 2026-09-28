@@ -57,6 +57,13 @@ Fill in `POSTGRES_PASSWORD` and the other fields; the rest has sensible
 defaults. The template is [`unraid-templates/marquee.xml`](../unraid-templates/marquee.xml).
 Prefer Compose? Point the **Compose Manager** plugin at `docker-compose.yml`.
 
+The template keeps two folders in `appdata/marquee`: `postgres-data` (the
+database) and `logs` (the server's log file behind **Settings › Logs**, under
+**Show more settings**). Installed from an older template? Add the `logs` one by hand
+if you like: a **Path** from `/mnt/user/appdata/marquee/logs` to
+`/var/log/marquee`; without it the log is only kept until the container is
+recreated. `docker-compose.yml` has both as named volumes.
+
 ## Mac, Windows and iPhone apps
 
 Native apps that talk to your server and update themselves from each
