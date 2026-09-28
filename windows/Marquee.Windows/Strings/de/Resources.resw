@@ -2899,6 +2899,9 @@
   <data name="Model_OrderOldestFirst" xml:space="preserve">
     <value>Älteste zuerst</value>
   </data>
+  <data name="Model_LinkWebsite" xml:space="preserve">
+    <value>Website</value>
+  </data>
   <data name="Model_ReleaseDaysAgo_One" xml:space="preserve">
     <value>vor {0} Tag</value>
   </data>
@@ -3216,6 +3219,12 @@
   </data>
   <data name="Person_Died" xml:space="preserve">
     <value>Gestorben am {0}</value>
+  </data>
+  <data name="Person_KnownForFrom" xml:space="preserve">
+    <value>Aus {0}</value>
+  </data>
+  <data name="Person_KnownForFromLabel" xml:space="preserve">
+    <value>Hintergrund aus {0}. Seite öffnen</value>
   </data>
   <data name="Person_EmptyCredits" xml:space="preserve">
     <value>Für diese Person wurde noch keine verarbeitete Filmografie gefunden.</value>
