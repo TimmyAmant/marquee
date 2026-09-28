@@ -51,7 +51,7 @@ export function sonarrEpisodeCounts(
     const fullyAired = !stats.nextAiring;
     const aired = !monitored && fullyAired ? Math.max(wanted, stats.totalEpisodeCount ?? 0) : wanted;
     have += files;
-    total += Math.max(aired, files);
+    total += aired;
   }
   return { have, total };
 }
@@ -87,6 +87,9 @@ export function regularEpisodeCount(episodes: readonly { seasonNumber: number | 
  * The count a poster shows: Sonarr's where it tracks the show, else the
  * media server's files against TMDb's aired episodes. Null — no count on the
  * poster — when neither source has both numbers, or nothing has aired.
+ * Never more than complete: `have` is capped at `total` (a file for an
+ * episode that hasn't aired yet, or TMDb and TheTVDB numbering a show
+ * differently, would otherwise read "63/62").
  */
 export function pickEpisodeCounts(input: {
   sonarr: { have: number | null; total: number | null } | null;
@@ -94,11 +97,15 @@ export function pickEpisodeCounts(input: {
   tmdbAired: number | null;
 }): EpisodeCounts | null {
   const s = input.sonarr;
-  if (s && s.have != null && s.total != null && s.total > 0) return { have: s.have, total: s.total };
+  if (s && s.have != null && s.total != null && s.total > 0) return capped(s.have, s.total);
   if (input.mediaServerHave != null && input.tmdbAired != null && input.tmdbAired > 0) {
-    return { have: input.mediaServerHave, total: input.tmdbAired };
+    return capped(input.mediaServerHave, input.tmdbAired);
   }
   return null;
+}
+
+function capped(have: number, total: number): EpisodeCounts {
+  return { have: Math.min(have, total), total };
 }
 
 /** Every aired episode is on disk. */

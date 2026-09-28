@@ -51,11 +51,12 @@ describe("sonarrEpisodeCounts", () => {
     expect(counts).toEqual({ have: 0, total: 6 });
   });
 
-  it("never reports more on disk than aired", () => {
+  it("counts files for episodes that haven't aired, for the poster to cap", () => {
     const counts = sonarrEpisodeCounts([
       { seasonNumber: 1, monitored: true, statistics: { episodeFileCount: 5, episodeCount: 3, totalEpisodeCount: 5, nextAiring: "2026-10-01" } },
     ]);
-    expect(counts).toEqual({ have: 5, total: 5 });
+    expect(counts).toEqual({ have: 5, total: 3 });
+    expect(pickEpisodeCounts({ sonarr: counts, mediaServerHave: null, tmdbAired: null })).toEqual({ have: 3, total: 3 });
   });
 
   it("has nothing to say without a regular season", () => {
@@ -115,6 +116,12 @@ describe("pickEpisodeCounts", () => {
     expect(pickEpisodeCounts({ sonarr: null, mediaServerHave: 96, tmdbAired: 96 })).toEqual({ have: 96, total: 96 });
     // A Sonarr row from before the columns existed.
     expect(pickEpisodeCounts({ sonarr: { have: null, total: null }, mediaServerHave: 10, tmdbAired: 12 })).toEqual({ have: 10, total: 12 });
+  });
+
+  it("never shows more than complete", () => {
+    expect(pickEpisodeCounts({ sonarr: { have: 63, total: 62 }, mediaServerHave: null, tmdbAired: null })).toEqual({ have: 62, total: 62 });
+    expect(pickEpisodeCounts({ sonarr: null, mediaServerHave: 63, tmdbAired: 62 })).toEqual({ have: 62, total: 62 });
+    expect(pickEpisodeCounts({ sonarr: null, mediaServerHave: 61, tmdbAired: 62 })).toEqual({ have: 61, total: 62 });
   });
 
   it("shows nothing without both numbers, or before anything has aired", () => {

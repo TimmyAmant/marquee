@@ -121,7 +121,8 @@ describe("getEpisodeCountMap", () => {
       { mediaType: "tv", tmdbId: 1100, name: "Old Show", rawTmdb: aired([10], [1, 10]) },
     ]);
     await db.insert(plexLibraryItems).values([
-      { plexServerId: plex.id, ratingKey: "hl", mediaType: "tv", tmdbId: 1407, title: "Homeland", episodeCount: 99, episodesHave: 96 },
+      // More files than TMDb says have aired (different numbering): capped at complete.
+      { plexServerId: plex.id, ratingKey: "hl", mediaType: "tv", tmdbId: 1407, title: "Homeland", episodeCount: 99, episodesHave: 97 },
       { plexServerId: plex.id, ratingKey: "st", mediaType: "tv", tmdbId: 66732, title: "Stranger Things", episodesHave: 20 },
       // A Plex row from a sync older than the column: no count.
       { plexServerId: plex.id, ratingKey: "old", mediaType: "tv", tmdbId: 1100, title: "Old Show", episodeCount: 10 },
