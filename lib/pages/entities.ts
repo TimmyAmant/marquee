@@ -80,6 +80,12 @@ async function personInLanguage(
       item,
     ]),
   );
+  // Only what's new is written: the page is opened far more often than
+  // TMDb's answer changes.
+  const saved = await getSavedTranslations(
+    filmography.map(({ title }) => title.id),
+    locale,
+  ).catch(() => new Map<string, TitleTranslation>());
   const cards = new Map<string, CardTranslation>();
   const light: { titleId: string; name: string | null; overview: string | null; posterPath: string | null }[] = [];
   for (const { title } of filmography) {
@@ -87,6 +93,8 @@ async function personInLanguage(
     if (!item) continue;
     const translation = { name: item.title || item.name || null, posterPath: item.poster_path };
     cards.set(title.id, translation);
+    const known = saved.get(title.id);
+    if (known && (known.details || (known.name === translation.name && known.posterPath === translation.posterPath))) continue;
     light.push({ titleId: title.id, ...translation, overview: item.overview || null });
   }
   await saveLightTranslations(locale, light).catch((err) =>
