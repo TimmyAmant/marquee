@@ -20,7 +20,7 @@ import type { ArrPickerOptions } from "@/lib/arr/add-options-server";
 import type { Ok } from "@/lib/api/types";
 
 // /api/v1/settings/arr-servers — every Sonarr and Radarr server (admin only,
-// like everything else under Settings → Integrations). The API key is never
+// like everything else under Settings → Services). The API key is never
 // returned; each server's own webhook URL is built from this request's Host.
 
 type IdParams = { id: string };

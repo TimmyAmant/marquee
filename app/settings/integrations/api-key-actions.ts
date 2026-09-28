@@ -6,7 +6,7 @@ import { createApiKey, listApiKeys, revokeApiKey } from "@/lib/api/api-key-store
 import type { ApiKey, ApiKeyCreated } from "@/lib/api/types";
 import { getT } from "@/lib/i18n/server";
 
-// Settings › Integrations › API keys, on the admin's browser session.
+// Settings › General › API access, on the admin's browser session.
 // /api/v1/settings/api-keys is the same for the apps. The secret only ever
 // travels back in createApiKeyAction's answer, once.
 

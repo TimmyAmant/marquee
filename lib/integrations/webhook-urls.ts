@@ -1,5 +1,5 @@
 // Pure (client-safe) helpers for the Sonarr/Radarr → Marquee webhook URLs
-// shown on Settings → Integrations and returned by /api/v1.
+// shown on Settings → Services and returned by /api/v1.
 
 /** The base URL Sonarr/Radarr should post to, derived from the incoming
  * request's Host / X-Forwarded-Proto headers. */

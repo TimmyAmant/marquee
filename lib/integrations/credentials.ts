@@ -102,7 +102,7 @@ export type JellyfinCredential = {
   baseUrl: string;
   apiKey: string;
   /** The address people open the server at from a browser, when the
-   * admin gave one (Settings › Integrations); null: `baseUrl`. */
+   * admin gave one (Settings › Media servers); null: `baseUrl`. */
   publicUrl: string | null;
 };
 
@@ -162,7 +162,7 @@ export async function upsertJellyfinCredential(
 }
 
 /** The shared secret embedded in this user's Sonarr/Radarr webhook URLs
- * (Settings > Integrations) — lazily created on first need, same pattern as
+ * (Settings > Services) — lazily created on first need, same pattern as
  * getOrCreatePlexClientId above. One secret covers both providers since the
  * URL path already identifies which provider a request is for. */
 export async function getOrCreateWebhookSecret(userId: string): Promise<string> {

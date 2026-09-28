@@ -16,7 +16,7 @@ import {
   type Fetch,
 } from "@/lib/auth/sso/oidc";
 
-// The admin's single sign-on settings (Settings → Integrations): stored in
+// The admin's single sign-on settings (Settings → Members): stored in
 // the one `sso_settings` row, the client secret encrypted at rest. Nothing
 // here ever hands the secret to a caller outside lib/auth/sso — the
 // settings view only says whether one is saved.

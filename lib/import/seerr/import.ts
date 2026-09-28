@@ -46,7 +46,7 @@ import {
 } from "@/lib/import/seerr/mapping";
 import type { SeerrArrServer, SeerrBlocklistItem, SeerrIssue, SeerrQuota, SeerrRequest, SeerrUser } from "@/lib/import/seerr/types";
 
-// "Import from Seerr" (Settings › Integrations): everything a household
+// "Import from Seerr" (Settings › General): everything a household
 // built up in Seerr, Overseerr or Jellyseerr — accounts, requests, problem
 // reports with their comments, the blocklist — read from that server's API
 // with its admin key and written into Marquee. Preview first (what would

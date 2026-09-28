@@ -10,7 +10,7 @@ sign-in. Available from server version 0.47.
 
 ## 1. Create a key
 
-As the admin: **Settings › Integrations › API access › API keys**.
+As the admin: **Settings › General › API access › API keys**.
 
 | Choice | Pick |
 |---|---|

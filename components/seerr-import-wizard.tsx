@@ -244,7 +244,7 @@ function phaseLabel(t: Translator, job: SeerrImportJob): string {
 }
 
 /**
- * Settings › Integrations › Import from Seerr: connect (address + admin
+ * Settings › General › Import from Seerr: connect (address + admin
  * API key, tested), preview what would come over, choose what to import,
  * run with progress, and a summary with a downloadable report. The key
  * stays in this component's state for the session and is sent with each

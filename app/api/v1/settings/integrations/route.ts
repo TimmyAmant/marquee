@@ -20,7 +20,7 @@ function arrSettings(
   };
 }
 
-/** Settings → Integrations (admin). Like the page, first re-syncs any
+/** Settings → General, Media servers and Services (admin). Like the page, first re-syncs any
  * library data older than 15 minutes, so this can take a few seconds. API
  * keys and tokens are never returned — only whether one is saved. The
  * Sonarr/Radarr webhook URLs (which embed the admin's own webhook secret) are

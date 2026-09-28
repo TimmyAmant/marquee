@@ -19,7 +19,7 @@ import {
   type ApiKeyInput,
 } from "@/lib/api/api-keys";
 
-// Admin-issued API keys (Settings › Integrations › API keys). Shared by the
+// Admin-issued API keys (Settings › General › API access). Shared by the
 // website's server actions and /api/v1/settings/api-keys; callers check that
 // the caller is the admin (and is not itself using a key).
 

@@ -41,7 +41,7 @@ where the real server needed something the core contract didn't spell out.
 7. **TMDb not configured is reported as `502 upstream`.** The website renders
    TMDb-backed pages as empty shelves when no TMDb credential exists. The API
    instead answers every TMDb-backed endpoint with
-   `502 {"code":"upstream","error":"TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → Integrations."}`.
+   `502 {"code":"upstream","error":"TMDb isn't configured on this server. An admin needs to add a TMDb access token in Settings → General."}`.
 8. **`X-Marquee-API: 1` on everything under `/api/v1`**, including responses
    Next.js generates itself (`405 Method Not Allowed`, automatic `OPTIONS`).
    Those two have empty bodies rather than the `{error, code}` shape. Unknown
@@ -364,7 +364,7 @@ Cheap: a few small queries (3 s timeout together), no calls to integrations.
 ```
 
 `signIn` says which sign-in buttons to show: `plex` / `jellyfin` are true
-while the admin has that server connected in Settings → Integrations (Plex
+while the admin has that server connected in Settings → Media servers (Plex
 also needs its first library sync done). Missing on older servers — show
 password sign-in only.
 
@@ -585,7 +585,7 @@ again.". Who it signs in as is decided exactly like `POST /auth/jellyfin`
 ### Sign in with single sign-on — public (0.44+)
 
 The admin's own OpenID Connect identity provider (Authentik, Authelia,
-Pocket ID, Keycloak, Google…), set up in Settings → Integrations (`GET
+Pocket ID, Keycloak, Google…), set up in Settings → Members (`GET
 /settings/sso`). Offered when `signIn.sso` isn't null; label the button
 "Sign in with {sso.name}". The app never sees the provider's tokens or the
 client secret: the browser does the provider's sign-in, the server checks
@@ -705,7 +705,7 @@ keys, single sign-on, sign-in, jobs, activity, Add buttons, relink,
 monitoring, manual approval — isn't a permission, and can't be granted.
 Treat an unknown permission as off, and a missing one as off too.
 
-Use `role` only for the admin's own UI (Integrations/Activity/Jobs settings
+Use `role` only for the admin's own UI (General/Services/Activity/Jobs settings
 tabs, Add buttons, household accounts). The role is re-read on every
 request, so a demotion takes effect immediately (`403`s).
 
@@ -941,7 +941,7 @@ only) is one flat shape for every `kind`:
 | `library` | Recently added to Plex/Jellyfin | `mediaType` `movie`/`tv`/`all` |
 
 `traktConfigured`: Trakt rows need Trakt connected (Settings ›
-Integrations) — without it they're empty. `403` "Only the admin can arrange
+General) — without it they're empty. `403` "Only the admin can arrange
 Discover." for anyone else, on every `/settings/discover` endpoint. API keys
 can't reach them.
 
@@ -1368,7 +1368,7 @@ Field notes:
   Title", "Theatrical Release", "Digital Release", "Budget", "Revenue",
   "Studio", each hidden when null. `ratings`: IMDb (0–10, with votes),
   Rotten Tomatoes (critics, 0–100) and Metacritic (0–100) from OMDb — only
-  with an OMDb key in Settings › Integrations, cached a day; null otherwise
+  with an OMDb key in Settings › General, cached a day; null otherwise
   or when OMDb knows none of them. The website shows them as small badges
   under the TMDb score, IMDb's linking to `imdbUrl`.
 - `play` (0.53+; an older server omits it): where the title can be played
@@ -1377,7 +1377,7 @@ Field notes:
   button beside the request/status row (a menu when there are several).
   `url` opens the server's web app (Plex's is app.plex.tv, so it works from
   anywhere; Jellyfin/Emby use the server's public URL — Settings ›
-  Integrations › Jellyfin — else its address); `appUrl` is the server's own
+  Media servers › Jellyfin — else its address); `appUrl` is the server's own
   scheme (`plex://`) for a device with its app, null for Jellyfin/Emby.
 - `credits`: Director + Screenplay/Writer (movies) or Creator + Executive
   Producer (TV), max 6.
@@ -1436,7 +1436,7 @@ Field notes:
   kbps.
 - `viewer` decides the action area under the title:
   - `canAdd` → "Add to Radarr/Sonarr" button (`POST …/add`).
-  - `needsArrSetup` → "Connect Radarr/Sonarr to add this title" link (admin → Integrations).
+  - `needsArrSetup` → "Connect Radarr/Sonarr to add this title" link (admin → Settings › Services).
   - `canRequest` → "Request" button (`POST …/request`); when
     `alreadyRequested` show "Requested — waiting for approval" instead; when
     `otherRequesters` is non-empty and you haven't requested, show "Also
@@ -1593,7 +1593,7 @@ only their own account.
 
 A `RequestPerson` plus `avatarUrl` (as on `HouseholdMember`) — the same shape
 as a notification's `sharedBy`. `publicUrl`: the address set as Marquee's
-public one (Settings › Integrations › Single sign-on's "Public address"), with
+public one (Settings › Members › Single sign-on's "Public address"), with
 no trailing slash; null when none is set — then build links on the address
 the app is connected to.
 
@@ -3007,7 +3007,7 @@ isn't yours, exactly as for one that doesn't exist.
 
 `available`: which kinds this server can offer. Telegram, Pushover and
 email ride on the household's own bot, app and mail server (Settings ›
-Integrations), so they're only available once the admin set those up.
+Notifications), so they're only available once the admin set those up.
 `botUsername`: the household bot, for "message @… /start" and the one-tap
 Telegram link below (null if Telegram can't be reached). `householdServer`:
 the household ntfy server, where a member can pick just a topic (null: only
@@ -3143,7 +3143,7 @@ event this account can't get, or a channel id that isn't one of its own.
 ### `GET /settings/notification-events` — admin (0.45+)
 
 What the household channels (Discord, ntfy, Telegram, Pushover, email and
-the webhook under Settings › Integrations › Household channels) post. Each
+the webhook under Settings › Notifications) post. Each
 notification is posted there once, from the admin's copy (a new request,
 say, not once per reviewer).
 
@@ -3199,7 +3199,7 @@ Entries are sorted by date; a movie can appear once per matching release type.
 The website shows at most 4 per day ("+N more"). `configured: false` (neither
 Sonarr nor Radarr connected, `entries` empty) → admin: "Connect Sonarr or
 Radarr to see upcoming releases and air dates here." with a link to
-Integrations; member: "The household admin hasn't connected Sonarr or Radarr yet."
+Settings › Services; member: "The household admin hasn't connected Sonarr or Radarr yet."
 
 Errors: `400 invalid` for a malformed `month`.
 
@@ -3554,7 +3554,7 @@ from its link. `movies` / `tv`: which kinds are requested. `lastSyncedAt`:
 last successful check. `lastError`: e.g. "Couldn't read that list from
 Trakt. Check the link, and that the list (or watchlist) is public on
 Trakt." `requestedCount`: titles requested from this list so far.
-`available`: Trakt is connected (Settings › Integrations) — without it
+`available`: Trakt is connected (Settings › General) — without it
 syncs can't be added and existing ones pause. `owner`: whose it is. `403`
 for `?all=true` from anyone but the admin.
 
@@ -3569,7 +3569,7 @@ for `?all=true` from anyone but the admin.
   with the sync. `400` for a bad link or "Pick movies, TV shows or both.";
   `403` "Your account can't request movies or series, so there's nothing to
   sync."; `409` "Trakt isn't connected. The admin can connect it in Settings
-  → Integrations." / "You're already keeping that list in sync." / "You can
+  → General." / "You're already keeping that list in sync." / "You can
   keep up to 10 Trakt lists in sync. Remove one first."; `502 upstream`
   when Trakt can't read it.
 - **`PATCH /trakt-syncs/{id}`** — `{ "movies"?: bool, "tv"?: bool }` (at
@@ -3650,7 +3650,7 @@ the Import buttons.
 ### `GET /settings/sso` · `PUT` · `DELETE` — admin (0.44+)
 
 Single sign-on with any OpenID Connect provider. Website: the "Single
-sign-on" card under Settings → Integrations → Sign-in.
+sign-on" card under Settings → Members → Sign-in.
 
 ```json
 {
@@ -3724,7 +3724,7 @@ calls itself "…", not "…". Use its issuer URL exactly.").
 
 ---
 
-## 12. Settings — Integrations (admin)
+## 12. Settings — General, Media servers, Services (admin)
 
 Every endpoint here is admin-only (`403` "Only the admin can manage
 integrations."), except `POST /settings/integrations/sync`. Secrets (API keys,
@@ -4275,7 +4275,7 @@ Starts the import in the background and answers **`202`** with the job
 sent `true`: also set matched accounts' permissions and limits from Seerr,
 never the admin's). One import at a time: `409` "An import is already
 running. Wait for it to finish." Requests or reports without TMDb: `409`
-"Connect TMDb in Settings → Integrations before importing …". Nothing
+"Connect TMDb in Settings → General before importing …". Nothing
 chosen: `400` "Choose at least one thing to import.".
 
 #### `GET /settings/import/seerr/jobs/{id}` — admin
@@ -4464,7 +4464,7 @@ what to do, grouped by area.
         {
           "message": "Connect Sonarr in Settings first.",
           "meaning": "No Sonarr connection is saved, or it's missing a root folder / quality profile.",
-          "whatToDo": "Go to Settings → Integrations and finish the Sonarr setup (URL, API key, then pick defaults)."
+          "whatToDo": "Go to Settings → Services and finish the Sonarr setup (URL, API key, then pick defaults)."
         }
       ]
     }
@@ -4481,7 +4481,7 @@ paste widget configs are in `docs/integrations.md`.
 
 ### API keys — how they work
 
-The admin creates keys under Settings › Integrations › API keys (website, Mac
+The admin creates keys under Settings › General › API access (website, Mac
 and Windows apps) or with `POST /settings/api-keys`. A key is `mq_` followed
 by 43 base64url characters; it's shown **once**, when it's made, and only a
 SHA-256 hash of it is kept (plus `hint`, its first 7 characters, to tell keys
@@ -4714,7 +4714,7 @@ page.
 | `arrTracking` | **The admin only**: Radarr/Sonarr has the title, so `POST /titles/{type}/{id}/search` and `PUT …/monitored` apply (`monitored` is its flag there). Null for members and for a media-server-only title. |
 | `summary` | The header counts: owned movies and series, episode files on disk, bytes on disk, and `tracked` — rows not on disk yet (downloading, missing, coming soon). |
 | `filters` | What the pickers offer: only values present in this library. |
-| `connected` | False when neither Plex, Jellyfin, Sonarr nor Radarr is connected: the website shows "Connect Plex, Jellyfin, Sonarr or Radarr to see everything you already own in one place." (the admin gets a link to Settings › Integrations; a member reads "The household admin hasn't connected Plex, Jellyfin, Sonarr or Radarr yet."). |
+| `connected` | False when neither Plex, Jellyfin, Sonarr nor Radarr is connected: the website shows "Connect Plex, Jellyfin, Sonarr or Radarr to see everything you already own in one place." (the admin gets a link to Settings › Media servers; a member reads "The household admin hasn't connected Plex, Jellyfin, Sonarr or Radarr yet."). |
 
 Errors: `400 invalid` (an unknown `type`, `status`, `source`, `resolution`,
 `sort` or `hdr`; a non-integer or out-of-range `year`, `page` or `pageSize`).
@@ -4903,7 +4903,7 @@ see free space per root folder here."
 | | `POST /me/links/jellyfin` · `DELETE` | user |
 | | `GET /users/import/{provider}` · `POST` | admin |
 | | `GET /settings/sign-in` · `PUT` | admin |
-| Settings: Integrations | `GET /settings/integrations` | admin |
+| Settings: General, Media servers, Services | `GET /settings/integrations` | admin |
 | | `POST /settings/integrations/sync` | user |
 | | `POST /settings/integrations/webhook-secret` | admin |
 | | `GET /settings/arr-servers` · `POST` | admin |

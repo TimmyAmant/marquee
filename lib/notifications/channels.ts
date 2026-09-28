@@ -22,8 +22,8 @@ import {
 
 import type { TestOptions } from "@/lib/integrations/manage";
 
-// Telegram, Pushover and email settings (Settings → Integrations →
-// Notifications, and /api/v1/settings/integrations/{telegram,pushover,email}).
+// Telegram, Pushover and email settings (Settings → Notifications,
+// and /api/v1/settings/integrations/{telegram,pushover,email}).
 // Each is saved only after a test message goes through, like Discord and
 // ntfy. A blank secret on a later save keeps the saved one, so changing the
 // chat or the recipients doesn't mean digging the token out again.

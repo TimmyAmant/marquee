@@ -50,7 +50,7 @@ export const ACTIVITY_EVENT_VERB_KEYS: Record<ActivityEventType, MessageKey> = {
 };
 
 /**
- * Settings → Integrations for the admin: kicks off any stale library sync in
+ * Settings' General, Media servers and Services tabs for the admin: kicks off any stale library sync in
  * the background, then reads every integration's connection state.
  * Secrets never leave this function except as booleans — apart from the
  * admin's own Sonarr/Radarr webhook secret, which the page shows in full.

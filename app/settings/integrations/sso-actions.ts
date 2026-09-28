@@ -11,7 +11,7 @@ import {
 } from "@/lib/auth/sso/config";
 import { getT } from "@/lib/i18n/server";
 
-// Settings → Integrations' single sign-on card (admin) — the same operations
+// Settings → Members' single sign-on card (admin) — the same operations
 // as /api/v1/settings/sso (lib/auth/sso/config.ts).
 
 async function forbidden(): Promise<string> {

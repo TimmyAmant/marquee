@@ -227,7 +227,7 @@
     <div class="section-head centered">
       <p class="eyebrow">How it connects</p>
       <h2 id="connects-title">It sits in front of the stack <em>you already run.</em></h2>
-      <p class="section-intro">Marquee doesn’t replace Plex, Jellyfin, Sonarr or Radarr. Connect whichever you use from Settings → Integrations and it keeps them in step: your libraries sync every hour, and Sonarr and Radarr webhooks report each grab and finished download as it happens.</p>
+      <p class="section-intro">Marquee doesn’t replace Plex, Jellyfin, Sonarr or Radarr. Connect whichever you use from Settings and it keeps them in step: your libraries sync every hour, and Sonarr and Radarr webhooks report each grab and finished download as it happens.</p>
     </div>
 
     <div class="flow reveal">
@@ -519,7 +519,7 @@
 <span class="c-comment"># now set POSTGRES_PASSWORD, AUTH_SECRET and</span>
 <span class="c-comment"># MASTER_ENCRYPTION_KEY in .env</span>
 <span class="c-prompt" aria-hidden="true">$ </span>docker compose up -d</code></pre>
-        <p class="admit-then">Then open <code>http://&lt;your-server-ip&gt;:3000</code>. The first visit creates your admin account; connect everything else from Settings → Integrations.</p>
+        <p class="admit-then">Then open <code>http://&lt;your-server-ip&gt;:3000</code>. The first visit creates your admin account; connect everything else from Settings.</p>
         <p class="admit-tip">Generate the two secrets with <code>openssl rand -base64 32</code>, and back up <code>MASTER_ENCRYPTION_KEY</code>: it’s what decrypts your saved Plex, Jellyfin, Sonarr and Radarr credentials. You’ll also want a free TMDb API key, in <code>.env</code> or added later in the app.</p>
       </div>
       <div class="admit-stub">

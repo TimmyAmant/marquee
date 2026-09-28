@@ -378,7 +378,7 @@ export async function clearNtfyUrl(): Promise<void> {
 
 let omdbCached: { value: string | null; expiresAt: number } | null = null;
 
-/** The OMDb API key (Settings › Integrations › OMDb), or null: ratings
+/** The OMDb API key (Settings › General › OMDb), or null: ratings
  * beyond TMDb's are off. */
 export async function getOmdbApiKey(): Promise<string | null> {
   if (omdbCached && Date.now() < omdbCached.expiresAt) return omdbCached.value;

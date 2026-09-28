@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (session?.user) redirect("/");
 
   // Only the methods that can work right now: Plex/Jellyfin sign-in need the
-  // admin's server connected in Settings → Integrations, SSO its settings.
+  // admin's server connected in Settings → Media servers, SSO its settings.
   const methods = await getSignInMethods();
   // Back from a single sign-on that didn't work: a fixed code, never text
   // from the URL itself (lib/auth/sso/messages.ts).

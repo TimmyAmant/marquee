@@ -2,7 +2,7 @@
 
 Marquee can import a running Seerr (or Overseerr / Jellyseerr) through its
 HTTP API — no database files, nothing installed on the Seerr side. Available
-from server version 0.51, under **Settings › Integrations › Coming from
+from server version 0.51, under **Settings › General › Coming from
 Seerr? › Import from Seerr** (admin only). The Mac and Windows apps show the
 same card and open this page in your browser.
 
@@ -12,10 +12,10 @@ endpoints (Overseerr has no blocklist, so that part is simply empty).
 ## Before you start
 
 1. Keep Seerr running until the import is done — it's read live.
-2. In Marquee, connect **TMDb** (Settings › Integrations) — requests and
+2. In Marquee, connect **TMDb** (Settings › General) — requests and
    problem reports need it for their titles and posters — and, if you want
    requests tied to your download servers, add the same **Sonarr/Radarr**
-   servers Seerr uses, at the same addresses.
+   servers (Settings › Services) Seerr uses, at the same addresses.
 3. Copy Seerr's API key: **Settings › General › API key** in Seerr.
 
 The key is sent to your Marquee server for each step of the import and is

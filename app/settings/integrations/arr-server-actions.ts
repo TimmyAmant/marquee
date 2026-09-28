@@ -16,7 +16,7 @@ import {
 import type { ArrPickerOptions } from "@/lib/arr/add-options-server";
 import { getT } from "@/lib/i18n/server";
 
-// Settings → Integrations → Download Clients (components/arr-servers-card.tsx).
+// Settings → Services (components/arr-servers-card.tsx).
 // Thin session wrappers over lib/arr/server-manage.ts, shared with
 // /api/v1/settings/arr-servers. The client sends plain objects; everything
 // is validated again here by the same parser the API uses.
