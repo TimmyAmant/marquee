@@ -28,7 +28,7 @@
   "blocklistHeading": "Lista de bloqueio de pedidos",
   "blocklistIntro": "Títulos e palavras-chave que ninguém pode pedir. Bloqueie um título específico na página dele.",
   "menuPositionLabel": "Posição do menu",
-  "menuPositionHelp": "Onde o menu fica neste dispositivo. Em uma janela do tamanho de um celular, ele fica atrás do botão de menu e desliza da direita quando definido como Direita; caso contrário, da esquerda.",
+  "menuPositionHelp": "Onde o menu fica neste dispositivo, em telas maiores. Em uma janela do tamanho de um celular, o menu é sempre uma barra de abas na parte de baixo.",
   "menuPositionLeft": "Esquerda",
   "menuPositionRight": "Direita",
   "menuPositionTop": "Topo",

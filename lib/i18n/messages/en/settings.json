@@ -28,7 +28,7 @@
   "blocklistHeading": "Request blocklist",
   "blocklistIntro": "Titles and keywords nobody can request. Block a single title from its page.",
   "menuPositionLabel": "Menu position",
-  "menuPositionHelp": "Where the menu sits on this device. On a phone-sized window it stays behind the menu button and slides in from the right when set to Right, otherwise from the left.",
+  "menuPositionHelp": "Where the menu sits on this device, on larger screens. On a phone-sized window the menu is always a tab bar along the bottom.",
   "menuPositionLeft": "Left",
   "menuPositionRight": "Right",
   "menuPositionTop": "Top",

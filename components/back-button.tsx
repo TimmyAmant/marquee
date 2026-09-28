@@ -7,7 +7,7 @@ import { useT } from "@/lib/i18n/client";
 /** The top-level pages the menu opens. On any of them there's nowhere to go
  * "back" to inside Marquee, so the button hides; deeper pages (a title, a
  * person, a studio, a full list) show it. */
-const TOP_LEVEL = new Set(["/", "/discover", "/movies", "/series", "/search", "/favorites", "/calendar", "/requests", "/settings"]);
+const TOP_LEVEL = new Set(["/", "/discover", "/movies", "/series", "/search", "/library", "/favorites", "/calendar", "/requests", "/settings"]);
 
 // Pages seen in this tab since it loaded: the fallback for browsers without
 // the Navigation API. With one (a link opened straight onto a title, or the
