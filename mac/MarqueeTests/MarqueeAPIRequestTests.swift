@@ -472,7 +472,7 @@ final class MarqueeAPIRequestTests: XCTestCase {
     func testEveryEndpointSendsWhatTheDocSpecifies() async throws {
         let cases = self.cases
         XCTAssertEqual(cases.count, 160, "The 159 of docs/api-v1.md's 169 endpoints the app calls; GET /library is covered twice, with and without filters")
-        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 169, "Each documented endpoint is covered")
+        XCTAssertEqual(Set(cases.map { "\($0.method) \($0.path)" }).count, 159, "Each endpoint the app calls is covered")
 
         let events = ServerEvents()
         let client = APIClient(baseURL: URL(string: "http://127.0.0.1:3000")!, token: "mqt_test", session: StubURLProtocol.session())
