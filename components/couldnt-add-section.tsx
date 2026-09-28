@@ -84,6 +84,7 @@ function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedReques
             tmdbId={request.tmdbId}
             is4k={request.is4k}
             formId={`retry-${request.id}`}
+            requestId={request.id}
             disabled={busy}
           />
         </div>

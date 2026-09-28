@@ -199,6 +199,8 @@ public sealed partial class TitleViewModel : ObservableObject
         nameof(CanAdd),
         nameof(AddLabel),
         nameof(HasTracking),
+        nameof(CanRemoveFromArr),
+        nameof(RemoveFromArrLabel),
         nameof(MonitorLabel),
         nameof(CanRelink),
         nameof(NeedsArrSetup),
@@ -493,6 +495,33 @@ public sealed partial class TitleViewModel : ObservableObject
     public bool CanAdd => Viewer?.CanAdd == true;
     public string AddLabel => IsAdding ? Loc.Get("Title_Adding") : Loc.Format("Title_AddTo", Id.MediaType.ArrName);
     public bool HasTracking => Viewer?.ArrTracking != null;
+
+    /// <summary>"Remove from Radarr/Sonarr" (0.58+) in the … menu: the admin's, while it's tracked.</summary>
+    public bool CanRemoveFromArr => HasTracking && model.Viewer?.IsAdmin == true;
+
+    public string RemoveFromArrLabel => Loc.Format("Title_RemoveFromArr", Id.MediaType.ArrName);
+
+    /// <summary>
+    /// <c>POST /titles/{type}/{id}/remove-from-arr</c> (admin, 0.58+): off every
+    /// server that has it, with its files when <paramref name="deleteFiles"/>.
+    /// Its approved requests are marked removed, so it can be requested again.
+    /// </summary>
+    public async Task RemoveFromArrAsync(bool deleteFiles)
+    {
+        TrackingMessage = null;
+        try
+        {
+            await model.Api.AdminTools.RemoveFromArrAsync(Id.MediaType, Id.TmdbId, deleteFiles);
+            TrackingIsError = false;
+            TrackingMessage = Loc.Format("Title_RemovedFromArr", Id.MediaType.ArrName);
+            await RefreshStatusAsync();
+        }
+        catch (ApiException error)
+        {
+            TrackingIsError = true;
+            TrackingMessage = error.Message;
+        }
+    }
     public string SearchLabel => IsSearching ? Loc.Get("Title_Searching") : Loc.Get("Title_SearchNow");
 
     public string MonitorLabel => IsTogglingMonitor

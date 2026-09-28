@@ -79,7 +79,7 @@ export function AddToLibraryButton({
   // "Advanced" for the admin's Add and a member's Request: a chevron on the
   // button, its panel on a line of its own at the end of the action row.
   const addAdvanced = useAddAdvancedOptions({ mediaType, tmdbId });
-  const requestAdvanced = useAddAdvancedOptions({ mediaType, tmdbId });
+  const requestAdvanced = useAddAdvancedOptions({ mediaType, tmdbId, forRequest: true });
   const arrName = mediaType === "movie" ? "Radarr" : "Sonarr";
 
   useEffect(() => {

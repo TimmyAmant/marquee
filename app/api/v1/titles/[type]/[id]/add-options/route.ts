@@ -3,7 +3,7 @@ import { ApiError, msg } from "@/lib/api/errors";
 import { requireApiPermission } from "@/lib/api/auth";
 import { queryBool } from "@/lib/api/request";
 import { parseTitleParams, type TitleParams } from "@/lib/api/routes/titles";
-import { getAddOptions, type AddOptions } from "@/lib/arr/add-options-server";
+import { getAddOptions, requesterForOptions, type AddOptions } from "@/lib/arr/add-options-server";
 import { getAdminUserId } from "@/lib/auth/get-admin";
 
 /** What the "Advanced" section of Approve / Add offers for this title: each
@@ -14,8 +14,15 @@ import { getAdminUserId } from "@/lib/auth/get-admin";
 export const GET = withApi<TitleParams>(async (request, params): Promise<AddOptions> => {
   const ctx = await requireApiPermission(request, "advancedRequests", msg("server.onlyAdminApproveRequests"));
   const { mediaType, tmdbId } = parseTitleParams(params);
-  const fourK = queryBool(new URL(request.url), "is4k") ?? false;
+  const url = new URL(request.url);
+  const fourK = queryBool(url, "is4k") ?? false;
   const ownerId = ctx.user.isAdmin ? ctx.user.id : await getAdminUserId();
   if (!ownerId) throw ApiError.of("conflict", msg("server.noAdminToAddWith"));
-  return getAddOptions(ownerId, mediaType, tmdbId, fourK);
+  // ?requestId= (reviewing a request) or ?forRequest=true (making one): the
+  // override rule that applies becomes the default (`rule`).
+  const forRequest = await requesterForOptions(
+    ctx.user,
+    { requestId: url.searchParams.get("requestId"), forRequest: queryBool(url, "forRequest") ?? false },
+  );
+  return getAddOptions(ownerId, mediaType, tmdbId, fourK, forRequest);
 });

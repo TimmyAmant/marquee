@@ -11,6 +11,14 @@ extension API {
         /// "Every hour", "Daily at 3:00 AM".
         let schedule: String
         let description: String
+        /// 0.58+ (nil from an older server, which can't change them): how
+        /// often it runs, its default, when it runs next and last ran (since
+        /// the server started), and whether it's running now.
+        var interval: JobInterval? = nil
+        var defaultInterval: JobInterval? = nil
+        var nextRunAt: Date? = nil
+        var lastRunAt: Date? = nil
+        var running: Bool? = nil
 
         /// The Can't Find Check (0.46+): its row also sets the wait.
         static let notFoundCheckID = "not-found-check"

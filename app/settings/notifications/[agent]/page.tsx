@@ -35,7 +35,12 @@ export default async function NotificationAgentPage({ params }: { params: Promis
     <SettingsSection>
       {agent === "discord" && <DiscordConnectCard connected={discordConnected} />}
       {agent === "ntfy" && <NtfyConnectCard connected={ntfyConnected} />}
-      {(agent === "telegram" || agent === "pushover" || agent === "email") && (
+      {(agent === "telegram" ||
+        agent === "pushover" ||
+        agent === "email" ||
+        agent === "gotify" ||
+        agent === "slack" ||
+        agent === "pushbullet") && (
         <NotificationChannelCards channels={channels} only={agent} />
       )}
       {agent === "webhook" && <WebhookConnectCard connected={genericWebhookConnected} />}

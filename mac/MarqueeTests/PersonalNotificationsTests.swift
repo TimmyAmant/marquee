@@ -22,7 +22,7 @@ private func decode<T: Decodable>(_ type: T.Type, _ name: String) throws -> T {
 final class PersonalNotificationsDecodingTests: XCTestCase {
     func testChannelsDecode() throws {
         let list = try decode(API.PersonalNotificationChannels.self, "notification-channels")
-        XCTAssertEqual(list.offeredKinds, [.telegram, .email, .discord, .ntfy, .webhook])
+        XCTAssertEqual(list.offeredKinds, [.telegram, .email, .discord, .ntfy, .slack, .gotify, .pushbullet, .webhook])
         XCTAssertEqual(list.missingKinds, [.pushover])
         XCTAssertEqual(list.telegramBot, "MarqueeHomeBot")
         XCTAssertEqual(list.ntfyHouseholdServer, "https://ntfy.sh")

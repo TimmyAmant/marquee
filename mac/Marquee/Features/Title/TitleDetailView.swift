@@ -598,6 +598,8 @@ private struct TitleActionRow: View {
     /// "Block requests" opened its reason field.
     @State private var askingBlockReason = false
     @State private var blockReason = ""
+    /// "Remove from Radarr/Sonarr"'s confirmation (0.58+).
+    @State private var confirmingRemove = false
 
     var body: some View {
         let viewer = detail.viewer
@@ -782,6 +784,15 @@ private struct TitleActionRow: View {
                                 )
                             }
                             .disabled(screen.isTogglingMonitor)
+                            // components/remove-from-arr-button.tsx (0.58+): asks first.
+                            if model.viewer?.isAdmin == true {
+                                Button(role: .destructive) {
+                                    confirmingRemove = true
+                                } label: {
+                                    Label(String(localized: "Remove from \(detail.mediaType.arrName)"), systemImage: "trash")
+                                }
+                                .disabled(screen.isRemovingFromArr)
+                            }
                         }
                         if menuBlock {
                             Button {
@@ -807,6 +818,17 @@ private struct TitleActionRow: View {
                     .fixedSize()
                     .help(String(localized: "More actions"))
                     .accessibilityLabel(String(localized: "More actions"))
+                    .confirmationDialog(
+                        String(localized: "Remove \(detail.name) from \(detail.mediaType.arrName)?"),
+                        isPresented: $confirmingRemove,
+                        titleVisibility: .visible
+                    ) {
+                        Button(String(localized: "Remove"), role: .destructive) { screen.removeFromArr(deleteFiles: false) }
+                        Button(String(localized: "Remove and delete files"), role: .destructive) { screen.removeFromArr(deleteFiles: true) }
+                        Button(String(localized: "Cancel"), role: .cancel) {}
+                    } message: {
+                        Text("\(detail.mediaType.arrName) stops tracking it on every server that has it. Its approved requests are marked removed, so it can be requested again. Deleting the files removes them from the disk for good — Plex and Jellyfin lose it too.")
+                    }
                 }
 
                 if viewer.needsArrSetup {
@@ -881,14 +903,16 @@ private struct TitleActionRow: View {
             AddOptionsPanel(
                 advanced: Binding(get: { screen.advancedAdd }, set: { screen.advancedAdd = $0 }),
                 mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: false,
-                heading: both ? (viewer.canAdd ? String(localized: "Add to \(arrName)") : String(localized: "Request")) : nil
+                heading: both ? (viewer.canAdd ? String(localized: "Add to \(arrName)") : String(localized: "Request")) : nil,
+                forRequest: !viewer.canAdd
             )
         }
         if targets.fourK && screen.advancedAdd4K.isExpanded {
             AddOptionsPanel(
                 advanced: Binding(get: { screen.advancedAdd4K }, set: { screen.advancedAdd4K = $0 }),
                 mediaType: detail.mediaType, tmdbId: detail.tmdbId, is4k: true,
-                heading: both ? (viewer.fourK?.canAdd == true ? String(localized: "Add to 4K \(arrName)") : String(localized: "Request in 4K")) : nil
+                heading: both ? (viewer.fourK?.canAdd == true ? String(localized: "Add to 4K \(arrName)") : String(localized: "Request in 4K")) : nil,
+                forRequest: viewer.fourK?.canAdd != true
             )
         }
     }

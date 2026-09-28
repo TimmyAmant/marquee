@@ -5155,4 +5155,424 @@
   <data name="Account_YourAccountIntro.Text" xml:space="preserve">
     <value>Edite seu nome, nome de usuário ou senha abaixo.</value>
   </data>
+  <data name="Nav_SettingsTabLogs" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Jobs_IntervalDaily" xml:space="preserve">
+    <value>Uma vez por dia</value>
+  </data>
+  <data name="Jobs_IntervalMinutes" xml:space="preserve">
+    <value>A cada {0} minutos</value>
+  </data>
+  <data name="Jobs_IntervalHour" xml:space="preserve">
+    <value>A cada hora</value>
+  </data>
+  <data name="Jobs_IntervalHours" xml:space="preserve">
+    <value>A cada {0} horas</value>
+  </data>
+  <data name="Jobs_NextRun" xml:space="preserve">
+    <value>Próxima execução {0}</value>
+  </data>
+  <data name="Jobs_NextAndLastRun" xml:space="preserve">
+    <value>Próxima execução {0} · última vez {1}</value>
+  </data>
+  <data name="Jobs_IntervalPicker.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Com que frequência roda</value>
+  </data>
+  <data name="Jobs_DailyTime.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Horário</value>
+  </data>
+  <data name="Jobs_SaveInterval.Content" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Jobs_ResetInterval.Content" xml:space="preserve">
+    <value>Voltar ao padrão</value>
+  </data>
+  <data name="Logs_Title" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Logs_Intro" xml:space="preserve">
+    <value>O que o servidor anda fazendo, o mais recente embaixo. Chaves, tokens e senhas aparecem ocultos.</value>
+  </data>
+  <data name="Logs_LevelDebug" xml:space="preserve">
+    <value>Depuração</value>
+  </data>
+  <data name="Logs_LevelInfo" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="Logs_LevelWarn" xml:space="preserve">
+    <value>Aviso</value>
+  </data>
+  <data name="Logs_LevelError" xml:space="preserve">
+    <value>Erro</value>
+  </data>
+  <data name="Logs_LevelAndUp" xml:space="preserve">
+    <value>{0} e acima</value>
+  </data>
+  <data name="Logs_Filter" xml:space="preserve">
+    <value>Filtrar linhas</value>
+  </data>
+  <data name="Logs_Pause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="Logs_Resume" xml:space="preserve">
+    <value>Retomar</value>
+  </data>
+  <data name="Logs_Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Logs_Copied" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="Logs_Save" xml:space="preserve">
+    <value>Salvar como…</value>
+  </data>
+  <data name="Logs_FileType" xml:space="preserve">
+    <value>Arquivo de log</value>
+  </data>
+  <data name="Logs_Unsupported" xml:space="preserve">
+    <value>Este servidor ainda não guarda o log para os Ajustes. Atualize-o para vê-lo aqui.</value>
+  </data>
+  <data name="Logs_Empty" xml:space="preserve">
+    <value>Nada registrado que corresponda.</value>
+  </data>
+  <data name="Logs_PausedLines_One" xml:space="preserve">
+    <value>Pausado · {0} linha</value>
+  </data>
+  <data name="Logs_PausedLines_Other" xml:space="preserve">
+    <value>Pausado · {0} linhas</value>
+  </data>
+  <data name="Logs_LiveLines_One" xml:space="preserve">
+    <value>Atualiza a cada poucos segundos · {0} linha</value>
+  </data>
+  <data name="Logs_LiveLines_Other" xml:space="preserve">
+    <value>Atualiza a cada poucos segundos · {0} linhas</value>
+  </data>
+  <data name="Model_BlockCertificationLabel" xml:space="preserve">
+    <value>Classificação {0} em {1}</value>
+  </data>
+  <data name="Model_BlockAdultLabel" xml:space="preserve">
+    <value>Títulos adultos (como o TMDb os marca)</value>
+  </data>
+  <data name="Channel_TestAndSave" xml:space="preserve">
+    <value>Testar e salvar</value>
+  </data>
+  <data name="Channel_Remove" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Channel_Connected" xml:space="preserve">
+    <value>Conectado</value>
+  </data>
+  <data name="Channel_NotConnected" xml:space="preserve">
+    <value>Não configurado</value>
+  </data>
+  <data name="Channel_KeepSaved" xml:space="preserve">
+    <value>•••••••• (deixe em branco para manter)</value>
+  </data>
+  <data name="Channel_Saved" xml:space="preserve">
+    <value>Salvo — uma mensagem de teste está a caminho.</value>
+  </data>
+  <data name="Channel_Unsupported" xml:space="preserve">
+    <value>Este servidor ainda não tem este canal. Atualize-o para usá-lo.</value>
+  </data>
+  <data name="Channel_GotifyTitle" xml:space="preserve">
+    <value>Gotify</value>
+  </data>
+  <data name="Channel_GotifyIntro" xml:space="preserve">
+    <value>Publica no seu próprio servidor Gotify. Quais eventos ele recebe fica na aba Eventos da casa.</value>
+  </data>
+  <data name="Channel_GotifyServer" xml:space="preserve">
+    <value>Endereço do servidor</value>
+  </data>
+  <data name="Channel_GotifyToken" xml:space="preserve">
+    <value>Token de aplicativo</value>
+  </data>
+  <data name="Channel_GotifyTokenHelp" xml:space="preserve">
+    <value>No Gotify, Apps › Create application e copie o token. Em branco, o salvo é mantido.</value>
+  </data>
+  <data name="Channel_GotifyPriority" xml:space="preserve">
+    <value>Prioridade</value>
+  </data>
+  <data name="Channel_GotifyPriorityHelp" xml:space="preserve">
+    <value>De 0 a 10; os apps do Gotify alertam a partir de 5 por padrão.</value>
+  </data>
+  <data name="Channel_SlackTitle" xml:space="preserve">
+    <value>Slack</value>
+  </data>
+  <data name="Channel_SlackIntro" xml:space="preserve">
+    <value>Publica num canal do Slack por um webhook de entrada — os do Mattermost e do Rocket.Chat também servem. Quais eventos ele recebe fica na aba Eventos da casa.</value>
+  </data>
+  <data name="Channel_SlackWebhook" xml:space="preserve">
+    <value>URL do webhook</value>
+  </data>
+  <data name="Channel_SlackWebhookHelp" xml:space="preserve">
+    <value>No Slack, adicione o app Incoming Webhooks a um canal e copie a URL. Em branco, a salva é mantida.</value>
+  </data>
+  <data name="Channel_PushbulletTitle" xml:space="preserve">
+    <value>Pushbullet</value>
+  </data>
+  <data name="Channel_PushbulletIntro" xml:space="preserve">
+    <value>Envia para seus dispositivos do Pushbullet ou para um dos seus canais do Pushbullet. Quais eventos ele recebe fica na aba Eventos da casa.</value>
+  </data>
+  <data name="Channel_PushbulletToken" xml:space="preserve">
+    <value>Token de acesso</value>
+  </data>
+  <data name="Channel_PushbulletTokenHelp" xml:space="preserve">
+    <value>Em pushbullet.com, Settings › Account › Create access token. Em branco, o salvo é mantido.</value>
+  </data>
+  <data name="Channel_PushbulletChannel" xml:space="preserve">
+    <value>Tag do canal (opcional)</value>
+  </data>
+  <data name="Channel_PushbulletChannelHelp" xml:space="preserve">
+    <value>Publica num canal seu em vez dos seus dispositivos.</value>
+  </data>
+  <data name="AutoBlock_Title" xml:space="preserve">
+    <value>Bloquear automaticamente</value>
+  </data>
+  <data name="AutoBlock_Intro" xml:space="preserve">
+    <value>Nenhum título que corresponda poderá ser pedido — você ainda pode adicioná-lo. A prévia mostra o que seria bloqueado entre os títulos que o Marquee já consultou.</value>
+  </data>
+  <data name="AutoBlock_Kind" xml:space="preserve">
+    <value>Bloquear por</value>
+  </data>
+  <data name="AutoBlock_KindKeyword" xml:space="preserve">
+    <value>Palavra-chave ou gênero</value>
+  </data>
+  <data name="AutoBlock_KindRating" xml:space="preserve">
+    <value>Classificação etária</value>
+  </data>
+  <data name="AutoBlock_KindAdult" xml:space="preserve">
+    <value>Conteúdo adulto</value>
+  </data>
+  <data name="AutoBlock_Keyword" xml:space="preserve">
+    <value>Bloquear uma palavra-chave ou gênero</value>
+  </data>
+  <data name="AutoBlock_KeywordHelp" xml:space="preserve">
+    <value>Nenhum título com esta palavra-chave ou gênero do TMDb poderá ser pedido.</value>
+  </data>
+  <data name="AutoBlock_KeywordPlaceholder" xml:space="preserve">
+    <value>ex.: anime, reality, terror</value>
+  </data>
+  <data name="AutoBlock_Country" xml:space="preserve">
+    <value>País</value>
+  </data>
+  <data name="AutoBlock_Rating" xml:space="preserve">
+    <value>Classificação</value>
+  </data>
+  <data name="AutoBlock_RatingHelp" xml:space="preserve">
+    <value>Como o TMDb a lista para esse país: NC-17, TV-MA, 18…</value>
+  </data>
+  <data name="AutoBlock_AdultHelp" xml:space="preserve">
+    <value>Tudo o que o TMDb marca como adulto.</value>
+  </data>
+  <data name="AutoBlock_Reason" xml:space="preserve">
+    <value>Motivo (opcional, mostrado a quem pedir)</value>
+  </data>
+  <data name="AutoBlock_Preview" xml:space="preserve">
+    <value>Prévia</value>
+  </data>
+  <data name="AutoBlock_Block" xml:space="preserve">
+    <value>Bloquear</value>
+  </data>
+  <data name="AutoBlock_Added" xml:space="preserve">
+    <value>Adicionado à lista de bloqueio.</value>
+  </data>
+  <data name="AutoBlock_PreviewNothing" xml:space="preserve">
+    <value>Nada entre os {0} títulos que o Marquee consultou.</value>
+  </data>
+  <data name="AutoBlock_PreviewSome" xml:space="preserve">
+    <value>Bloquearia {0} dos {1} títulos que o Marquee consultou.</value>
+  </data>
+  <data name="AutoBlock_PreviewPending_One" xml:space="preserve">
+    <value>{0} pedido aguardando revisão é de um deles.</value>
+  </data>
+  <data name="AutoBlock_PreviewPending_Other" xml:space="preserve">
+    <value>{0} pedidos aguardando revisão são destes.</value>
+  </data>
+  <data name="AutoBlock_Unsupported" xml:space="preserve">
+    <value>Este servidor só bloqueia palavras-chave e gêneros. Atualize-o para ver a prévia ou bloquear por classificação.</value>
+  </data>
+  <data name="Rules_Title" xml:space="preserve">
+    <value>Regras de substituição</value>
+  </data>
+  <data name="Rules_Intro" xml:space="preserve">
+    <value>Envie alguns pedidos para outro servidor, perfil, pasta ou tags — por gênero, idioma original, palavra-chave ou quem pediu. Aplicado na aprovação e mostrado como padrão em Avançado; escolhas feitas à mão continuam valendo.</value>
+  </data>
+  <data name="Rules_Add" xml:space="preserve">
+    <value>Adicionar regra</value>
+  </data>
+  <data name="Rules_AddTitle" xml:space="preserve">
+    <value>Adicionar regra</value>
+  </data>
+  <data name="Rules_EditTitle" xml:space="preserve">
+    <value>Editar regra</value>
+  </data>
+  <data name="Rules_EditorHelp" xml:space="preserve">
+    <value>Um pedido corresponde quando todas as condições definidas valem; numa lista, basta um item. Se várias regras corresponderem, vence a que tiver mais condições.</value>
+  </data>
+  <data name="Rules_Name" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Rules_NamePlaceholder" xml:space="preserve">
+    <value>Anime na pasta de anime</value>
+  </data>
+  <data name="Rules_Server" xml:space="preserve">
+    <value>Servidor</value>
+  </data>
+  <data name="Rules_ServerHelp" xml:space="preserve">
+    <value>Para onde vão os pedidos que correspondem. Regras de um servidor 4K valem para pedidos em 4K.</value>
+  </data>
+  <data name="Rules_Genres" xml:space="preserve">
+    <value>Gêneros</value>
+  </data>
+  <data name="Rules_Languages" xml:space="preserve">
+    <value>Idioma original</value>
+  </data>
+  <data name="Rules_AnyHelp" xml:space="preserve">
+    <value>Nenhum escolhido: qualquer um.</value>
+  </data>
+  <data name="Rules_Keywords" xml:space="preserve">
+    <value>Palavras-chave</value>
+  </data>
+  <data name="Rules_KeywordsHelp" xml:space="preserve">
+    <value>Palavras-chave do TMDb. Uma série de anime só corresponde a uma regra que inclua a palavra-chave “anime”.</value>
+  </data>
+  <data name="Rules_KeywordSearch" xml:space="preserve">
+    <value>Buscar palavras-chave do TMDb</value>
+  </data>
+  <data name="Rules_Search" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Rules_Members" xml:space="preserve">
+    <value>Pedido por</value>
+  </data>
+  <data name="Rules_MembersHelp" xml:space="preserve">
+    <value>Ninguém escolhido: qualquer pessoa.</value>
+  </data>
+  <data name="Rules_Profile" xml:space="preserve">
+    <value>Perfil de qualidade</value>
+  </data>
+  <data name="Rules_Folder" xml:space="preserve">
+    <value>Pasta raiz</value>
+  </data>
+  <data name="Rules_ServerDefault" xml:space="preserve">
+    <value>O padrão do servidor</value>
+  </data>
+  <data name="Rules_Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Rules_TagsHelp" xml:space="preserve">
+    <value>Nenhuma escolhida: as tags padrão do servidor.</value>
+  </data>
+  <data name="Rules_Enabled" xml:space="preserve">
+    <value>Ativada</value>
+  </data>
+  <data name="Rules_On" xml:space="preserve">
+    <value>Ativada</value>
+  </data>
+  <data name="Rules_Off" xml:space="preserve">
+    <value>Desativada</value>
+  </data>
+  <data name="Rules_Save" xml:space="preserve">
+    <value>Salvar</value>
+  </data>
+  <data name="Rules_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Rules_Edit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Rules_Remove" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Rules_Keep" xml:space="preserve">
+    <value>Manter</value>
+  </data>
+  <data name="Rules_RemoveConfirm" xml:space="preserve">
+    <value>Remover “{0}”?</value>
+  </data>
+  <data name="Rules_GoesTo" xml:space="preserve">
+    <value>Para {0}</value>
+  </data>
+  <data name="Rules_EveryRequest" xml:space="preserve">
+    <value>Todos os pedidos</value>
+  </data>
+  <data name="Rules_FormerMember" xml:space="preserve">
+    <value>Ex-membro</value>
+  </data>
+  <data name="Rules_RemovedServer" xml:space="preserve">
+    <value>Um servidor removido</value>
+  </data>
+  <data name="Rules_NeedsServer" xml:space="preserve">
+    <value>Adicione primeiro um servidor Sonarr ou Radarr.</value>
+  </data>
+  <data name="Rules_GenreCount_One" xml:space="preserve">
+    <value>{0} gênero</value>
+  </data>
+  <data name="Rules_GenreCount_Other" xml:space="preserve">
+    <value>{0} gêneros</value>
+  </data>
+  <data name="Title_RemoveFromArr" xml:space="preserve">
+    <value>Remover do {0}</value>
+  </data>
+  <data name="Title_RemovedFromArr" xml:space="preserve">
+    <value>Removido do {0}</value>
+  </data>
+  <data name="Title_RemoveFromArrTitle" xml:space="preserve">
+    <value>Remover {0} do {1}?</value>
+  </data>
+  <data name="Title_RemoveFromArrBody" xml:space="preserve">
+    <value>O {0} deixa de acompanhá-lo em todos os servidores que o têm. Os pedidos aprovados ficam como removidos, então ele pode ser pedido de novo.</value>
+  </data>
+  <data name="Title_RemoveDeleteFiles" xml:space="preserve">
+    <value>Apagar também os arquivos</value>
+  </data>
+  <data name="Title_RemoveDeleteFilesHelp" xml:space="preserve">
+    <value>Sai do disco de vez — o Plex e o Jellyfin também o perdem.</value>
+  </data>
+  <data name="Title_RemoveConfirm" xml:space="preserve">
+    <value>Remover</value>
+  </data>
+  <data name="Title_RemoveAndDelete" xml:space="preserve">
+    <value>Remover e apagar arquivos</value>
+  </data>
+  <data name="Personal_UrlHeaderGotify" xml:space="preserve">
+    <value>Servidor Gotify</value>
+  </data>
+  <data name="Personal_MissingSlack" xml:space="preserve">
+    <value>Digite o endereço do webhook de entrada.</value>
+  </data>
+  <data name="Personal_MissingGotify" xml:space="preserve">
+    <value>Digite o endereço do seu servidor Gotify e um token de aplicativo.</value>
+  </data>
+  <data name="Personal_MissingPushbullet" xml:space="preserve">
+    <value>Digite seu token de acesso do Pushbullet.</value>
+  </data>
+  <data name="Personal_HintSlack" xml:space="preserve">
+    <value>Do app Incoming Webhooks do Slack, ou do Mattermost ou Rocket.Chat.</value>
+  </data>
+  <data name="Personal_HintGotify" xml:space="preserve">
+    <value>No Gotify, Apps › Create application. Prioridade de 0 a 10 (5 se ficar em branco).</value>
+  </data>
+  <data name="Personal_HintPushbullet" xml:space="preserve">
+    <value>Em pushbullet.com, Settings › Account › Create access token. Deixe o canal em branco para enviar a todos os seus dispositivos.</value>
+  </data>
+  <data name="Account_AddSlackWebhook.Header" xml:space="preserve">
+    <value>URL do webhook de entrada do Slack</value>
+  </data>
+  <data name="Account_AddSlackWebhook.PlaceholderText" xml:space="preserve">
+    <value>https://hooks.slack.com/services/…</value>
+  </data>
+  <data name="Account_AddAppToken.Header" xml:space="preserve">
+    <value>Token de aplicativo do Gotify</value>
+  </data>
+  <data name="Account_AddPriority.Header" xml:space="preserve">
+    <value>Prioridade (opcional)</value>
+  </data>
+  <data name="Account_AddAccessToken.Header" xml:space="preserve">
+    <value>Token de acesso do Pushbullet</value>
+  </data>
+  <data name="Account_AddChannelTag.Header" xml:space="preserve">
+    <value>Tag do canal (opcional)</value>
+  </data>
 </root>

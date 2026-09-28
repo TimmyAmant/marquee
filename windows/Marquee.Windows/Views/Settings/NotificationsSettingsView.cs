@@ -98,9 +98,15 @@ public sealed partial class NotificationsSettingsView : UserControl, ISettingsTa
 
         if (!views.TryGetValue(current, out var view))
         {
-            view = current == NotificationsSubTab.Personal
-                ? new AccountSettingsView(SettingsPart.Notifications)
-                : new IntegrationsSettingsView(current.Part());
+            view = current switch
+            {
+                NotificationsSubTab.Personal => new AccountSettingsView(SettingsPart.Notifications),
+                // 0.58+: built in code (ServiceChannelView).
+                NotificationsSubTab.Gotify => new ServiceChannelView(ServiceChannelView.Channel.Gotify),
+                NotificationsSubTab.Slack => new ServiceChannelView(ServiceChannelView.Channel.Slack),
+                NotificationsSubTab.Pushbullet => new ServiceChannelView(ServiceChannelView.Channel.Pushbullet),
+                _ => new IntegrationsSettingsView(current.Part()),
+            };
             views[current] = view;
         }
         if (ReferenceEquals(content.Content, view))

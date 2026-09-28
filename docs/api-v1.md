@@ -1662,7 +1662,11 @@ Sonarr (TV) or Radarr (movies) server that could take the title, default
 first, each with its quality profiles, root folders and tags, and the values
 it would use if nothing is changed. Query: `is4k=true` lists the 4K servers
 instead (a 4K request can only go to a 4K server, a regular one only to a
-regular one). `403` "Only an admin can approve requests." for members.
+regular one). `requestId=…` (a pending request being reviewed) or
+`forRequest=true` (a request the caller is about to make) also apply the
+override rules (0.58+, below): the matching rule's server comes first, with
+the rule's picks as its `defaults`, and `rule` names it. `403` "Only an admin
+can approve requests." for members.
 
 ```json
 {
@@ -1670,6 +1674,7 @@ regular one). `403` "Only an admin can approve requests." for members.
   "tmdbId": 95396,
   "is4k": false,
   "isAnime": false,
+  "rule": { "id": "7d2e9c41-5b3a-4f1e-8c6d-2a9b0e4f1c37", "name": "Anime to the anime folder", "serverId": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10" },
   "servers": [
     {
       "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
@@ -1697,6 +1702,10 @@ regular one). `403` "Only an admin can approve requests." for members.
   overrides still works if it comes back.
 - `servers` is empty when none is set up for this type (then Add/Approve fail
   with "Connect Radarr in Settings first." as before).
+- `rule` (0.58+): the override rule the request goes by, or null (always
+  null without `requestId`/`forRequest`, and on older servers it's missing).
+  Website: "Picked by the override rule “Anime to the anime folder”." above
+  the pickers.
 
 Errors: `403 forbidden` "Only the admin can add titles.", `409 conflict`
 "Connect Radarr in Settings first." / "Connect Sonarr in Settings first." (not
@@ -1752,6 +1761,27 @@ Navigate to the new title afterwards. Errors (`400 invalid` unless noted):
 ID on TMDb." / "Couldn't find that TVDB ID on TMDb." / "Couldn't find that
 title on TMDb. Check the ID and try again."; `409 conflict` "Couldn't update —
 the corrected title may already be linked to something else in your library.".
+
+### `POST /titles/{type}/{tmdbId}/remove-from-arr` — admin, never an API key (0.58+)
+
+"Remove from Radarr" / "Remove from Sonarr" in the title page's "…" menu:
+takes the title off every standard server that has it (or, with `is4k`, the
+4K ones), and deletes its files too with `deleteFiles`. Body: `{
+"deleteFiles": false, "is4k"?: false }`. The approved requests for it (of
+that 4K-ness) get marked removed: they no longer count as open (so it can be
+requested again), and the can't-find and ready-to-watch checks leave them.
+
+```json
+{ "ok": true, "removedFrom": ["Radarr"], "failed": [], "requestsMarked": 1 }
+```
+
+`failed`: servers that had it but didn't take the delete (it still counts
+as done when any server did). Website: a dialog "Remove Dune from Radarr?"
+with "Also delete the files" (off by default) and Cancel / Remove (or
+"Remove and delete files"); a toast "Removed from Radarr" afterwards.
+Errors: `409 conflict` "Not tracked in Radarr/Sonarr.", `502 upstream`
+"Radarr didn't remove it. Check that it's reachable and try again.", `403`
+"Only the admin can remove titles from Sonarr or Radarr.".
 
 ---
 
@@ -2595,15 +2625,35 @@ when a keyword did it.
   "keyword": null, "reason": "Already on Max.", "createdAt": "…" }, { "id":
   "…", "kind": "keyword", "mediaType": null, "tmdbId": null, "title": null,
   "keyword": "anime", "reason": null, "createdAt": "…" } ] }` (keywords
-  first, then titles).
-- **`POST /settings/blocklist`** — admin. `{ "keyword": "anime", "reason":
-  "…" }`. `400` "Enter a keyword or genre, like anime.".
+  first, then titles). Since 0.58 each entry also has `region`, and `kind`
+  may be `certification` (`keyword` the rating, `region` its country) or
+  `adult`; treat any other kind as unknown. A title blocked by one reads
+  `"keyword": "NC-17 (US)"` / `"adult"` in `viewer.blocked`.
+- **`POST /settings/blocklist`** — admin. A rule that blocks
+  automatically: `{ "keyword": "anime", "reason": "…" }` (or `"kind":
+  "keyword"`), and since 0.58 `{ "kind": "certification", "region": "US",
+  "certification": "NC-17" }` (a rating as TMDb lists it for that country:
+  a movie's release certifications, a show's content ratings) or `{ "kind":
+  "adult" }` (everything TMDb marks adult). `400` "Enter a keyword or genre,
+  like anime.", "Pick the country whose ratings to go by.", "Enter a rating,
+  like NC-17 or TV-MA.", "\"kind\" must be keyword, certification or adult.".
+- **`POST /settings/blocklist/preview`** — admin (0.58+). The same body, and
+  nothing is added: what the rule would block among the titles Marquee has
+  looked up (its TMDb records, the newest 5,000), with up to 24 of them, and
+  the pending requests it would have refused. `{ "titles": [ { "mediaType":
+  "movie", "tmdbId": 129, "name": "Spirited Away", "year": "2001" } ],
+  "scanned": 812, "matched": 1, "pendingRequests": [ { "id": "…", "title":
+  "Spirited Away", "mediaType": "movie", "tmdbId": 129 } ] }`.
 - **`DELETE /settings/blocklist/{id}`** — admin. `404` "Not on the
   blocklist.".
 
-Website: Settings → Account (admin), "Request blocklist": the list (titles
-link to their page, keywords read "Keyword: anime", each with Remove) and a
-form "Block a keyword or genre" with an optional reason.
+Website: Settings › Blocklist, "Request blocklist": the list (titles link to
+their page, keywords read "Keyword: anime", ratings "Rated NC-17 in United
+States", each with Remove) and "Block automatically": Block by (Keyword or
+genre / Age rating / Adult content), the keyword or the country and rating,
+an optional reason, and Preview ("Would block 3 of the 812 titles Marquee
+has looked up.", the titles, and "1 request waiting for review is for one of
+them.") beside Block.
 
 ### Problem reports (0.38+)
 
@@ -2892,7 +2942,10 @@ isn't yours, exactly as for one that doesn't exist.
     "email": { "available": true },
     "discord": { "available": true },
     "ntfy": { "available": true, "householdServer": "https://ntfy.sh" },
-    "webhook": { "available": true, "homeNetwork": false }
+    "webhook": { "available": true, "homeNetwork": false },
+    "slack": { "available": true },
+    "gotify": { "available": true },
+    "pushbullet": { "available": true }
   },
   "channels": [
     {
@@ -2933,8 +2986,10 @@ full topic URLs). `homeNetwork`: whether this account's webhook and ntfy URLs
 may point at the home network (the admin's may; members' only when the
 server sets `MARQUEE_ALLOW_PRIVATE_WEBHOOKS=true`).
 
-Each channel: `kind` is `telegram`, `pushover`, `email`, `discord`, `ntfy`
-or `webhook` (treat any other as unknown and show it read-only). `target`:
+Each channel: `kind` is `telegram`, `pushover`, `email`, `discord`, `ntfy`,
+`webhook`, or since 0.58 `slack`, `gotify` or `pushbullet` (treat any other
+as unknown and show it read-only; older servers don't list the last three in
+`available`). `target`:
 where it goes, **masked** — webhook URLs, ntfy topics and Pushover keys are
 secrets and the API never returns them (email addresses are shown whole).
 `enabled`: off, it gets nothing. `verified`: false for an email address,
@@ -2955,7 +3010,10 @@ account.
   `email` `{ "address": "you@example.com" }`; `discord` `{ "webhookUrl":
   "https://discord.com/api/webhooks/…" }`; `ntfy` `{ "topic": "…" }` on the
   household server or `{ "url": "https://ntfy.sh/…" }`; `webhook` `{ "url":
-  "https://…" }`. A test message is sent first and the channel is saved only
+  "https://…" }`; `slack` `{ "webhookUrl": "https://hooks.slack.com/…" }`;
+  `gotify` `{ "url": "https://gotify.example.com", "appToken": "…",
+  "priority"?: 5 }`; `pushbullet` `{ "accessToken": "…", "channelTag"?:
+  "…" }`. A test message is sent first and the channel is saved only
   if it arrives: `201` with the channel, or `400 invalid` with the reason
   ("The test message didn't arrive: HTTP 404"). Email and Telegram instead
   get a 6-digit code (`201`, `verified: false`; the bot sends Telegram's). Webhook and ntfy URLs must be on the
@@ -3688,6 +3746,9 @@ take a few seconds.
     "connected": true, "host": "smtp.gmail.com", "port": 587, "secure": false,
     "username": "me@gmail.com", "from": "me@gmail.com", "to": ["me@gmail.com", "partner@example.com"]
   },
+  "gotify": { "connected": true, "url": "https://gotify.example.com", "priority": 5 },
+  "slack": { "connected": false },
+  "pushbullet": { "connected": false, "channelTag": null },
   "genericWebhook": { "connected": false },
   "arrWebhooks": {
     "secret": "d8a989b4f0ad05fab2ab959bf0d5615adb0a25a9a3974674",
@@ -3914,6 +3975,63 @@ The webhook: in Sonarr/Radarr → Settings → Connect → Add → Webhook, past
 server's `webhookUrl` (method POST, on Grab and on Import/Download). Webhook
 URLs from before 0.43 (`arrWebhooks`) keep working.
 
+#### `GET /settings/override-rules` — admin, never an API key (0.58+)
+
+Settings › Services › Override rules (like Seerr's): which requests go to
+which server, with which quality profile, root folder and tags. A rule names
+a server — which also says whether it's for movies (Radarr) or shows
+(Sonarr), and for 4K requests or regular ones — and conditions: TMDb genre
+ids, original languages (ISO 639-1), TMDb keywords and requesting members.
+An empty list is "any"; within a list any one entry will do; every list
+that's set must match. An anime show only matches a rule that lists TMDb's
+"anime" keyword (210024), since its server's anime settings already apply.
+When several match, the rule with the most kinds of condition wins, then the
+one listed first. It's applied when a request is approved (by hand,
+automatically or with Approve all): hand-made picks win field by field, and
+picking another server drops the rule. `GET /titles/…/add-options` with
+`requestId` shows it as the default.
+
+```json
+{
+  "results": [
+    {
+      "id": "7d2e9c41-5b3a-4f1e-8c6d-2a9b0e4f1c37",
+      "serverId": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "name": "Anime to the anime folder",
+      "enabled": true,
+      "genres": [16],
+      "languages": ["ja"],
+      "keywords": [{ "id": 210024, "name": "anime" }],
+      "userIds": [],
+      "qualityProfileId": 7,
+      "rootFolderPath": "/anime",
+      "tags": [3],
+      "position": 0
+    }
+  ]
+}
+```
+
+`qualityProfileId`, `rootFolderPath` and `tags`: null keeps the server's
+default. A rule goes with its server when the server is removed.
+
+- **`POST /settings/override-rules`** — the same fields (not `id` or
+  `position`); `serverId` and `name` (≤ 80 characters) required, lists of at
+  most 50. `201` `{ "ok": true, "rule": {…} }`. `400` "Give the rule a
+  name.", "Pick one of your Sonarr or Radarr servers for the rule.", "The
+  rule's “genres” isn't right.", "One of the members in the rule isn't in the
+  household any more.".
+- **`PUT /settings/override-rules/{id}`** — replaces the rule; `{ "ok": true,
+  "rule": {…} }`. `404` "That override rule doesn't exist.".
+- **`DELETE /settings/override-rules/{id}`** — `{ "ok": true }`.
+
+Website: a tile per rule ("Anime to the anime folder", "To Anime Sonarr ·
+Sonarr", its conditions as chips or "Every request", On/Off) with Edit and
+Remove, an "Add rule" tile, and the rule being edited as rows (Name, Server,
+Genres, Original language, Keywords with a TMDb search, Requested by,
+Quality profile / Root folder with "The server's default", Tags, On) and one
+Save bar.
+
 ### Sonarr / Radarr (one default server each)
 
 `{provider}` is `sonarr` or `radarr` (default ports 8989 / 7878). Since 0.43
@@ -4027,6 +4145,9 @@ value. All respond `{ "ok": true }`.
 | `/settings/integrations/webhook` | `{ "webhookUrl": "https://…" }` (generic JSON webhook) | "Enter a webhook URL.", "Enter a valid URL, starting with http:// or https://.", "Couldn't post a test request to that URL. Check it and try again." |
 | `/settings/integrations/telegram` | `{ "botToken": "123456789:AA…", "chatId": "-1001234567890" }` — `botToken` may be left `""` to keep the saved one | "Enter your bot's token.", "That doesn't look like a bot token. …", "Enter the chat ID to send to.", "The chat ID is a number (groups and channels start with -100) or a channel's @name.", "Telegram didn't take the test message: chat not found" (Telegram's own reason) |
 | `/settings/integrations/pushover` | `{ "appToken": "…", "userKey": "…" }` — both 30 characters; `appToken` may be `""` to keep the saved one | "The application token is the 30-character code …", "The user key is the 30-character code …", "Pushover didn't take the test message: user identifier is not a valid user, group, or subscribed user key" (Pushover's own reason) |
+| `/settings/integrations/gotify` (0.58+) | `{ "url": "https://gotify.example.com", "appToken": "…", "priority": 5 }` — an application token from Gotify; `priority` 0–10 (5 when left out); `appToken` may be `""` to keep the saved one for the same server | "Enter your Gotify server's address.", "Enter an application token from Gotify (Apps › Create application).", "The priority is a number from 0 to 10.", "The test message didn't go through: HTTP 401" |
+| `/settings/integrations/slack` (0.58+) | `{ "webhookUrl": "https://hooks.slack.com/services/…" }` — an incoming webhook (Mattermost's and Rocket.Chat's work too); `""` keeps the saved one | "Enter the incoming webhook's address.", "The test message didn't go through: HTTP 404" |
+| `/settings/integrations/pushbullet` (0.58+) | `{ "accessToken": "o.…", "channelTag"?: "family" }` — an access token from pushbullet.com; `channelTag` posts to one of your channels instead of your devices; `""` keeps the saved token | "Enter your Pushbullet access token (Settings › Account › Create access token).", "A channel tag is letters, digits, - and _.", "The test message didn't go through: HTTP 401" |
 | `/settings/integrations/email` | `{ "host": "smtp.gmail.com", "port": 587, "secure": false, "username": "me@gmail.com", "password": "…", "from": "me@gmail.com", "to": ["me@gmail.com"] }` — `secure`: TLS from the start (usually 465), otherwise STARTTLS when offered; `username`/`password` both or neither; `password` may be `""` to keep the saved one when `host` and `username` are unchanged; `to` may also be one comma-separated string, at most 20 | "Enter the SMTP server's host name, like smtp.gmail.com.", "Enter the SMTP port, like 587.", "Enter both the SMTP username and password, or neither.", "Enter the address the emails come from.", "Enter at least one address to send to.", "\"bob\" isn't an email address.", "The test email didn't go through: 535 5.7.8 Username and Password not accepted…" (the server's own answer) |
 
 Deleting the TMDb token falls back to `TMDB_ACCESS_TOKEN`/`TMDB_API_KEY` from
@@ -4174,7 +4295,7 @@ already here, 0 couldn't be imported." / "Download report (JSON)".
 ```json
 {
   "results": [
-    { "id": "plex-sync", "name": "Plex Library Sync", "schedule": "Every hour", "description": "Pulls the latest library state from every connected Plex server." },
+    { "id": "plex-sync", "name": "Plex Library Sync", "schedule": "Every 2 hours", "description": "Pulls the latest library state from every connected Plex server.", "interval": { "every": "hours", "count": 2 }, "defaultInterval": { "every": "hours", "count": 1 }, "nextRunAt": "2026-09-27T22:00:00.000Z", "lastRunAt": "2026-09-27T20:00:04.000Z", "running": false },
     { "id": "jellyfin-sync", "name": "Jellyfin Library Sync", "schedule": "Every hour", "description": "Pulls the latest library state from every connected Jellyfin server." },
     { "id": "arr-sync", "name": "Sonarr/Radarr Sync", "schedule": "Every hour", "description": "Refreshes tracked/monitored status from every connected Sonarr and Radarr instance." },
     { "id": "plex-watchlist", "name": "Plex Watchlist Requests", "schedule": "Every 10 minutes", "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each." },
@@ -4187,6 +4308,52 @@ already here, 0 couldn't be imported." / "Download report (JSON)".
 ```
 
 `403` "Only the admin can run jobs." for members.
+
+Since 0.58 each job also has `interval` (how often it runs: `{ "every":
+"minutes" | "hours", "count": n }` or `{ "dailyAt": { "hour": 3, "minute":
+30 } }`, server time), `defaultInterval`, `nextRunAt`, `lastRunAt` (since the
+server started; null before its first run) and `running`. They're missing on
+older servers. `schedule` stays the interval in words.
+
+#### `PUT /settings/jobs/{id}` — admin, never an API key (0.58+)
+
+How often a job runs: `{ "interval": { "every": "minutes", "count": 15 } }`
+— every 5, 10, 15 or 30 minutes, every 1, 2, 3, 4, 6, 8 or 12 hours, or `{
+"dailyAt": { "hour": 4, "minute": 15 } }` — or `{ "interval": null }` for its
+default. The job moves to it straight away (keeping its own minute past the
+hour); answers with the job. `400` "Pick how often: every 5, 10, 15 or 30
+minutes, every 1, 2, 3, 4, 6, 8 or 12 hours, or once a day at a time.",
+`404` "Unknown job.". Website: under each job, a menu of those presets
+("Every 15 minutes", "Every 6 hours", "Once a day" with a time), Save, "Back
+to the default", and "Next run Sep 27, 10:00 PM · last ran Sep 27, 8:00 PM".
+
+### `GET /settings/logs` — admin, never an API key (0.58+)
+
+Settings › Logs: the server's recent log lines (the last 2,000 kept in
+memory, and on disk across restarts in `MARQUEE_LOG_DIR`, the system's
+temporary folder by default), oldest first. Keys, tokens, passwords, webhook
+addresses and the like are masked (`[redacted]`) before they're kept.
+Query: `level` the least severe to include (`debug`, `info`, `warn`,
+`error`), `q` text in the message or source, `after` only lines newer than
+that `id` (for polling), `limit` at most this many of the newest (default
+500, at most 2,000).
+
+```json
+{
+  "results": [
+    { "id": 41, "time": "2026-09-27T21:00:00.412Z", "level": "info", "source": "jobs", "message": "plex-sync rescheduled" },
+    { "id": 42, "time": "2026-09-27T21:00:03.118Z", "level": "error", "source": "arr-sync", "message": "scheduled run failed: Error: Radarr request failed: /movie?apikey=[redacted] (401)" }
+  ],
+  "latestId": 42
+}
+```
+
+`source`: the subsystem from the line's `[prefix]`, or `server`. `latestId`:
+the newest line's id, whatever the filter, for the next `after`. Ids start
+again when the server restarts. `403` "Only the admin can read the server's
+logs.", `400` "\"level\" must be debug, info, warn or error.". Website: a
+level menu ("Info and up"), a filter box, Pause / Resume (it refreshes every
+few seconds), Copy and Download (a .log text file of the lines shown).
 
 ### `GET /settings/not-found` · `PUT` — admin (0.46+)
 
@@ -4311,7 +4478,8 @@ Sending an API key *and* a device token on one request is refused (`401`).
   manage API keys, sign-in, household accounts or admin settings."):
   `/settings/api-keys`, everything under `/auth`, `/me/links`,
   `/settings/integrations`, `/settings/arr-servers`, `/settings/sso`,
-  `/settings/sign-in` and `/users/import`; any change under `/settings`,
+  `/settings/sign-in`, `/users/import`, `/settings/logs` and (0.58+) any
+  `…/remove-from-arr`; any change under `/settings`,
   `/users` (accounts, roles, photos), `/me/notification-channels` and
   `/me/plex-watchlist`. Of the admin settings, a key may only read
   `/settings/activity`, `/settings/jobs`, `/settings/about`,
@@ -4658,6 +4826,7 @@ see free space per root folder here."
 | | `POST /titles/{type}/{tmdbId}/search` | admin |
 | | `PUT /titles/{type}/{tmdbId}/monitored` | admin |
 | | `POST /titles/{type}/{tmdbId}/relink` | admin |
+| | `POST /titles/{type}/{tmdbId}/remove-from-arr` | admin (no API key) |
 | Person / Company | `GET /people/{tmdbId}` | user |
 | | `GET /companies/{tmdbId}` | user |
 | Favorites | `GET /favorites` | user |
@@ -4739,8 +4908,15 @@ see free space per root folder here."
 | | `PUT /settings/integrations/telegram` · `DELETE` | admin |
 | | `PUT /settings/integrations/pushover` · `DELETE` | admin |
 | | `PUT /settings/integrations/email` · `DELETE` | admin |
+| | `PUT /settings/integrations/gotify` · `DELETE` | admin |
+| | `PUT /settings/integrations/slack` · `DELETE` | admin |
+| | `PUT /settings/integrations/pushbullet` · `DELETE` | admin |
+| | `GET /settings/override-rules` · `POST` | admin (no API key) |
+| | `PUT /settings/override-rules/{id}` · `DELETE` | admin (no API key) |
 | Settings: Jobs | `GET /settings/jobs` | admin |
 | | `POST /settings/jobs/{id}/run` | admin |
+| | `PUT /settings/jobs/{id}` | admin (no API key) |
+| | `GET /settings/logs` | admin (no API key) |
 | | `GET /settings/not-found` · `PUT` | admin |
 | Settings: About & Changelog | `GET /settings/about` | user |
 | | `GET /changelog` | user |

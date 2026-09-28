@@ -3,6 +3,11 @@
   "tmdbId": 95396,
   "is4k": false,
   "isAnime": false,
+  "rule": {
+    "id": "7d2e9c41-5b3a-4f1e-8c6d-2a9b0e4f1c37",
+    "name": "Anime to the anime folder",
+    "serverId": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10"
+  },
   "servers": [
     {
       "id": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",

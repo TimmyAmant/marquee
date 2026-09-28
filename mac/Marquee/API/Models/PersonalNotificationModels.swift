@@ -16,10 +16,16 @@ extension API {
         case discord
         case ntfy
         case webhook
+        /// 0.58+.
+        case slack
+        case gotify
+        case pushbullet
         case unknown(String)
 
         /// The order the website offers them in.
-        static let knownCases: [NotificationChannelKind] = [.telegram, .pushover, .email, .discord, .ntfy, .webhook]
+        static let knownCases: [NotificationChannelKind] = [
+            .telegram, .pushover, .email, .discord, .ntfy, .slack, .gotify, .pushbullet, .webhook,
+        ]
 
         var rawValue: String {
             switch self {
@@ -29,6 +35,9 @@ extension API {
             case .discord: return "discord"
             case .ntfy: return "ntfy"
             case .webhook: return "webhook"
+            case .slack: return "slack"
+            case .gotify: return "gotify"
+            case .pushbullet: return "pushbullet"
             case let .unknown(raw): return raw
             }
         }
@@ -42,6 +51,9 @@ extension API {
             case .discord: return "Discord"
             case .ntfy: return "ntfy"
             case .webhook: return String(localized: "Webhook")
+            case .slack: return "Slack" // i18n-ignore: brand
+            case .gotify: return "Gotify" // i18n-ignore: brand
+            case .pushbullet: return "Pushbullet" // i18n-ignore: brand
             case let .unknown(raw): return raw.capitalized
             }
         }
@@ -65,7 +77,8 @@ extension API {
         /// The kinds the admin hasn't set up yet ("… can be added once the
         /// admin sets them up for the household.").
         var missingKinds: [NotificationChannelKind] {
-            NotificationChannelKind.knownCases.filter { availability(of: $0)?.available != true }
+            // A kind an older server doesn't list at all isn't "missing".
+            NotificationChannelKind.knownCases.filter { availability(of: $0).map { !$0.available } ?? false }
         }
 
         /// The household bot, for "Connect with Telegram" (nil: enter the chat ID).

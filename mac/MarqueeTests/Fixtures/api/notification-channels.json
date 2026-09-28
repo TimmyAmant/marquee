@@ -20,6 +20,15 @@
     "webhook": {
       "available": true,
       "homeNetwork": false
+    },
+    "slack": {
+      "available": true
+    },
+    "gotify": {
+      "available": true
+    },
+    "pushbullet": {
+      "available": true
     }
   },
   "channels": [

@@ -30,6 +30,7 @@ describe("Settings' tabs", () => {
       "discover",
       "blocklist",
       "jobs",
+      "logs",
       "activity",
       "about",
     ]);
@@ -79,6 +80,9 @@ describe("Notifications' sub-tabs", () => {
       "telegram",
       "pushover",
       "email",
+      "gotify",
+      "slack",
+      "pushbullet",
       "webhook",
     ]);
   });
@@ -93,7 +97,7 @@ describe("Notifications' sub-tabs", () => {
       expect(tab.href).toBe(`/settings/notifications/${tab.id}`);
     }
     expect(isNotificationAgent("personal")).toBe(false);
-    expect(isNotificationAgent("slack")).toBe(false);
+    expect(isNotificationAgent("matrix")).toBe(false);
   });
 });
 

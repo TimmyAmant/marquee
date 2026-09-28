@@ -276,6 +276,11 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowsUserKey))]
     [NotifyPropertyChangedFor(nameof(ShowsAddress))]
     [NotifyPropertyChangedFor(nameof(ShowsWebhookUrl))]
+    [NotifyPropertyChangedFor(nameof(ShowsSlackWebhook))]
+    [NotifyPropertyChangedFor(nameof(ShowsAppToken))]
+    [NotifyPropertyChangedFor(nameof(ShowsPriority))]
+    [NotifyPropertyChangedFor(nameof(ShowsAccessToken))]
+    [NotifyPropertyChangedFor(nameof(ShowsChannelTag))]
     [NotifyPropertyChangedFor(nameof(ShowsTopic))]
     [NotifyPropertyChangedFor(nameof(ShowsUrl))]
     [NotifyPropertyChangedFor(nameof(UrlHeader))]
@@ -306,6 +311,20 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
 
     [ObservableProperty]
     private string addUrl = "";
+
+    /// <summary>Gotify (0.58+): its application token and priority.</summary>
+    [ObservableProperty]
+    private string addAppToken = "";
+
+    [ObservableProperty]
+    private string addPriority = "";
+
+    /// <summary>Pushbullet (0.58+): the access token and an optional channel.</summary>
+    [ObservableProperty]
+    private string addAccessToken = "";
+
+    [ObservableProperty]
+    private string addChannelTag = "";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AddLabel))]
@@ -347,17 +366,30 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
     public bool ShowsAddress => SelectedAddKind == NotificationChannelKind.Email;
     public bool ShowsWebhookUrl => SelectedAddKind == NotificationChannelKind.Discord;
 
+    /// <summary>Slack's incoming webhook (0.58+), in <see cref="AddWebhookUrl"/> too.</summary>
+    public bool ShowsSlackWebhook => SelectedAddKind == NotificationChannelKind.Slack;
+
+    public bool ShowsAppToken => SelectedAddKind == NotificationChannelKind.Gotify;
+    public bool ShowsPriority => SelectedAddKind == NotificationChannelKind.Gotify;
+    public bool ShowsAccessToken => SelectedAddKind == NotificationChannelKind.Pushbullet;
+    public bool ShowsChannelTag => SelectedAddKind == NotificationChannelKind.Pushbullet;
+
     /// <summary>ntfy with a household server: a topic alone is enough there.</summary>
     public bool ShowsTopic => SelectedAddKind == NotificationChannelKind.Ntfy && NtfyHouseholdServer != null;
 
     /// <summary>ntfy's full topic URL, or the webhook's URL.</summary>
-    public bool ShowsUrl => SelectedAddKind == NotificationChannelKind.Ntfy || SelectedAddKind == NotificationChannelKind.Webhook;
+    public bool ShowsUrl =>
+        SelectedAddKind == NotificationChannelKind.Ntfy
+        || SelectedAddKind == NotificationChannelKind.Webhook
+        || SelectedAddKind == NotificationChannelKind.Gotify;
 
     public string UrlHeader => SelectedAddKind == NotificationChannelKind.Ntfy
         ? NtfyHouseholdServer != null ? Loc.Get("Personal_UrlHeaderOtherServer") : Loc.Get("Personal_UrlHeaderTopic")
-        : Loc.Get("Personal_UrlHeaderWebhook");
+        : SelectedAddKind == NotificationChannelKind.Gotify ? Loc.Get("Personal_UrlHeaderGotify") : Loc.Get("Personal_UrlHeaderWebhook");
 
-    public string UrlPlaceholder => SelectedAddKind == NotificationChannelKind.Ntfy ? "https://ntfy.sh/your-topic" : "https://";
+    public string UrlPlaceholder => SelectedAddKind == NotificationChannelKind.Ntfy
+        ? "https://ntfy.sh/your-topic"
+        : SelectedAddKind == NotificationChannelKind.Gotify ? "https://gotify.example.com" : "https://";
 
     /// <summary>The one-tap Telegram button: Telegram picked, and the household bot can be reached.</summary>
     public bool ShowsTelegramConnect => SelectedAddKind == NotificationChannelKind.Telegram && TelegramBot != null;
@@ -659,7 +691,9 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         }
         AddError = null;
         AddNotice = null;
-        if (NotificationChannelConfig.FromForm(kind, AddChatId, AddUserKey, AddAddress, AddWebhookUrl, ShowsTopic ? AddTopic : "", AddUrl) is not { } config)
+        if (NotificationChannelConfig.FromForm(
+                kind, AddChatId, AddUserKey, AddAddress, AddWebhookUrl, ShowsTopic ? AddTopic : "", AddUrl,
+                AddAppToken, AddPriority, AddAccessToken, AddChannelTag) is not { } config)
         {
             AddError = MissingFieldMessage(kind);
             return;
@@ -759,6 +793,10 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         AddWebhookUrl = "";
         AddTopic = "";
         AddUrl = "";
+        AddAppToken = "";
+        AddPriority = "";
+        AddAccessToken = "";
+        AddChannelTag = "";
     }
 
     internal static string MissingFieldMessage(NotificationChannelKind kind)
@@ -768,6 +806,9 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         if (kind == NotificationChannelKind.Email) return Loc.Get("Personal_MissingEmail");
         if (kind == NotificationChannelKind.Discord) return Loc.Get("Personal_MissingDiscord");
         if (kind == NotificationChannelKind.Ntfy) return Loc.Get("Personal_MissingNtfy");
+        if (kind == NotificationChannelKind.Slack) return Loc.Get("Personal_MissingSlack");
+        if (kind == NotificationChannelKind.Gotify) return Loc.Get("Personal_MissingGotify");
+        if (kind == NotificationChannelKind.Pushbullet) return Loc.Get("Personal_MissingPushbullet");
         return Loc.Get("Personal_MissingWebhook");
     }
 
@@ -791,6 +832,18 @@ public sealed partial class PersonalNotificationsViewModel : ObservableObject
         if (kind == NotificationChannelKind.Discord)
         {
             return Loc.Get("Personal_HintDiscord");
+        }
+        if (kind == NotificationChannelKind.Slack)
+        {
+            return Loc.Get("Personal_HintSlack");
+        }
+        if (kind == NotificationChannelKind.Gotify)
+        {
+            return Loc.Get("Personal_HintGotify");
+        }
+        if (kind == NotificationChannelKind.Pushbullet)
+        {
+            return Loc.Get("Personal_HintPushbullet");
         }
         // On a home network the server can reach local addresses; otherwise the hint says it must be on the internet.
         var homeNetwork = availability?.HomeNetwork == true;

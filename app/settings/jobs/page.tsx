@@ -6,12 +6,13 @@ import { getT } from "@/lib/i18n/server";
 import { NotFoundHoursSetting } from "@/components/not-found-hours-setting";
 import { getNotFoundAfterHours } from "@/lib/requests/not-found";
 import { SettingRow, SettingsGroup, SettingsHeader, SettingsSection } from "@/components/settings/settings-ui";
+import { JobScheduleSetting } from "@/components/job-schedule-setting";
+import { getStoredJobSchedules } from "@/lib/jobs/schedule-store";
 
 export default async function JobsSettingsPage() {
   const viewer = await getViewerContext();
   if (!viewer.session || !viewer.isAdmin) redirect("/settings");
-  const notFoundAfterHours = await getNotFoundAfterHours();
-  const t = await getT();
+  const [notFoundAfterHours, stored, t] = await Promise.all([getNotFoundAfterHours(), getStoredJobSchedules(), getT()]);
 
   return (
     <div>
@@ -19,14 +20,14 @@ export default async function JobsSettingsPage() {
 
       <SettingsSection>
         <SettingsGroup>
-          {jobDefinitions(t).map((job) => (
+          {jobDefinitions(t, stored).map((job) => (
             <SettingRow
               key={job.id}
               label={job.name}
               help={
                 <>
                   {job.description}
-                  <span className="mt-1 block text-xs text-text-muted">{job.schedule}</span>
+                  <JobScheduleSetting job={job} />
                   {job.id === "not-found-check" && <NotFoundHoursSetting initial={notFoundAfterHours} />}
                 </>
               }

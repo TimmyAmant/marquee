@@ -400,6 +400,13 @@ public sealed record AddOptions
 
     /// <summary>Empty when none is set up for this type.</summary>
     public required IReadOnlyList<AddServerOption> Servers { get; init; }
+
+    /// <summary>
+    /// The override rule the request goes by (0.58+, with a request id): its
+    /// server comes first, with the rule's picks as its defaults. Null when
+    /// none applies, or from an older server.
+    /// </summary>
+    public AddOptionsRule? Rule { get; init; }
 }
 
 /// <summary>One server under <see cref="AddOptions.Servers"/>.</summary>
@@ -489,7 +496,10 @@ public sealed class AddOverridesSelection
     public AddOverridesSelection(AddOptions options)
     {
         Options = options;
-        Server = options.Servers.FirstOrDefault(server => server.IsDefault) ?? options.Servers.FirstOrDefault();
+        // An override rule's server first (0.58+), with the rule's picks.
+        Server = options.Servers.FirstOrDefault(server => options.Rule != null && server.Id == options.Rule.ServerId)
+            ?? options.Servers.FirstOrDefault(server => server.IsDefault)
+            ?? options.Servers.FirstOrDefault();
         ResetToServerDefaults();
     }
 

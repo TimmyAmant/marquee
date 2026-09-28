@@ -231,5 +231,8 @@
   "seerrImportNotFound": "Esa importación ya no existe.",
   "seerrNothingChosen": "Elige al menos una cosa para importar.",
   "onlyOwnProfile": "Solo puedes ver tu propio perfil.",
-  "noSearchSection": "No hay ninguna sección de búsqueda \"{section}\" (usa una de {sections})."
+  "noSearchSection": "No hay ninguna sección de búsqueda \"{section}\" (usa una de {sections}).",
+  "onlyAdminLogs": "Solo el administrador puede leer los registros del servidor.",
+  "logLevelInvalid": "\"level\" debe ser debug, info, warn o error.",
+  "onlyAdminRemoveFromArr": "Solo el administrador puede quitar títulos de Sonarr o Radarr."
 }

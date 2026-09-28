@@ -22,6 +22,7 @@ import {
   type PersonalChannelConfig,
 } from "@/lib/notifications/personal-config";
 import { getT, translatorForUser } from "@/lib/i18n/server";
+import { gotifyRequest, pushbulletRequest, send, slackRequest } from "@/lib/notifications/services";
 import { englishT } from "@/lib/i18n/catalog";
 import type { Translator } from "@/lib/i18n/translator";
 
@@ -57,6 +58,9 @@ export type ChannelAvailability = {
   discord: { available: boolean };
   ntfy: { available: boolean; householdServer: string | null };
   webhook: { available: boolean; homeNetwork: boolean };
+  slack: { available: boolean };
+  gotify: { available: boolean };
+  pushbullet: { available: boolean };
 };
 
 let botNameCache: { token: string; name: string | null; expiresAt: number } | null = null;
@@ -93,6 +97,9 @@ export async function getAvailability(actor: Actor): Promise<ChannelAvailability
     discord: { available: true },
     ntfy: { available: true, householdServer: ntfyServerOf(ntfyUrl) },
     webhook: { available: true, homeNetwork: policyFor(actor).allowPrivate },
+    slack: { available: true },
+    gotify: { available: true },
+    pushbullet: { available: true },
   };
 }
 
@@ -248,6 +255,13 @@ export async function sendThrough(
         policyFor(actor),
         t,
       );
+    case "slack":
+      return send(slackRequest(config, message.line), policyFor(actor), t);
+    case "gotify":
+      return send(gotifyRequest(config, message.heading, message.message), policyFor(actor), t);
+    case "pushbullet":
+      // Pushbullet's own address.
+      return send(pushbulletRequest(config, message.heading, message.message), { allowPrivate: false }, t);
   }
 }
 

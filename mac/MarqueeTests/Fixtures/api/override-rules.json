@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "id": "7d2e9c41-5b3a-4f1e-8c6d-2a9b0e4f1c37",
+      "serverId": "4f0c2a8e-1b7d-4c1e-9a55-3c2d8e6f7a10",
+      "name": "Anime to the anime folder",
+      "enabled": true,
+      "genres": [
+        16
+      ],
+      "languages": [
+        "ja"
+      ],
+      "keywords": [
+        {
+          "id": 210024,
+          "name": "anime"
+        }
+      ],
+      "userIds": [],
+      "qualityProfileId": 7,
+      "rootFolderPath": "/anime",
+      "tags": [
+        3
+      ],
+      "position": 0
+    }
+  ]
+}

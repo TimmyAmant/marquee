@@ -34,7 +34,13 @@ public readonly record struct BlocklistKind(string Value) : IOpenEnum<BlocklistK
     public static readonly BlocklistKind Title = new("title");
     public static readonly BlocklistKind Keyword = new("keyword");
 
-    public static IReadOnlyList<BlocklistKind> Known { get; } = [Title, Keyword];
+    /// <summary>A rating in a country (0.58+): <c>keyword</c> is the rating, <c>region</c> the country.</summary>
+    public static readonly BlocklistKind Certification = new("certification");
+
+    /// <summary>Everything TMDb marks adult (0.58+).</summary>
+    public static readonly BlocklistKind Adult = new("adult");
+
+    public static IReadOnlyList<BlocklistKind> Known { get; } = [Title, Keyword, Certification, Adult];
     public static BlocklistKind FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -53,11 +59,31 @@ public sealed record BlocklistEntry
     /// <summary>A title's name as it was when blocked.</summary>
     public string? Title { get; init; }
 
-    /// <summary>A TMDb keyword or genre, lower-case.</summary>
+    /// <summary>A TMDb keyword or genre, lower-case; for a certification, the rating.</summary>
     public string? Keyword { get; init; }
+
+    /// <summary>A certification's country (0.58+).</summary>
+    public string? Region { get; init; }
 
     public string? Reason { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
+
+    /// <summary>A country's name in the app's language, or its code.</summary>
+    public static string RegionName(string? code)
+    {
+        if (code.NonBlank() is not { } value)
+        {
+            return "";
+        }
+        try
+        {
+            return new System.Globalization.RegionInfo(value).DisplayName;
+        }
+        catch (ArgumentException)
+        {
+            return value;
+        }
+    }
 
     /// <summary>The title this row links to; null for a keyword (or a title row missing its id).</summary>
     public TitleId? TitleId =>
@@ -71,6 +97,14 @@ public sealed record BlocklistEntry
             if (TitleId is { } title)
             {
                 return Title.NonBlank() ?? $"#{title.TmdbId}";
+            }
+            if (Kind == BlocklistKind.Certification)
+            {
+                return Loc.Format("Model_BlockCertificationLabel", Keyword, RegionName(Region));
+            }
+            if (Kind == BlocklistKind.Adult)
+            {
+                return Loc.Get("Model_BlockAdultLabel");
             }
             return Loc.Format("Model_BlockKeywordLabel", Keyword);
         }

@@ -53,6 +53,9 @@ const SETTING_PROVIDERS = [
   ["telegram", "Telegram"],
   ["pushover", "Pushover"],
   ["email", "email"],
+  ["gotify", "Gotify"],
+  ["slack", "Slack"],
+  ["pushbullet", "Pushbullet"],
 ] as const;
 
 export const API_OPERATIONS: ApiOperation[] = [
@@ -107,6 +110,7 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["GET", "/titles/{type}/{id}/add-options", "advancedRequests", "The servers, quality profiles and folders a title can be added with."],
     ["POST", "/titles/{type}/{id}/search", "admin", "Ask Sonarr/Radarr to search for a title now."],
     ["PUT", "/titles/{type}/{id}/monitored", "admin", "Turn monitoring on or off in Sonarr/Radarr."],
+    ["POST", "/titles/{type}/{id}/remove-from-arr", "admin", "Remove the title from Sonarr/Radarr (or the 4K ones), optionally with its files; its approved requests are marked removed. Not callable with an API key."],
     ["POST", "/titles/{type}/{id}/relink", "admin", "Point a title at a different Sonarr/Radarr entry."],
     ["POST", "/titles/{type}/{id}/block", "manageBlocklist", "Block requests for a title."],
     ["DELETE", "/titles/{type}/{id}/block", "manageBlocklist", "Unblock requests for a title."],
@@ -223,7 +227,8 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["DELETE", "/settings/sso", "admin", "Turn single sign-on off."],
     ["POST", "/settings/sso/test", "admin", "Test single sign-on settings."],
     ["GET", "/settings/blocklist", "manageBlocklist", "The request blocklist."],
-    ["POST", "/settings/blocklist", "manageBlocklist", "Block a keyword or genre."],
+    ["POST", "/settings/blocklist", "manageBlocklist", "Block automatically: a keyword or genre, a rating in a country, or adult titles."],
+    ["POST", "/settings/blocklist/preview", "manageBlocklist", "What a blocklist rule would block, before adding it."],
     ["DELETE", "/settings/blocklist/{id}", "manageBlocklist", "Remove a blocklist entry."],
   ]),
   ...group("API keys", [
@@ -242,6 +247,10 @@ export const API_OPERATIONS: ApiOperation[] = [
     ["DELETE", "/settings/arr-servers/{id}", "admin", "Remove a Sonarr/Radarr server."],
     ["GET", "/settings/arr-servers/{id}/options", "admin", "A server's quality profiles, folders and tags."],
     ["POST", "/settings/arr-servers/{id}/webhook-secret", "admin", "Regenerate a server's webhook secret."],
+    ["GET", "/settings/override-rules", "admin", "Override rules: which requests go to which server, profile, folder and tags. Not callable with an API key."],
+    ["POST", "/settings/override-rules", "admin", "Add an override rule. Not callable with an API key.", { created: true }],
+    ["PUT", "/settings/override-rules/{id}", "admin", "Replace an override rule. Not callable with an API key."],
+    ["DELETE", "/settings/override-rules/{id}", "admin", "Remove an override rule. Not callable with an API key."],
     ...ARR_PROVIDERS.flatMap(([provider, label]): Row[] => [
       ["PUT", `/settings/integrations/${provider}`, "admin", `Connect ${label} (the default server of its kind).`],
       ["DELETE", `/settings/integrations/${provider}`, "admin", `Disconnect ${label}.`],
@@ -268,6 +277,8 @@ export const API_OPERATIONS: ApiOperation[] = [
   ...group("Jobs", [
     ["GET", "/settings/jobs", "admin", "Background jobs and when they last ran."],
     ["POST", "/settings/jobs/{id}/run", "admin", "Run a background job now."],
+    ["PUT", "/settings/jobs/{id}", "admin", "Change how often a background job runs. Not callable with an API key."],
+    ["GET", "/settings/logs", "admin", "The server's recent log lines, secrets masked; filter by level and text. Not callable with an API key."],
     ["GET", "/settings/not-found", "admin", "How long before an approved request counts as can't-find."],
     ["PUT", "/settings/not-found", "admin", "Change how long before an approved request counts as can't-find."],
   ]),

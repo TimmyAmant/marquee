@@ -48,6 +48,13 @@ public sealed record IntegrationsOverview
     /// <summary>Null from a server older than 0.36.</summary>
     public EmailSettings? Email { get; init; }
 
+    /// <summary>0.58+: Gotify, Slack and Pushbullet; null from an older server, whose tabs say so.</summary>
+    public GotifySettings? Gotify { get; init; }
+
+    public ConnectionState? Slack { get; init; }
+
+    public PushbulletSettings? Pushbullet { get; init; }
+
     /// <summary>The server offers Telegram, Pushover and email (0.36+).</summary>
     public bool HasNotificationChannels => Telegram != null && Pushover != null && Email != null;
     public required ConnectionState GenericWebhook { get; init; }

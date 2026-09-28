@@ -81,7 +81,7 @@ export function SeasonRequestPicker({
               <details className="rounded-xl border border-[var(--marquee-glass-border)] px-3 py-2">
                 <summary className="cursor-pointer text-[13px] font-medium text-text-primary">{t("title.advancedSection")}</summary>
                 <div className="pt-2">
-                  <AddAdvancedOptions mediaType="tv" tmdbId={tmdbId} onChange={setOverrides} />
+                  <AddAdvancedOptions mediaType="tv" tmdbId={tmdbId} onChange={setOverrides} forRequest />
                 </div>
               </details>
             ) : undefined

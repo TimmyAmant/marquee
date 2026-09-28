@@ -51,6 +51,10 @@ type AdvancedArgs = {
   tmdbId: number;
   is4k?: boolean;
   onChange?: (overrides: AddOverrides | null) => void;
+  /** The request being reviewed, or (forRequest) one being made: the
+   * override rule that applies to it is what's picked at first. */
+  requestId?: string;
+  forRequest?: boolean;
 };
 
 export type AddAdvancedState = ReturnType<typeof useAddAdvancedOptions>;
@@ -61,7 +65,7 @@ export type AddAdvancedState = ReturnType<typeof useAddAdvancedOptions>;
  * button as a chevron (a split button) and shows the panel on a line of its
  * own under the actions (AddAdvancedPanel).
  */
-export function useAddAdvancedOptions({ mediaType, tmdbId, is4k = false, onChange }: AdvancedArgs) {
+export function useAddAdvancedOptions({ mediaType, tmdbId, is4k = false, onChange, requestId, forRequest }: AdvancedArgs) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<AddOptions | null>(null);
@@ -87,7 +91,7 @@ export function useAddAdvancedOptions({ mediaType, tmdbId, is4k = false, onChang
     }
     setLoading(true);
     setError(null);
-    const result = await getAddOptionsAction(mediaType, tmdbId, is4k).catch(() => null);
+    const result = await getAddOptionsAction(mediaType, tmdbId, is4k, { requestId, forRequest }).catch(() => null);
     setLoading(false);
     if (!result || !result.ok) {
       setError(result?.error ?? t("title.couldntLoadServers"));
@@ -121,6 +125,9 @@ export function AddAdvancedPanel({ state, formId }: { state: AddAdvancedState; f
         <>
           {formId && <input type="hidden" name="advanced" value="1" form={formId} />}
           {options.isAnime && tv && <p className="text-text-muted">{t("title.tmdbListsAnime")}</p>}
+          {options.rule && picks.serverId === options.rule.serverId && (
+            <p className="text-text-muted">{t("title.overrideRuleApplies", { name: options.rule.name })}</p>
+          )}
           <label className="flex flex-col gap-1">
             {t("title.server")}
             <select
@@ -233,9 +240,11 @@ export function AddAdvancedOptions({
   formId,
   onChange,
   disabled = false,
+  requestId,
+  forRequest,
 }: AdvancedArgs & { formId?: string; disabled?: boolean }) {
   const t = useT();
-  const state = useAddAdvancedOptions({ mediaType, tmdbId, is4k, onChange });
+  const state = useAddAdvancedOptions({ mediaType, tmdbId, is4k, onChange, requestId, forRequest });
 
   return (
     <div className="flex flex-col gap-2">

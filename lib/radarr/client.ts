@@ -31,7 +31,8 @@ async function radarrFetch<T>(
     throw new Error(`Radarr request failed: ${path} (${res.status})`);
   }
 
-  if (res.status === 204) return undefined as T;
+  // A delete answers with nothing to read (or an empty object).
+  if (res.status === 204 || options.method === "DELETE") return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -133,6 +134,13 @@ export async function setMovieMonitored(
     method: "PUT",
     body: { ...movie, monitored },
   });
+}
+
+/** Removes the movie from Radarr (the title page's "Remove from Radarr"),
+ * and its files too when `deleteFiles`. Radarr won't re-add it from a list
+ * import while it's excluded, so no exclusion is added. */
+export async function deleteMovie(config: ArrConfig, movieId: number, deleteFiles: boolean): Promise<void> {
+  await radarrFetch(config, `/movie/${movieId}?deleteFiles=${deleteFiles}&addImportExclusion=false`, { method: "DELETE" });
 }
 
 /** Queues an immediate search for this movie, same as Radarr's own "Search

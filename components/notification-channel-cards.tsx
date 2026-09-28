@@ -176,6 +176,88 @@ export function NotificationChannelCards({
       >
         <SecureRow initial={email.secure} />
       </ChannelCard>}
+      {shows("gotify") && (
+        <ChannelCard
+          kind="gotify"
+          title={t("integrations.channelGotifyTitle")}
+          shortName="Gotify"
+          description={t("integrations.channelGotifyIntro")}
+          connected={channels.gotify.connected}
+          successText={t("integrations.channelGotifySuccess")}
+          fields={[
+            {
+              name: "url",
+              label: t("integrations.gotifyServer"),
+              type: "url",
+              required: true,
+              defaultValue: channels.gotify.url ?? "",
+              placeholder: "https://gotify.example.com",
+            },
+            {
+              name: "appToken",
+              label: t("integrations.appToken"),
+              type: "password",
+              required: true,
+              keepsSaved: true,
+              hint: t("integrations.gotifyTokenHint"),
+            },
+            {
+              name: "priority",
+              label: t("integrations.gotifyPriority"),
+              type: "number",
+              defaultValue: String(channels.gotify.priority ?? 5),
+              hint: t("integrations.gotifyPriorityHint"),
+            },
+          ]}
+        />
+      )}
+      {shows("slack") && (
+        <ChannelCard
+          kind="slack"
+          title={t("integrations.channelSlackTitle")}
+          shortName="Slack"
+          description={t("integrations.channelSlackIntro")}
+          connected={channels.slack.connected}
+          successText={t("integrations.channelSlackSuccess")}
+          fields={[
+            {
+              name: "webhookUrl",
+              label: t("integrations.slackWebhookUrl"),
+              type: "password",
+              required: true,
+              keepsSaved: true,
+              placeholder: "https://hooks.slack.com/services/…",
+              hint: t("integrations.slackWebhookHint"),
+            },
+          ]}
+        />
+      )}
+      {shows("pushbullet") && (
+        <ChannelCard
+          kind="pushbullet"
+          title={t("integrations.channelPushbulletTitle")}
+          shortName="Pushbullet"
+          description={t("integrations.channelPushbulletIntro")}
+          connected={channels.pushbullet.connected}
+          successText={t("integrations.channelPushbulletSuccess")}
+          fields={[
+            {
+              name: "accessToken",
+              label: t("integrations.pushbulletToken"),
+              type: "password",
+              required: true,
+              keepsSaved: true,
+              hint: t("integrations.pushbulletTokenHint"),
+            },
+            {
+              name: "channelTag",
+              label: t("integrations.pushbulletChannel"),
+              defaultValue: channels.pushbullet.channelTag ?? "",
+              hint: t("integrations.pushbulletChannelHint"),
+            },
+          ]}
+        />
+      )}
     </>
   );
 }

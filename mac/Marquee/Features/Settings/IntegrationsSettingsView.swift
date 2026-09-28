@@ -133,6 +133,8 @@ struct IntegrationsSettingsView: View {
         if overview.usesServerList {
             ArrServersCard(kind: .sonarr, servers: overview.arrServers(of: .sonarr))
             ArrServersCard(kind: .radarr, servers: overview.arrServers(of: .radarr))
+            // 0.58+: which requests go where; hidden on an older server.
+            OverrideRulesSection(servers: overview.arrServers ?? [])
         } else {
             fixedArrCards(overview)
         }
@@ -185,6 +187,13 @@ struct IntegrationsSettingsView: View {
             if let pushover = overview.pushover { PushoverCard(connected: pushover.connected) }
         case .email:
             if let email = overview.email { EmailCard(settings: email) }
+        // 0.58+; an older server omits them, and the tab says so.
+        case .gotify:
+            if let gotify = overview.gotify { GotifyCard(settings: gotify) } else { NewerServerNote() }
+        case .slack:
+            if let slack = overview.slack { SlackCard(connected: slack.connected) } else { NewerServerNote() }
+        case .pushbullet:
+            if let pushbullet = overview.pushbullet { PushbulletCard(settings: pushbullet) } else { NewerServerNote() }
         case .webhook:
             SecretCard(
                 title: String(localized: "Custom webhook"),
@@ -957,6 +966,122 @@ private struct PushoverCard: View {
                 secure: true,
                 hint: String(localized: "Your user key is at the top of your pushover.net dashboard.")
             )
+        }
+    }
+}
+
+/// A channel this server is too old for.
+private struct NewerServerNote: View {
+    var body: some View {
+        InlineMessage(text: String(localized: "This server doesn't have this channel yet. Update it to use it."), isError: false)
+    }
+}
+
+private struct GotifyCard: View {
+    let settings: API.GotifySettings
+
+    @State private var url = ""
+    @State private var appToken = ""
+    @State private var priority = "5"
+
+    var body: some View {
+        ChannelCard(
+            title: String(localized: "Gotify"),
+            description: String(localized: "Posts to your own Gotify server. Which events it gets is on the Household events tab."),
+            removeLabel: String(localized: "Remove Gotify"),
+            successMessage: String(localized: "Gotify connected — a test message is on its way."),
+            connected: settings.connected,
+            save: { [url, appToken, priority] in
+                try await $0.integrations.gotify.save(
+                    API.GotifyRequest(url: url.trimmingCharacters(in: .whitespaces), appToken: appToken, priority: Int(priority) ?? 5)
+                )
+            },
+            remove: { try await $0.integrations.gotify.remove() },
+            reset: { appToken = "" }
+        ) {
+            ChannelField(label: String(localized: "Server address"), text: $url, placeholder: "https://gotify.example.com")
+            ChannelField(
+                label: String(localized: "Application token"),
+                text: $appToken,
+                placeholder: settings.connected ? keepSavedPlaceholder : "",
+                secure: true,
+                hint: String(localized: "In Gotify, Apps › Create application, then copy its token. Left blank, the saved one is kept.")
+            )
+            ChannelField(
+                label: String(localized: "Priority"),
+                text: $priority,
+                placeholder: "5",
+                hint: String(localized: "0 to 10; Gotify's apps alert from 5 up by default.")
+            )
+        }
+        .onAppear {
+            if url.isEmpty { url = settings.url ?? "" }
+            if let saved = settings.priority { priority = String(saved) }
+        }
+    }
+}
+
+private struct SlackCard: View {
+    let connected: Bool
+
+    @State private var webhookUrl = ""
+
+    var body: some View {
+        ChannelCard(
+            title: String(localized: "Slack"),
+            description: String(localized: "Posts to a Slack channel through an incoming webhook — Mattermost's and Rocket.Chat's work too. Which events it gets is on the Household events tab."),
+            removeLabel: String(localized: "Remove Slack"),
+            successMessage: String(localized: "Slack connected — a test message is on its way."),
+            connected: connected,
+            save: { [webhookUrl] in try await $0.integrations.slack.save(API.SlackRequest(webhookUrl: webhookUrl)) },
+            remove: { try await $0.integrations.slack.remove() },
+            reset: { webhookUrl = "" }
+        ) {
+            ChannelField(
+                label: String(localized: "Webhook URL"),
+                text: $webhookUrl,
+                placeholder: connected ? keepSavedPlaceholder : "https://hooks.slack.com/services/…",
+                secure: true,
+                hint: String(localized: "In Slack, add the Incoming Webhooks app to a channel and copy its URL. Left blank, the saved one is kept.")
+            )
+        }
+    }
+}
+
+private struct PushbulletCard: View {
+    let settings: API.PushbulletSettings
+
+    @State private var accessToken = ""
+    @State private var channelTag = ""
+
+    var body: some View {
+        ChannelCard(
+            title: String(localized: "Pushbullet"),
+            description: String(localized: "Pushes to your Pushbullet devices, or to one of your Pushbullet channels. Which events it gets is on the Household events tab."),
+            removeLabel: String(localized: "Remove Pushbullet"),
+            successMessage: String(localized: "Pushbullet connected — a test push is on its way."),
+            connected: settings.connected,
+            save: { [accessToken, channelTag] in
+                try await $0.integrations.pushbullet.save(API.PushbulletRequest(accessToken: accessToken, channelTag: channelTag))
+            },
+            remove: { try await $0.integrations.pushbullet.remove() },
+            reset: { accessToken = "" }
+        ) {
+            ChannelField(
+                label: String(localized: "Access token"),
+                text: $accessToken,
+                placeholder: settings.connected ? keepSavedPlaceholder : "",
+                secure: true,
+                hint: String(localized: "On pushbullet.com, Settings › Account › Create access token. Left blank, the saved one is kept.")
+            )
+            ChannelField(
+                label: String(localized: "Channel tag (optional)"),
+                text: $channelTag,
+                hint: String(localized: "Post to a channel you own instead of your own devices.")
+            )
+        }
+        .onAppear {
+            if channelTag.isEmpty { channelTag = settings.channelTag ?? "" }
         }
     }
 }
