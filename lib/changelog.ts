@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.66.0",
+    date: "2026-09-27",
+    changes: [
+      "iPhone and iPad: Settings is now built into the app with the same tabs as the Mac (Account, General, Members, Media servers, Services, Notifications, Discover, Blocklist, Jobs, Logs, Activity, About) instead of opening the website. Plex and single sign-on linking use the in-app sign-in sheet.",
+      "iPad: notifications and sign-in messages say iPad instead of iPhone.",
+    ],
+  },
+  {
     version: "0.65.0",
     date: "2026-09-27",
     changes: [
