@@ -359,32 +359,95 @@ struct SettingsPane<Content: View>: View {
     }
 }
 
-/// Labeled text input styled like the web forms.
+/// A text input as a settings row (the website's SettingRow): the label and
+/// any help on the left, the field on the right — or the label above the
+/// field where the row is too narrow for both (a sheet).
 struct SettingsField: View {
     let label: String
     @Binding var text: String
     var placeholder = ""
     var secure = false
+    var help: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundStyle(Theme.textSecondary)
-            Group {
-                if secure {
-                    SecureField(placeholder, text: $text)
-                } else {
-                    TextField(placeholder, text: $text)
-                }
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 24) {
+                caption
+                    .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                field
+                    .frame(width: 320)
             }
-            .textFieldStyle(.plain)
-            .font(.system(size: 13))
-            .padding(.horizontal, 11)
-            .padding(.vertical, 8)
-            .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border))
+            VStack(alignment: .leading, spacing: 5) {
+                caption
+                field
+            }
         }
+    }
+
+    private var caption: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Theme.textPrimary)
+            if let help {
+                Text(help)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var field: some View {
+        Group {
+            if secure {
+                SecureField(placeholder, text: $text)
+            } else {
+                TextField(placeholder, text: $text)
+            }
+        }
+        .textFieldStyle(.plain)
+        .font(.system(size: 13))
+        .padding(.horizontal, 11)
+        .padding(.vertical, 8)
+        .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Theme.border))
+        .accessibilityLabel(label)
+    }
+}
+
+/// A form's one Save, at its foot (the website's SaveBar): what happened on
+/// the left, any other actions, then the main button on the right.
+struct SettingsSaveBar<Secondary: View>: View {
+    let title: String
+    var pendingTitle: String?
+    var pending = false
+    var disabled = false
+    var message: (String, Bool)?
+    let action: () -> Void
+    @ViewBuilder var secondary: () -> Secondary
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Divider().overlay(Theme.border)
+            HStack(spacing: 12) {
+                if let message {
+                    InlineMessage(text: message.0, isError: message.1)
+                }
+                Spacer(minLength: 0)
+                secondary()
+                Button(pending ? (pendingTitle ?? title) : title, action: action)
+                    .buttonStyle(AccentButtonStyle())
+                    .disabled(pending || disabled)
+            }
+        }
+        .padding(.top, 4)
+    }
+}
+
+extension SettingsSaveBar where Secondary == EmptyView {
+    init(title: String, pendingTitle: String? = nil, pending: Bool = false, disabled: Bool = false, message: (String, Bool)? = nil, action: @escaping () -> Void) {
+        self.init(title: title, pendingTitle: pendingTitle, pending: pending, disabled: disabled, message: message, action: action) { EmptyView() }
     }
 }
 
@@ -435,8 +498,9 @@ struct ActivitySettingsView: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textMuted)
                 } else {
-                    VStack(spacing: 8) {
-                        ForEach(events) { event in
+                    VStack(spacing: 0) {
+                        ForEach(Array(events.enumerated()), id: \.element.id) { index, event in
+                            if index > 0 { Divider().overlay(Theme.border) }
                             HStack(alignment: .firstTextBaseline, spacing: 4) {
                                 (Text(event.actor.label).fontWeight(.medium).foregroundStyle(Theme.textPrimary)
                                     + Text(" \(event.verb)").foregroundStyle(Theme.textSecondary))
@@ -452,9 +516,11 @@ struct ActivitySettingsView: View {
                                     .font(.system(size: 11))
                                     .foregroundStyle(Theme.textMuted)
                             }
-                            .cardSurface(padding: 12, radius: 12)
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 12)
                         }
                     }
+                    .cardSurface(padding: 0)
                 }
             } else if let error {
                 InlineMessage(text: error)

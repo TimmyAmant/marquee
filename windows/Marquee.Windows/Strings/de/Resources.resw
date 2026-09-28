@@ -697,7 +697,7 @@
   <data name="App_SessionEnded" xml:space="preserve">
     <value>Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.</value>
   </data>
-  <data name="Arr_AddRadarr.Content" xml:space="preserve">
+  <data name="Arr_AddRadarrTile" xml:space="preserve">
     <value>Radarr-Server hinzufügen</value>
   </data>
   <data name="Arr_AddServer" xml:space="preserve">
@@ -706,7 +706,7 @@
   <data name="Arr_AddServerTitle" xml:space="preserve">
     <value>{0}-Server hinzufügen</value>
   </data>
-  <data name="Arr_AddSonarr.Content" xml:space="preserve">
+  <data name="Arr_AddSonarrTile" xml:space="preserve">
     <value>Sonarr-Server hinzufügen</value>
   </data>
   <data name="Arr_Confirm" xml:space="preserve">
@@ -5142,5 +5142,17 @@
   </data>
   <data name="Account_Intro.Text" xml:space="preserve">
     <value>Dein Profil, wie du dich anmeldest und wie Marquee auf diesem Gerät aussieht.</value>
+  </data>
+  <data name="Arr_ShowWebhook" xml:space="preserve">
+    <value>Webhook</value>
+  </data>
+  <data name="Arr_HideWebhook" xml:space="preserve">
+    <value>Webhook ausblenden</value>
+  </data>
+  <data name="Account_YourAccountTitle.Text" xml:space="preserve">
+    <value>Dein Konto</value>
+  </data>
+  <data name="Account_YourAccountIntro.Text" xml:space="preserve">
+    <value>Bearbeite unten deinen Namen, Benutzernamen oder dein Passwort.</value>
   </data>
 </root>

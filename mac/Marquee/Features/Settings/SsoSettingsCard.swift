@@ -144,11 +144,14 @@ struct SsoSettingsCard: View {
             )
             SettingsField(label: String(localized: "Groups claim"), text: $groupsClaim)
 
-            if let message { InlineMessage(text: message.0, isError: message.1) }
-            HStack(spacing: 12) {
-                Button(pending ? "Checking…" : "Test & save") { save() }
-                    .buttonStyle(AccentButtonStyle())
-                    .disabled(pending || removing)
+            SettingsSaveBar(
+                title: String(localized: "Test & save"),
+                pendingTitle: String(localized: "Checking…"),
+                pending: pending,
+                disabled: removing,
+                message: message,
+                action: save
+            ) {
                 if saved.configured { removeControl }
             }
         }
@@ -309,15 +312,7 @@ private struct HintedField: View {
     var hint: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            SettingsField(label: label, text: $text, placeholder: placeholder)
-            if let hint {
-                Text(hint)
-                    .font(.system(size: 11.5))
-                    .foregroundStyle(Theme.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
+        SettingsField(label: label, text: $text, placeholder: placeholder, help: hint)
     }
 }
 

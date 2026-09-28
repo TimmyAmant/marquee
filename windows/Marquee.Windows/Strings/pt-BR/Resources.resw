@@ -697,7 +697,7 @@
   <data name="App_SessionEnded" xml:space="preserve">
     <value>Sua sessão terminou. Entre novamente.</value>
   </data>
-  <data name="Arr_AddRadarr.Content" xml:space="preserve">
+  <data name="Arr_AddRadarrTile" xml:space="preserve">
     <value>Adicionar servidor do Radarr</value>
   </data>
   <data name="Arr_AddServer" xml:space="preserve">
@@ -706,7 +706,7 @@
   <data name="Arr_AddServerTitle" xml:space="preserve">
     <value>Adicionar servidor do {0}</value>
   </data>
-  <data name="Arr_AddSonarr.Content" xml:space="preserve">
+  <data name="Arr_AddSonarrTile" xml:space="preserve">
     <value>Adicionar servidor do Sonarr</value>
   </data>
   <data name="Arr_Confirm" xml:space="preserve">
@@ -5142,5 +5142,17 @@
   </data>
   <data name="Account_Intro.Text" xml:space="preserve">
     <value>Seu perfil, como você entra e como o Marquee aparece neste dispositivo.</value>
+  </data>
+  <data name="Arr_ShowWebhook" xml:space="preserve">
+    <value>Webhook</value>
+  </data>
+  <data name="Arr_HideWebhook" xml:space="preserve">
+    <value>Ocultar webhook</value>
+  </data>
+  <data name="Account_YourAccountTitle.Text" xml:space="preserve">
+    <value>Sua conta</value>
+  </data>
+  <data name="Account_YourAccountIntro.Text" xml:space="preserve">
+    <value>Edite seu nome, nome de usuário ou senha abaixo.</value>
   </data>
 </root>

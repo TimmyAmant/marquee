@@ -502,10 +502,13 @@ private struct JellyfinCard: View {
                 placeholder: settings.hasApiKey ? String(localized: "•••••••••••••••• (enter to replace)") : "",
                 secure: true
             )
-            if let message { InlineMessage(text: message.0, isError: message.1) }
-            Button(pending ? "Testing…" : "Test & save") { save() }
-                .buttonStyle(AccentButtonStyle())
-                .disabled(pending)
+            SettingsSaveBar(
+                title: String(localized: "Test & save"),
+                pendingTitle: String(localized: "Testing…"),
+                pending: pending,
+                message: message,
+                action: save
+            )
         }
         .onAppear {
             if baseUrl.isEmpty { baseUrl = settings.baseUrl ?? "" }
@@ -567,10 +570,13 @@ private struct ArrCard: View {
                 placeholder: settings.hasApiKey ? String(localized: "•••••••••••••••• (enter to replace)") : "",
                 secure: true
             )
-            if let message { InlineMessage(text: message.0, isError: message.1) }
-            Button(pending ? "Testing…" : "Test & save") { save() }
-                .buttonStyle(AccentButtonStyle())
-                .disabled(pending)
+            SettingsSaveBar(
+                title: String(localized: "Test & save"),
+                pendingTitle: String(localized: "Testing…"),
+                pending: pending,
+                message: message,
+                action: save
+            )
 
             if let options, !options.rootFolders.isEmpty, !options.qualityProfiles.isEmpty {
                 Divider().overlay(Theme.border).padding(.vertical, 4)
@@ -731,11 +737,13 @@ private struct SecretCard: View {
                 placeholder: connected ? String(localized: "•••••••••••••••• (enter to replace)") : placeholder,
                 secure: true
             )
-            if let message { InlineMessage(text: message.0, isError: message.1) }
-            HStack(spacing: 12) {
-                Button(pending ? "Testing…" : "Test & save") { submit() }
-                    .buttonStyle(AccentButtonStyle())
-                    .disabled(pending)
+            SettingsSaveBar(
+                title: String(localized: "Test & save"),
+                pendingTitle: String(localized: "Testing…"),
+                pending: pending,
+                message: message,
+                action: submit
+            ) {
                 if connected {
                     Button(removing ? "Removing…" : removeLabel) { removeSaved() }
                         .buttonStyle(QuietButtonStyle())
@@ -827,11 +835,13 @@ private struct ChannelCard<Fields: View>: View {
     var body: some View {
         IntegrationCard(title: title, description: description, connected: connected) {
             fields()
-            if let message { InlineMessage(text: message.0, isError: message.1) }
-            HStack(spacing: 12) {
-                Button(pending ? "Testing…" : "Test & save") { submit() }
-                    .buttonStyle(AccentButtonStyle())
-                    .disabled(pending)
+            SettingsSaveBar(
+                title: String(localized: "Test & save"),
+                pendingTitle: String(localized: "Testing…"),
+                pending: pending,
+                message: message,
+                action: submit
+            ) {
                 if connected {
                     Button(removing ? "Removing…" : removeLabel) { removeSaved() }
                         .buttonStyle(QuietButtonStyle())

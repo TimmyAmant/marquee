@@ -547,13 +547,14 @@ private struct CreateMemberForm: View {
             SettingsField(label: String(localized: "Name"), text: $displayName)
             SettingsField(label: String(localized: "Username"), text: $username)
             SettingsField(label: String(localized: "Password"), text: $password, secure: true)
-            if let error { InlineMessage(text: error) }
-            if let createdName {
-                InlineMessage(text: String(localized: "Account created — \(createdName) can now sign in."), isError: false)
-            }
-            Button(pending ? "Creating…" : "Create account") { create() }
-                .buttonStyle(AccentButtonStyle())
-                .disabled(pending)
+            SettingsSaveBar(
+                title: String(localized: "Create account"),
+                pendingTitle: String(localized: "Creating…"),
+                pending: pending,
+                message: error.map { ($0, true) }
+                    ?? createdName.map { (String(localized: "Account created — \($0) can now sign in."), false) },
+                action: create
+            )
         }
     }
 

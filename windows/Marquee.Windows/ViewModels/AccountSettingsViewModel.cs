@@ -225,7 +225,11 @@ public sealed partial class AccountSettingsViewModel : ObservableObject
     /// <summary>Null until <c>GET /users</c> first answers.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowsMembersError))]
+    [NotifyPropertyChangedFor(nameof(OwnMember))]
     private IReadOnlyList<HouseholdMemberRow>? members;
+
+    /// <summary>Your own row alone, for Settings › Account's "Your account" (the Members tab has everyone's).</summary>
+    public IReadOnlyList<HouseholdMemberRow> OwnMember => Members?.Where(row => row.IsCurrentUser).ToList() ?? [];
 
     [ObservableProperty]
     private bool isMembersLoading;

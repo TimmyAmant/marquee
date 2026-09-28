@@ -52,6 +52,79 @@
                 </ItemsRepeater>
             </Grid>
         </DataTemplate>
+        <!-- One household member row: the Members tab's list, and your own row under Account. -->
+        <DataTemplate x:Key="MemberRowTemplate" x:DataType="vm:HouseholdMemberRow">
+            <StackPanel>
+                <Border
+                    Height="1"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+                <Grid Padding="20,12" ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:AvatarView
+                        Grid.Column="0"
+                        Label="{x:Bind Label}"
+                        AvatarUrl="{x:Bind AvatarUrl}"
+                        Diameter="36"
+                        VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock
+                            Text="{x:Bind Label}"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            TextWrapping="NoWrap"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Text="{x:Bind UsernameLine}"
+                            Visibility="{x:Bind UsernameLine, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            TextWrapping="NoWrap"
+                            TextTrimming="CharacterEllipsis" />
+                        <TextBlock
+                            Text="{x:Bind LastActiveLine}"
+                            Visibility="{x:Bind LastActiveLine, Converter={StaticResource StringToVisibility}}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            TextWrapping="NoWrap"
+                            TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <!-- An empty text collapses the pill. -->
+                        <controls:TonePill Text="{x:Bind PlexTag}" Tone="{x:Bind LinkTone}" />
+                        <controls:TonePill Text="{x:Bind JellyfinTag}" Tone="{x:Bind LinkTone}" />
+                        <controls:TonePill Text="{x:Bind SsoTag}" Tone="{x:Bind LinkTone}" />
+                        <controls:TonePill
+                            Text="{x:Bind AdminTag}"
+                            Tone="{x:Bind AdminTone}"
+                            Visibility="{x:Bind IsAdminRow, Converter={StaticResource BoolToVisibility}}" />
+                        <controls:TonePill Text="{x:Bind TrustedTag}" Tone="{x:Bind AdminTone}" />
+                        <controls:TonePill
+                            Text="{x:Bind YouTag}"
+                            Tone="{x:Bind YouTone}"
+                            Visibility="{x:Bind IsCurrentUser, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            x:Uid="Account_MemberProfile"
+                            Command="{x:Bind Profile}"
+                            CommandParameter="{x:Bind}"
+                            Visibility="{x:Bind CanViewProfile, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            x:Uid="Account_MemberEdit"
+                            Command="{x:Bind Edit}"
+                            CommandParameter="{x:Bind}"
+                            Visibility="{x:Bind CanEdit, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+                            x:Uid="Account_MemberRemove"
+                            Command="{x:Bind Remove}"
+                            CommandParameter="{x:Bind}"
+                            Visibility="{x:Bind CanRemove, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </DataTemplate>
     </UserControl.Resources>
 
     <StackPanel Spacing="20">
@@ -76,21 +149,28 @@
                     <TextBlock x:Uid="Account_RoleLabel" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{x:Bind ViewModel.RoleLabel, Mode=OneWay}" Style="{StaticResource BodyTextBlockStyle}" />
                 </StackPanel>
-                <TextBox
-                    x:Uid="Account_NameBox"
-                    Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    MaxLength="80" />
-                <PasswordBox
-                    x:Uid="Account_NewPassword"
-                    Password="{x:Bind ViewModel.NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <PasswordBox
-                    x:Uid="Account_ConfirmPassword"
-                    Password="{x:Bind ViewModel.ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <controls:SettingsRow>
+                    <TextBox
+                        x:Uid="Account_NameBox"
+                        Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        MaxLength="80" />
+                </controls:SettingsRow>
+                <controls:SettingsRow>
+                    <PasswordBox
+                        x:Uid="Account_NewPassword"
+                        Password="{x:Bind ViewModel.NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </controls:SettingsRow>
+                <controls:SettingsRow>
+                    <PasswordBox
+                        x:Uid="Account_ConfirmPassword"
+                        Password="{x:Bind ViewModel.ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </controls:SettingsRow>
                 <!-- An account made by Plex/Jellyfin sign-in has no password yet, so none to give. -->
-                <PasswordBox
-                    x:Uid="Account_CurrentPassword"
-                    Password="{x:Bind ViewModel.CurrentPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Visibility="{x:Bind ViewModel.NeedsCurrentPassword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                <controls:SettingsRow Visibility="{x:Bind ViewModel.NeedsCurrentPassword, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <PasswordBox
+                        x:Uid="Account_CurrentPassword"
+                        Password="{x:Bind ViewModel.CurrentPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </controls:SettingsRow>
                 <TextBlock
                     x:Uid="Account_PasswordWarningText"
                     Style="{StaticResource CaptionTextBlockStyle}"
@@ -450,10 +530,12 @@
                         Padding="20,16"
                         Spacing="12"
                         Visibility="{x:Bind ViewModel.Trakt.IsAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <TextBox
-                            x:Uid="Account_TraktLink"
-                            InputScope="Url"
-                            Text="{x:Bind ViewModel.Trakt.Link, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <controls:SettingsRow>
+                            <TextBox
+                                x:Uid="Account_TraktLink"
+                                InputScope="Url"
+                                Text="{x:Bind ViewModel.Trakt.Link, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
                         <StackPanel Orientation="Horizontal" Spacing="24">
                             <ToggleSwitch
                                 x:Uid="Account_TraktNewMovies"
@@ -637,21 +719,25 @@
             <Border Style="{StaticResource SettingsCard}" Visibility="{x:Bind ViewModel.Personal.CanAddChannels, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Spacing="14">
                     <TextBlock x:Uid="Account_AddChannelTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                    <ComboBox
-                        x:Uid="Account_AddChannelKind"
-                        MinWidth="260"
-                        ItemsSource="{x:Bind ViewModel.Personal.AddKindLabels, Mode=OneWay}"
-                        SelectedIndex="{x:Bind ViewModel.Personal.SelectedAddKindIndex, Mode=TwoWay}" />
+                    <controls:SettingsRow>
+                        <ComboBox
+                            x:Uid="Account_AddChannelKind"
+                            MinWidth="260"
+                            ItemsSource="{x:Bind ViewModel.Personal.AddKindLabels, Mode=OneWay}"
+                            SelectedIndex="{x:Bind ViewModel.Personal.SelectedAddKindIndex, Mode=TwoWay}" />
+                    </controls:SettingsRow>
                     <TextBlock
                         Text="{x:Bind ViewModel.Personal.AddHint, Mode=OneWay}"
                         Visibility="{x:Bind ViewModel.Personal.AddHint, Mode=OneWay, Converter={StaticResource StringToVisibility}}"
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         TextWrapping="Wrap" />
-                    <TextBox
-                        x:Uid="Account_AddChannelName"
-                        MaxLength="60"
-                        Text="{x:Bind ViewModel.Personal.AddName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <controls:SettingsRow>
+                        <TextBox
+                            x:Uid="Account_AddChannelName"
+                            MaxLength="60"
+                            Text="{x:Bind ViewModel.Personal.AddName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
                     <!-- One-tap Telegram: opens a chat with the household bot; pressing Start there adds the channel. -->
                     <Button
                         Content="{x:Bind ViewModel.Personal.ConnectTelegramLabel, Mode=OneWay}"
@@ -672,33 +758,39 @@
                             VerticalAlignment="Center" />
                         <Button x:Uid="Account_TelegramCancel" Grid.Column="2" Command="{x:Bind ViewModel.Personal.CancelConnectTelegramCommand}" />
                     </Grid>
-                    <TextBox
-                        x:Uid="Account_AddChatId"
-                        PlaceholderText="123456789"
-                        Text="{x:Bind ViewModel.Personal.AddChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.Personal.ShowsChatId, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBox
-                        x:Uid="Account_AddUserKey"
-                        Text="{x:Bind ViewModel.Personal.AddUserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.Personal.ShowsUserKey, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBox
-                        x:Uid="Account_AddAddress"
-                        InputScope="EmailSmtpAddress"
-                        Text="{x:Bind ViewModel.Personal.AddAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.Personal.ShowsAddress, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBox
-                        x:Uid="Account_AddWebhook"
-                        Text="{x:Bind ViewModel.Personal.AddWebhookUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.Personal.ShowsWebhookUrl, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBox
-                        x:Uid="Account_AddTopic"
-                        Text="{x:Bind ViewModel.Personal.AddTopic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.Personal.ShowsTopic, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-                    <TextBox
-                        Header="{x:Bind ViewModel.Personal.UrlHeader, Mode=OneWay}"
-                        PlaceholderText="{x:Bind ViewModel.Personal.UrlPlaceholder, Mode=OneWay}"
-                        Text="{x:Bind ViewModel.Personal.AddUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{x:Bind ViewModel.Personal.ShowsUrl, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsChatId, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddChatId"
+                            PlaceholderText="123456789"
+                            Text="{x:Bind ViewModel.Personal.AddChatId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsUserKey, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddUserKey"
+                            Text="{x:Bind ViewModel.Personal.AddUserKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsAddress, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddAddress"
+                            InputScope="EmailSmtpAddress"
+                            Text="{x:Bind ViewModel.Personal.AddAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsWebhookUrl, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddWebhook"
+                            Text="{x:Bind ViewModel.Personal.AddWebhookUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsTopic, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            x:Uid="Account_AddTopic"
+                            Text="{x:Bind ViewModel.Personal.AddTopic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
+                    <controls:SettingsRow Visibility="{x:Bind ViewModel.Personal.ShowsUrl, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <TextBox
+                            Header="{x:Bind ViewModel.Personal.UrlHeader, Mode=OneWay}"
+                            PlaceholderText="{x:Bind ViewModel.Personal.UrlPlaceholder, Mode=OneWay}"
+                            Text="{x:Bind ViewModel.Personal.AddUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </controls:SettingsRow>
                     <InfoBar
                         IsOpen="{x:Bind ViewModel.Personal.HasAddError, Mode=OneWay}"
                         Visibility="{x:Bind ViewModel.Personal.HasAddError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
@@ -785,6 +877,25 @@
         </StackPanel>
         </StackPanel>
 
+        <!-- Account: your own row of the household list (name, username, password, photo), as on the website and the Mac. -->
+        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowsAccountPart, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Spacing="4">
+                <TextBlock x:Uid="Account_YourAccountTitle" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock
+                    x:Uid="Account_YourAccountIntro"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <Border Style="{StaticResource SettingsCard}" Padding="0">
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.OwnMember, Mode=OneWay}" ItemTemplate="{StaticResource MemberRowTemplate}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Vertical" Spacing="0" />
+                    </ItemsRepeater.Layout>
+                </ItemsRepeater>
+            </Border>
+        </StackPanel>
+
         <!-- Account: the menu on this PC. -->
         <StackPanel Spacing="20" Visibility="{x:Bind ViewModel.ShowsAccountPart, Converter={StaticResource BoolToVisibility}}">
         <!--
@@ -821,11 +932,13 @@
                     Spacing="8"
                     Margin="0,8,0,0"
                     Visibility="{x:Bind ViewModel.ShowsLanguage, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <ComboBox
-                        x:Uid="Language_Picker"
-                        MinWidth="260"
-                        ItemsSource="{x:Bind ViewModel.LanguageLabels}"
-                        SelectedIndex="{x:Bind ViewModel.LanguageIndex, Mode=TwoWay}" />
+                    <controls:SettingsRow>
+                        <ComboBox
+                            x:Uid="Language_Picker"
+                            MinWidth="260"
+                            ItemsSource="{x:Bind ViewModel.LanguageLabels}"
+                            SelectedIndex="{x:Bind ViewModel.LanguageIndex, Mode=TwoWay}" />
+                    </controls:SettingsRow>
                     <TextBlock
                         x:Uid="Language_Caption"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -904,84 +1017,10 @@
                         TextWrapping="Wrap" />
                     <Button x:Uid="Account_MembersRetry" Command="{x:Bind ViewModel.LoadMembersCommand}" />
                 </StackPanel>
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Members, Mode=OneWay}">
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Members, Mode=OneWay}" ItemTemplate="{StaticResource MemberRowTemplate}">
                     <ItemsRepeater.Layout>
                         <StackLayout Orientation="Vertical" Spacing="0" />
                     </ItemsRepeater.Layout>
-                    <ItemsRepeater.ItemTemplate>
-                        <DataTemplate x:DataType="vm:HouseholdMemberRow">
-                            <StackPanel>
-                                <Border
-                                    Height="1"
-                                    Background="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                    Visibility="{x:Bind ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
-                                <Grid Padding="20,12" ColumnSpacing="12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <controls:AvatarView
-                                        Grid.Column="0"
-                                        Label="{x:Bind Label}"
-                                        AvatarUrl="{x:Bind AvatarUrl}"
-                                        Diameter="36"
-                                        VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock
-                                            Text="{x:Bind Label}"
-                                            Style="{StaticResource BodyTextBlockStyle}"
-                                            TextWrapping="NoWrap"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            Text="{x:Bind UsernameLine}"
-                                            Visibility="{x:Bind UsernameLine, Converter={StaticResource StringToVisibility}}"
-                                            Style="{StaticResource CaptionTextBlockStyle}"
-                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            TextWrapping="NoWrap"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            Text="{x:Bind LastActiveLine}"
-                                            Visibility="{x:Bind LastActiveLine, Converter={StaticResource StringToVisibility}}"
-                                            Style="{StaticResource CaptionTextBlockStyle}"
-                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            TextWrapping="NoWrap"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <!-- An empty text collapses the pill. -->
-                                        <controls:TonePill Text="{x:Bind PlexTag}" Tone="{x:Bind LinkTone}" />
-                                        <controls:TonePill Text="{x:Bind JellyfinTag}" Tone="{x:Bind LinkTone}" />
-                                        <controls:TonePill Text="{x:Bind SsoTag}" Tone="{x:Bind LinkTone}" />
-                                        <controls:TonePill
-                                            Text="{x:Bind AdminTag}"
-                                            Tone="{x:Bind AdminTone}"
-                                            Visibility="{x:Bind IsAdminRow, Converter={StaticResource BoolToVisibility}}" />
-                                        <controls:TonePill Text="{x:Bind TrustedTag}" Tone="{x:Bind AdminTone}" />
-                                        <controls:TonePill
-                                            Text="{x:Bind YouTag}"
-                                            Tone="{x:Bind YouTone}"
-                                            Visibility="{x:Bind IsCurrentUser, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            x:Uid="Account_MemberProfile"
-                                            Command="{x:Bind Profile}"
-                                            CommandParameter="{x:Bind}"
-                                            Visibility="{x:Bind CanViewProfile, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            x:Uid="Account_MemberEdit"
-                                            Command="{x:Bind Edit}"
-                                            CommandParameter="{x:Bind}"
-                                            Visibility="{x:Bind CanEdit, Converter={StaticResource BoolToVisibility}}" />
-                                        <Button
-                                            x:Uid="Account_MemberRemove"
-                                            Command="{x:Bind Remove}"
-                                            CommandParameter="{x:Bind}"
-                                            Visibility="{x:Bind CanRemove, Converter={StaticResource BoolToVisibility}}" />
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
             </StackPanel>
         </Border>
@@ -1111,19 +1150,23 @@
                     <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                     <StackPanel Padding="20,16" Spacing="12">
                         <StackPanel Spacing="4">
-                            <TextBox
-                                x:Uid="Account_BlockKeyword"
-                                Text="{x:Bind ViewModel.Blocklist.Keyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <controls:SettingsRow>
+                                <TextBox
+                                    x:Uid="Account_BlockKeyword"
+                                    Text="{x:Bind ViewModel.Blocklist.Keyword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </controls:SettingsRow>
                             <TextBlock
                                 x:Uid="Account_BlockKeywordNote"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
-                        <TextBox
-                            x:Uid="Account_BlockReason"
-                            MaxLength="200"
-                            Text="{x:Bind ViewModel.Blocklist.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <controls:SettingsRow>
+                            <TextBox
+                                x:Uid="Account_BlockReason"
+                                MaxLength="200"
+                                Text="{x:Bind ViewModel.Blocklist.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </controls:SettingsRow>
                         <Button
                             Content="{x:Bind ViewModel.Blocklist.BlockLabel, Mode=OneWay}"
                             Command="{x:Bind ViewModel.Blocklist.BlockCommand}"
