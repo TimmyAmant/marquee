@@ -126,11 +126,29 @@ const JOB_RUNNERS: Record<JobId, () => Promise<void>> = {
   cleanup: pruneOldRecords,
 };
 
-const RUNNERS = new Map<string, () => Promise<void>>(Object.entries(JOB_RUNNERS));
-
-/** A job's runner; undefined for anything that isn't one of the jobs. */
+/** A job's runner; undefined for anything that isn't one of the jobs. Spelled
+ * out, so a name from a request can only ever pick one of these. */
 function runnerFor(jobId: string): (() => Promise<void>) | undefined {
-  return RUNNERS.get(jobId);
+  switch (jobId) {
+    case "plex-sync":
+      return JOB_RUNNERS["plex-sync"];
+    case "jellyfin-sync":
+      return JOB_RUNNERS["jellyfin-sync"];
+    case "arr-sync":
+      return JOB_RUNNERS["arr-sync"];
+    case "plex-watchlist":
+      return JOB_RUNNERS["plex-watchlist"];
+    case "trakt-sync":
+      return JOB_RUNNERS["trakt-sync"];
+    case "not-found-check":
+      return JOB_RUNNERS["not-found-check"];
+    case "disk-space-snapshot":
+      return JOB_RUNNERS["disk-space-snapshot"];
+    case "cleanup":
+      return JOB_RUNNERS.cleanup;
+    default:
+      return undefined;
+  }
 }
 
 /** Runs a job and records it, however it was started. Throws what the job
