@@ -22,7 +22,6 @@ export type WatchlistShelfItem = {
 
 /** Titles per page of the row's See all. */
 export const WATCHLIST_PAGE_SIZE = 40;
-export const WATCHLIST_MAX_PAGE = 25;
 
 /** Whether the viewer has "Request from my Plex Watchlist" on — the row
  * only shows then (lib/plex/watchlist.ts). */

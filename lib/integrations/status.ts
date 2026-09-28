@@ -290,22 +290,6 @@ export async function getTitleLibraryStatus(
 
 export type SeasonCompleteness = { seasonNumber: number; have: number; total: number };
 
-/**
- * Per-season file-count completeness from Sonarr, for the have/total badge
- * on each row of the season accordion. Covers every season in one call (no
- * per-episode data) — cheap enough to fetch eagerly on page load. Returns
- * null when Sonarr isn't connected or isn't tracking this show — Plex only
- * tells us "owned" at the whole-show level, not per-season, so this is
- * Sonarr-only.
- */
-export async function getSonarrSeasonCompleteness(
-  userId: string,
-  tvdbId: number | null,
-): Promise<SeasonCompleteness[] | null> {
-  const states = await getSonarrSeasonStates(userId, tvdbId);
-  return states ? seasonCompletenessOf(states) : null;
-}
-
 /** The accordion's have/total badges from getSonarrSeasonStates, for a
  * caller that already has those and shouldn't ask Sonarr twice. Specials
  * are left out unless they're all the show has. */

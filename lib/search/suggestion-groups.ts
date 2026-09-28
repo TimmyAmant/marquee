@@ -4,8 +4,6 @@
 export type SuggestionKind = "movie" | "tv" | "person" | "company" | "network";
 export type SuggestionGroup = "movie" | "tv" | "person" | "company";
 
-export const SUGGESTION_GROUP_ORDER: readonly SuggestionGroup[] = ["movie", "tv", "person", "company"];
-
 /** How many of each group the type-ahead shows. */
 export const SUGGESTION_LIMITS: Record<SuggestionGroup, number> = { movie: 4, tv: 3, person: 3, company: 2 };
 

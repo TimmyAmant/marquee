@@ -29,10 +29,6 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   "pt-BR": "Português (Brasil)",
 };
 
-export function isLocale(value: unknown): value is Locale {
-  return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
-}
-
 /**
  * A language tag as one of ours, or null. Case and separator don't matter
  * ("pt_br", "PT-BR"), and a regional tag we don't have falls back to its

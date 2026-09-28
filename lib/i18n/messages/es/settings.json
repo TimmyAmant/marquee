@@ -6,7 +6,6 @@
   "singleSignOn": "Inicio de sesión único",
   "ssoLinked": "{name} está vinculado. Ya puedes iniciar sesión con él.",
   "accountHeading": "Cuenta",
-  "accountIntro": "Los datos de tu cuenta de Marquee.",
   "nameLabel": "Nombre",
   "usernameLabel": "Nombre de usuario",
   "linkedAccountsHeading": "Cuentas vinculadas",

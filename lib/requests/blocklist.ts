@@ -174,7 +174,7 @@ export async function unblockTitle(mediaType: MediaType, tmdbId: number): Promis
   return { ok: true };
 }
 
-export async function blockKeyword(keyword: unknown, reason: unknown): Promise<CoreResult> {
+async function blockKeyword(keyword: unknown, reason: unknown): Promise<CoreResult> {
   const value = normalizeKeyword(keyword);
   if (!value) return fail("invalid", (await getT())("notify.blockEnterKeyword"));
   const updated = await db

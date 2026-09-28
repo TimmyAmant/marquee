@@ -33,7 +33,6 @@
   "fieldOneOf": "\"{field}\" muss einer dieser Werte sein: {values}.",
   "unknownMediaType": "Unbekannter Medientyp \"{value}\".",
   "unknownProvider": "Unbekannter Anbieter \"{value}\".",
-  "unknownIntegration": "Unbekannte Integration \"{value}\".",
   "unknownFavoriteType": "Unbekannter Favoritentyp \"{value}\".",
   "invalidId": "Ungültige {label} \"{value}\".",
   "invalidSeason": "Ungültige Staffel \"{value}\".",

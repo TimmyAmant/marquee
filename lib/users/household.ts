@@ -10,6 +10,7 @@ import { getT } from "@/lib/i18n/server";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 import { displayNameSchema, firstIssueMessage, passwordSchema, usernameSchema } from "@/lib/users/account-rules";
 import { revokeAllApiTokensForUser } from "@/lib/api/token-store";
+import { MAX_QUOTA_DAYS, MAX_QUOTA_LIMIT } from "@/lib/requests/quota";
 import { removeAllSubscriptions } from "@/lib/push/deliver";
 import { isRateLimited, recordFailedAttempt, refundAttempt } from "@/lib/rate-limit";
 import {
@@ -326,12 +327,12 @@ export function parseAdminFields(
     if (value === undefined) return "skip";
     if (value === null || value === "") return null;
     const n = typeof value === "number" ? value : Number(value);
-    return Number.isInteger(n) && n >= 1 && n <= 1000 ? n : { error: t(rangeMessage) };
+    return Number.isInteger(n) && n >= 1 && n <= MAX_QUOTA_LIMIT ? n : { error: t(rangeMessage) };
   };
   const days = (value: unknown): number | "skip" | { error: string } => {
     if (value === undefined || value === null || value === "") return "skip";
     const n = typeof value === "number" ? value : Number(value);
-    return Number.isInteger(n) && n >= 1 && n <= 365 ? n : { error: t("server.quotaDaysRange") };
+    return Number.isInteger(n) && n >= 1 && n <= MAX_QUOTA_DAYS ? n : { error: t("server.quotaDaysRange") };
   };
   const pairs: [unknown, "movieQuotaLimit" | "tvQuotaLimit", MessageKey][] = [
     [input.movieQuotaLimit, "movieQuotaLimit", "server.movieLimitRange"],
