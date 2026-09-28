@@ -35,5 +35,11 @@ export function rich(message: string, tags: RichTags): ReactNode {
 /** The same message with its tags taken out, for a plain-text place (an
  * aria-label, a title attribute). */
 export function plain(message: string): string {
-  return message.replace(/<\/?[a-zA-Z][\w-]*>/g, "");
+  // Until none are left: taking one tag out can join the pieces of another.
+  let previous: string;
+  do {
+    previous = message;
+    message = message.replace(/<\/?[a-zA-Z][\w-]*>/g, "");
+  } while (message !== previous);
+  return message;
 }
