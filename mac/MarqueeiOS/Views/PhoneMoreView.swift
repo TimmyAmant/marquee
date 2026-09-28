@@ -75,7 +75,7 @@ struct PhoneSectionView: View {
         case .favorites: FavoritesView()
         case .settings: PhoneSettingsView()
         case .discover: DiscoverView()
-        case .calendar: CalendarScreen()
+        case .calendar: PhoneCalendarView()
         case .requests: RequestsView()
         }
     }

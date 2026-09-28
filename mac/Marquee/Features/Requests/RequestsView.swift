@@ -16,6 +16,7 @@ struct RequestsView: View {
                 Text("Requests")
                     .font(.marqueeDisplay(32))
                     .foregroundStyle(Theme.textPrimary)
+                    .macPageHeading()
                 if model.viewer?.can(.reviewRequests) == true {
                     AdminRequestsList()
                 } else {

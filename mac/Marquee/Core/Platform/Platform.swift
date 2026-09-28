@@ -138,18 +138,23 @@ extension View {
     }
 
     /// For a page that opens with its own serif heading ("Requests",
-    /// "Library"…): on the iPhone the navigation bar leaves its title out,
-    /// so the name isn't said twice. `navigationTitle` still names the page
-    /// for Back and VoiceOver. Nothing changes on the Mac.
+    /// "Library"…). On iOS the navigation bar carries the title instead —
+    /// large, beside the bell, on a tab's first page; small, beside Back, on
+    /// a pushed one (the tab stacks choose which) — and the page leaves its
+    /// own heading out (`macPageHeading()`), so it starts right under the
+    /// bar. Nothing changes on the Mac.
     func headingIsThePageTitle() -> some View {
-        #if os(iOS)
-        toolbar {
-            ToolbarItem(placement: .principal) {
-                Color.clear.frame(width: 1, height: 1).accessibilityHidden(true)
-            }
-        }
-        #else
         self
+    }
+
+    /// A page's own serif heading: shown on the Mac, left out on iOS, where
+    /// the navigation bar shows the title (`headingIsThePageTitle()`).
+    @ViewBuilder
+    func macPageHeading() -> some View {
+        #if os(macOS)
+        self
+        #else
+        EmptyView()
         #endif
     }
 
