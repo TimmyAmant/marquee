@@ -1,4 +1,5 @@
 import { seasonsForAdd, seasonsForUpdate, seasonsForWholeSeries } from "@/lib/sonarr/season-monitoring";
+import { isActiveQueueRecord, type ArrQueueRecord } from "@/lib/integrations/arr-status-logic";
 
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
@@ -107,6 +108,7 @@ export interface SonarrSeries {
   statistics?: {
     episodeFileCount: number;
     episodeCount: number;
+    totalEpisodeCount?: number;
     sizeOnDisk: number;
   };
 }
@@ -245,11 +247,11 @@ export function getAllEpisodes(config: ArrConfig, seriesId: number): Promise<Son
  * — a real-time signal, unlike file-count statistics which only reflect the
  * last completed sync and only update once an episode finishes importing. */
 export async function getQueuedSeriesIds(config: ArrConfig): Promise<Set<number>> {
-  const res = await sonarrFetch<{ records: { seriesId: number }[] }>(
+  const res = await sonarrFetch<{ records: ({ seriesId: number } & ArrQueueRecord)[] }>(
     config,
     "/queue?pageSize=250",
   );
-  return new Set(res.records.map((r) => r.seriesId));
+  return new Set(res.records.filter(isActiveQueueRecord).map((r) => r.seriesId));
 }
 
 export interface SonarrCalendarEpisode {

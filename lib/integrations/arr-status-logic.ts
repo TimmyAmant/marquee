@@ -1,6 +1,7 @@
 import type { LibraryStatus } from "@/components/status-badge";
 import type { RadarrMovie } from "@/lib/radarr/client";
 import type { SonarrSeries } from "@/lib/sonarr/client";
+import { isEpisodeCountComplete, sonarrEpisodeCounts } from "@/lib/library/episode-counts";
 
 export function deriveRadarrStatus(movie: RadarrMovie): LibraryStatus {
   if (movie.hasFile && movie.movieFile) return "owned";
@@ -21,6 +22,14 @@ export function deriveSonarrStatus(series: SonarrSeries): LibraryStatus {
   if (stats && stats.episodeCount > 0 && stats.episodeFileCount >= stats.episodeCount) {
     return "owned";
   }
+  // Sonarr's series-level `episodeCount` can be 0 for a show that's fully
+  // on disk (e.g. a finished miniseries with its seasons unmonitored), so
+  // fall back to every episode, and then to the per-season count.
+  if (stats?.totalEpisodeCount && stats.episodeFileCount >= stats.totalEpisodeCount) {
+    return "owned";
+  }
+  const counts = sonarrEpisodeCounts(series.seasons, series.monitored);
+  if (counts && counts.total > 0 && isEpisodeCountComplete(counts)) return "owned";
   if (stats && stats.episodeFileCount > 0) {
     return "tracked_downloading";
   }
@@ -30,4 +39,17 @@ export function deriveSonarrStatus(series: SonarrSeries): LibraryStatus {
   // airing yet — nothing to have downloaded, so "Missing" would be wrong.
   if (series.status === "upcoming") return "coming_soon";
   return "tracked_monitored";
+}
+
+/** One record from Radarr's or Sonarr's /queue. */
+export type ArrQueueRecord = { trackedDownloadState?: string };
+
+/**
+ * Whether a queue record is still on its way in. A download that has been
+ * imported stays in the queue for as long as the client keeps it (e.g.
+ * seeding a torrent), but the title is already on disk by then — counting it
+ * would show a finished movie or show as "Downloading" until it's removed.
+ */
+export function isActiveQueueRecord(record: ArrQueueRecord): boolean {
+  return record.trackedDownloadState !== "imported";
 }

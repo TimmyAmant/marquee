@@ -1,3 +1,5 @@
+import { isActiveQueueRecord, type ArrQueueRecord } from "@/lib/integrations/arr-status-logic";
+
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
 // Without this, a slow or unreachable Radarr instance can hang a page render
@@ -158,11 +160,11 @@ export async function searchMovie(config: ArrConfig, movieId: number): Promise<v
  * last completed sync. Paged, but a single page comfortably covers any
  * realistic queue size for a self-hosted instance. */
 export async function getQueuedMovieIds(config: ArrConfig): Promise<Set<number>> {
-  const res = await radarrFetch<{ records: { movieId: number }[] }>(
+  const res = await radarrFetch<{ records: ({ movieId: number } & ArrQueueRecord)[] }>(
     config,
     "/queue?pageSize=250",
   );
-  return new Set(res.records.map((r) => r.movieId));
+  return new Set(res.records.filter(isActiveQueueRecord).map((r) => r.movieId));
 }
 
 export interface RadarrCalendarMovie extends RadarrMovie {
