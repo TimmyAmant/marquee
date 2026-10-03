@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.69.0",
+    date: "2026-10-03",
+    changes: [
+      "Movies and shows that have finished downloading now show as Owned straight away, instead of Downloading for as long as the download client keeps seeding them. An upgrade to a better copy of something you already have still shows as Downloading while it's on its way.",
+      "Finished miniseries whose episodes are all on disk now show as Owned instead of Downloading.",
+    ],
+  },
+  {
     version: "0.68.0",
     date: "2026-09-28",
     changes: [

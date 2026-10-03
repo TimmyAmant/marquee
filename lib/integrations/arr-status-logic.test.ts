@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveRadarrStatus, deriveSonarrStatus } from "./arr-status-logic";
+import { deriveRadarrStatus, deriveSonarrStatus, isActiveQueueRecord } from "./arr-status-logic";
 import type { RadarrMovie } from "@/lib/radarr/client";
 import type { SonarrSeries } from "@/lib/sonarr/client";
 
@@ -107,6 +107,33 @@ describe("deriveSonarrStatus", () => {
     ).toBe("tracked_monitored");
   });
 
+  it("is owned when every episode has a file according to totalEpisodeCount", () => {
+    // A finished 6-episode miniseries whose series-level episodeCount is 0.
+    expect(
+      deriveSonarrStatus(
+        series({
+          statistics: { episodeFileCount: 6, episodeCount: 0, totalEpisodeCount: 6, sizeOnDisk: 1 },
+        }),
+      ),
+    ).toBe("owned");
+  });
+
+  it("is owned when all episodes across seasons are downloaded", () => {
+    expect(
+      deriveSonarrStatus(
+        series({
+          seasons: [
+            {
+              seasonNumber: 1,
+              monitored: true,
+              statistics: { episodeFileCount: 6, episodeCount: 6, totalEpisodeCount: 6 },
+            },
+          ],
+        }),
+      ),
+    ).toBe("owned");
+  });
+
   it("treats a series with zero total episodes as not owned, even with statistics present", () => {
     // episodeCount: 0 must not satisfy `episodeFileCount >= episodeCount`
     // (0 >= 0) and get misreported as "owned" for a show with no episodes yet.
@@ -118,5 +145,21 @@ describe("deriveSonarrStatus", () => {
         }),
       ),
     ).not.toBe("owned");
+  });
+});
+
+describe("isActiveQueueRecord", () => {
+  it("doesn't count a download that's already imported (e.g. a torrent still seeding)", () => {
+    expect(isActiveQueueRecord({ trackedDownloadState: "imported" })).toBe(false);
+  });
+
+  it("counts a download that's still on its way in, including an upgrade of a title already on disk", () => {
+    for (const state of ["downloading", "importPending", "importing", "importBlocked", "failedPending"]) {
+      expect(isActiveQueueRecord({ trackedDownloadState: state })).toBe(true);
+    }
+  });
+
+  it("counts a record with no tracked state, as before", () => {
+    expect(isActiveQueueRecord({})).toBe(true);
   });
 });
