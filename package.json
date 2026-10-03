@@ -41,7 +41,10 @@
     "vitest": "^5.0.1"
   },
   "overrides": {
-    "esbuild": "0.25.12"
+    "esbuild": "0.25.12",
+    "next-auth": {
+      "nodemailer": "$nodemailer"
+    }
   },
   "allowScripts": {
     "argon2@0.44.0": true,
