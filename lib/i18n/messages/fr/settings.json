@@ -258,6 +258,7 @@
   "eventRequestPending": "Nouvelle demande en attente d’examen",
   "eventRequestNotFound": "Sonarr/Radarr ne trouve pas une demande",
   "eventIssueReported": "Nouveau signalement",
+  "eventDownloadReady": "Téléchargement terminé, prêt à déplacer",
   "eventWatchlistRequests": "Demandes de la Plex Watchlist",
   "activityVerbRequested": "a demandé",
   "activityVerbApproved": "a approuvé",

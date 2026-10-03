@@ -886,7 +886,7 @@ private struct TitleActionRow: View {
                     }
                 }
 
-                StatusBadge(status: detail.library.status, large: true)
+                StatusBadge(status: detail.library.status, large: true, progress: detail.library.downloadProgress)
 
                 if viewer.alreadyRequested {
                     Text(viewer.pendingRequestLine)

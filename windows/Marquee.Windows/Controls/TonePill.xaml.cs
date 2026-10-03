@@ -53,6 +53,7 @@ public sealed partial class TonePill : UserControl
         MissingText.Text = text;
         UnmonitoredText.Text = text;
         SoonText.Text = text;
+        ReadyText.Text = text;
         InfoText.Text = text;
         NeutralText.Text = text;
 
@@ -63,6 +64,7 @@ public sealed partial class TonePill : UserControl
         MissingBorder.Visibility = shown && tone == BadgeTone.Missing ? Visibility.Visible : Visibility.Collapsed;
         UnmonitoredBorder.Visibility = shown && tone == BadgeTone.Unmonitored ? Visibility.Visible : Visibility.Collapsed;
         SoonBorder.Visibility = shown && tone == BadgeTone.Soon ? Visibility.Visible : Visibility.Collapsed;
+        ReadyBorder.Visibility = shown && tone == BadgeTone.Ready ? Visibility.Visible : Visibility.Collapsed;
         InfoBorder.Visibility = shown && tone == BadgeTone.Info ? Visibility.Visible : Visibility.Collapsed;
         NeutralBorder.Visibility = shown && tone == BadgeTone.Neutral ? Visibility.Visible : Visibility.Collapsed;
     }

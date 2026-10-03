@@ -66,8 +66,8 @@ picks a random title that matches your filters. *Everyone.*
 ### Status colors on posters
 Every poster shows where that title stands with a small label and a colored
 strip along the bottom, in the same colors Sonarr and Radarr use: green in
-your library, purple downloading, red missing, orange not monitored, blue
-coming soon. Titles you don't have get no strip. A **Color key** button on
+your library, purple downloading, teal ready to move, red missing, orange
+not monitored, blue coming soon. Titles you don't have get no strip. A **Color key** button on
 the grids explains the colors, and so does the "What the colors mean" help
 page (footer, and Settings › About). *Everyone.*
 
@@ -247,6 +247,18 @@ Sonarr and Radarr regularly and listens for Sonarr and Radarr's webhooks, so
 "Downloading" and "In your library" appear within moments. Titles you delete
 from your media server drop out on the next sync. *Everyone sees it; the
 admin connects the servers.*
+
+### Download watch
+While anything is downloading, Marquee checks Sonarr's and Radarr's queues
+every minute: a title page shows how far along it is ("Downloading · 63%").
+If a download finishes but Sonarr/Radarr doesn't import it — say your
+download client saves straight into its download folder and you move files
+yourself — the title shows **Ready to move** (teal) and you get one
+"Finished downloading, ready to move" notification. Once you've moved the
+file into the movie's or show's folder, Marquee asks Sonarr/Radarr to look
+again and it turns **Owned** within a couple of minutes (a show once every
+episode is there), and whoever requested it hears it's ready to watch. *The
+admin gets the notice; everyone sees the status.*
 
 ## Calendar
 

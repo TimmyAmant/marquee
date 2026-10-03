@@ -470,7 +470,13 @@ public sealed partial class TitleViewModel : ObservableObject
     private TitleViewerState? Viewer => detail?.Viewer;
 
     /// <summary>The big badge; a status this app doesn't know renders nothing rather than a raw wire value.</summary>
-    public string StatusLabel => detail?.Library.Status is { IsKnown: true } status ? status.Label : "";
+    public string StatusLabel => detail?.Library is { Status.IsKnown: true } library ? StatusWithProgress(library) : "";
+
+    /// <summary>"Downloading · 63%" while a download says how far it is.</summary>
+    private static string StatusWithProgress(TitleLibraryInfo library) =>
+        library.Status == LibraryStatus.TrackedDownloading && library.DownloadProgress is { } progress
+            ? $"{library.Status.Label} · {progress}%"
+            : library.Status.Label;
 
     public BadgeTone StatusTone => detail?.Library.Status is { IsKnown: true } status ? PosterItem.ToneFor(status) : BadgeTone.Neutral;
 

@@ -42,7 +42,9 @@ export function askEachServer<S, T>(
 /** How far along a copy is — owned beats downloading beats wanted, etc. —
  * for picking which server's copy of a title to show when several have it. */
 const STATUS_RANK: Record<LibraryStatus, number> = {
-  owned: 5,
+  owned: 6,
+  // Further along than downloading: the file's here, just not moved yet.
+  ready_to_move: 5,
   tracked_downloading: 4,
   tracked_monitored: 3,
   coming_soon: 2,

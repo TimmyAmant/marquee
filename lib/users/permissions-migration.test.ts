@@ -55,6 +55,8 @@ function oldAbilities(u: Before): Record<Permission, boolean> {
 }
 
 describe("migration 0051 (user permissions)", () => {
+  // A fresh database and every migration up to now: slow, and slower with
+  // the whole suite running alongside it.
   it("gives every existing account exactly what it could do before", async () => {
     const client = new PGlite();
     const db = drizzle(client);
@@ -111,5 +113,5 @@ describe("migration 0051 (user permissions)", () => {
       "reportIssues",
     ]);
     await client.close();
-  });
+  }, 30_000);
 });

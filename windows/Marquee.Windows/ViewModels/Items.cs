@@ -59,6 +59,7 @@ public static class StatusToneBadgeExtensions
     {
         StatusTone.Owned => BadgeTone.Owned,
         StatusTone.Downloading => BadgeTone.Downloading,
+        StatusTone.Ready => BadgeTone.Ready,
         StatusTone.Missing => BadgeTone.Missing,
         StatusTone.Unmonitored => BadgeTone.Unmonitored,
         StatusTone.Soon => BadgeTone.Soon,
@@ -394,6 +395,7 @@ public sealed class StatusKeyEntry
 
     public bool IsOwnedTone => Tone == BadgeTone.Owned;
     public bool IsDownloadingTone => Tone == BadgeTone.Downloading;
+    public bool IsReadyTone => Tone == BadgeTone.Ready;
     public bool IsMissingTone => Tone == BadgeTone.Missing;
     public bool IsUnmonitoredTone => Tone == BadgeTone.Unmonitored;
     public bool IsSoonTone => Tone == BadgeTone.Soon;

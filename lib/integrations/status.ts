@@ -1,3 +1,6 @@
+import { and, eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { arrStatusCache } from "@/lib/db/schema";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { getPlexFileInfo } from "@/lib/plex/sync";
@@ -47,6 +50,8 @@ export type TitleLibraryStatus = {
   provider: "plex" | "jellyfin" | "sonarr" | "radarr" | null;
   configured: boolean;
   file: FileInfo | null;
+  /** How far its download is (0–100), while it's downloading. */
+  downloadProgress?: number | null;
 };
 
 /** The movie as every standard Radarr has it — asked of all of them in
@@ -155,7 +160,7 @@ async function getArrStatus(
   // coming, and where the episodes that are here live is exactly what the
   // card is for.
   const file: FileInfo | null =
-    (status === "owned" || status === "tracked_downloading") && series.statistics?.sizeOnDisk
+    (status === "owned" || status === "tracked_downloading" || status === "ready_to_move") && series.statistics?.sizeOnDisk
       ? { path: series.path ?? null, sizeBytes: series.statistics.sizeOnDisk }
       : null;
 
@@ -280,12 +285,46 @@ export async function getTitleLibraryStatus(
     };
   }
 
-  const arrStatus = await getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup, sonarrLookup);
+  const arrStatus = withQueueStatus(
+    await getArrStatus(userId, mediaType, tmdbId, tvdbId, radarrLookup, sonarrLookup),
+    await queueRow(userId, mediaType, tmdbId).catch(() => null),
+  );
   // Sonarr's quality profile, already fetched above, for a show only Sonarr has.
   if (mediaType === "tv" && arrStatus.file && sonarrExtra?.quality && !arrStatus.file.quality) {
     return { ...arrStatus, file: { ...arrStatus.file, quality: sonarrExtra.quality } };
   }
   return arrStatus;
+}
+
+type QueueRow = { status: string | null; downloadProgress: number | null };
+
+/** The library cache's word on the title's download: the queue is only read
+ * by the syncs and the minute-by-minute download watch, not by the live
+ * Sonarr/Radarr lookups above. */
+async function queueRow(userId: string, mediaType: "movie" | "tv", tmdbId: number): Promise<QueueRow | null> {
+  const [row] = await db
+    .select({ status: arrStatusCache.status, downloadProgress: arrStatusCache.downloadProgress })
+    .from(arrStatusCache)
+    .where(
+      and(
+        eq(arrStatusCache.userId, userId),
+        eq(arrStatusCache.provider, mediaType === "movie" ? "radarr" : "sonarr"),
+        eq(arrStatusCache.externalId, tmdbId),
+      ),
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+/** A download on its way, or finished and waiting to be moved, beats what
+ * Sonarr/Radarr's own records say — except a copy that's already owned. Pure. */
+export function withQueueStatus(live: TitleLibraryStatus, cached: QueueRow | null): TitleLibraryStatus {
+  if (live.status === "owned" || !cached) return live;
+  if (cached.status === "tracked_downloading") {
+    return { ...live, status: "tracked_downloading", downloadProgress: cached.downloadProgress };
+  }
+  if (cached.status === "ready_to_move") return { ...live, status: "ready_to_move", downloadProgress: null };
+  return live;
 }
 
 export type SeasonCompleteness = { seasonNumber: number; have: number; total: number };

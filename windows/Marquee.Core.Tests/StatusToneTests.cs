@@ -11,6 +11,7 @@ public sealed class StatusToneTests
     [Theory]
     [InlineData("owned", StatusTone.Owned)]
     [InlineData("tracked_downloading", StatusTone.Downloading)]
+    [InlineData("ready_to_move", StatusTone.Ready)]
     [InlineData("tracked_monitored", StatusTone.Missing)]
     [InlineData("tracked_unmonitored", StatusTone.Unmonitored)]
     [InlineData("coming_soon", StatusTone.Soon)]
@@ -41,7 +42,7 @@ public sealed class StatusToneTests
     public void TheColorKeyListsEveryStatusInOrder()
     {
         Assert.Equal(
-            ["owned", "tracked_downloading", "tracked_monitored", "tracked_unmonitored", "coming_soon", "untracked"],
+            ["owned", "tracked_downloading", "ready_to_move", "tracked_monitored", "tracked_unmonitored", "coming_soon", "untracked"],
             LibraryStatus.Known.Select(status => status.Value));
     }
 
@@ -72,6 +73,18 @@ public sealed class StatusToneTests
         Assert.Equal("In Sonarr/Radarr but not monitored — it won't download on its own.", status.Meaning);
         Assert.Equal(StatusTone.Unmonitored, status.Tone);
         Assert.True(status.Tone.HasPosterStrip());
+    }
+
+    [Fact]
+    public void ReadyToMoveIsNamedAndInTheLibrary()
+    {
+        var status = LibraryStatus.ReadyToMove;
+        Assert.True(status.IsKnown);
+        Assert.True(status.IsInLibrary);
+        Assert.Equal("Ready to move", status.Label);
+        Assert.Equal("Ready to move", status.CompactLabel);
+        Assert.Equal("Finished downloading. Move it into your library and it shows as owned.", status.Meaning);
+        Assert.Equal(StatusTone.Ready, status.Tone);
     }
 
     [Fact]

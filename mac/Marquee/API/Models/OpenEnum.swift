@@ -133,6 +133,9 @@ extension API {
     enum LibraryStatus: OpenEnum {
         case owned
         case trackedDownloading
+        /// 0.71+: finished downloading but not imported — waiting to be moved
+        /// into the library by hand.
+        case readyToMove
         case trackedMonitored
         case trackedUnmonitored
         case comingSoon
@@ -140,13 +143,14 @@ extension API {
         case unknown(String)
 
         static let knownCases: [LibraryStatus] = [
-            .owned, .trackedDownloading, .trackedMonitored, .trackedUnmonitored, .comingSoon, .untracked,
+            .owned, .trackedDownloading, .readyToMove, .trackedMonitored, .trackedUnmonitored, .comingSoon, .untracked,
         ]
 
         var rawValue: String {
             switch self {
             case .owned: return "owned"
             case .trackedDownloading: return "tracked_downloading"
+            case .readyToMove: return "ready_to_move"
             case .trackedMonitored: return "tracked_monitored"
             case .trackedUnmonitored: return "tracked_unmonitored"
             case .comingSoon: return "coming_soon"
@@ -160,6 +164,7 @@ extension API {
             switch self {
             case .owned: return String(localized: "Already in your library")
             case .trackedDownloading: return String(localized: "Downloading")
+            case .readyToMove: return String(localized: "Ready to move")
             case .trackedMonitored: return String(localized: "Missing")
             case .trackedUnmonitored: return String(localized: "Not monitored")
             case .comingSoon: return String(localized: "Coming soon")
@@ -173,6 +178,7 @@ extension API {
             switch self {
             case .owned: return String(localized: "Owned")
             case .trackedDownloading: return String(localized: "Downloading")
+            case .readyToMove: return String(localized: "Ready to move")
             case .trackedMonitored: return String(localized: "Missing")
             case .trackedUnmonitored: return String(localized: "Not monitored")
             case .comingSoon: return String(localized: "Coming soon")
@@ -186,6 +192,7 @@ extension API {
             switch self {
             case .owned: return String(localized: "In your library")
             case .trackedDownloading: return String(localized: "Downloading")
+            case .readyToMove: return String(localized: "Ready to move")
             case .trackedMonitored: return String(localized: "Missing")
             case .trackedUnmonitored: return String(localized: "Not monitored")
             case .comingSoon: return String(localized: "Coming soon")
@@ -199,6 +206,7 @@ extension API {
             switch self {
             case .owned: return String(localized: "The file is in your library, ready to watch.")
             case .trackedDownloading: return String(localized: "It's downloading or queued right now.")
+            case .readyToMove: return String(localized: "Finished downloading. Move it into your library and it shows as owned.")
             case .trackedMonitored: return String(localized: "Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.")
             case .trackedUnmonitored: return String(localized: "In Sonarr/Radarr but not monitored — it won't download on its own.")
             case .comingSoon: return String(localized: "Added, but it hasn't been released yet.")

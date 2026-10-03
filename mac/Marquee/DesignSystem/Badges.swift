@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// Which palette a pill or badge draws itself in. The six library-status
-/// tones (owned, downloading, missing, unmonitored, soon, neutral) match
+/// Which palette a pill or badge draws itself in. The seven library-status
+/// tones (owned, downloading, ready, missing, unmonitored, soon, neutral) match
 /// lib/library/status-tone.ts on the website and Radarr's/Sonarr's own
 /// legends. `info` is the same blue as `soon` for chips that aren't a
 /// library status (pending, requested, monitored season, audio codec).
 enum BadgeTone: Hashable {
     case owned
     case downloading
+    case ready
     case missing
     case unmonitored
     case soon
@@ -21,6 +22,7 @@ enum BadgeTone: Hashable {
         switch self {
         case .owned: return (Theme.owned, Theme.ownedBg, Theme.owned.opacity(0.3))
         case .downloading: return (Theme.downloading, Theme.downloadingBg, Theme.downloading.opacity(0.3))
+        case .ready: return (Theme.ready, Theme.readyBg, Theme.ready.opacity(0.3))
         case .missing: return (Theme.missing, Theme.missingBg, Theme.missing.opacity(0.3))
         case .unmonitored: return (Theme.unmonitored, Theme.unmonitoredBg, Theme.unmonitored.opacity(0.3))
         case .soon: return (Theme.soon, Theme.soonBg, Theme.soon.opacity(0.3))
@@ -43,6 +45,7 @@ extension API.LibraryStatus {
         switch self {
         case .owned: return .owned
         case .trackedDownloading: return .downloading
+        case .readyToMove: return .ready
         case .trackedMonitored: return .missing
         case .trackedUnmonitored: return .unmonitored
         case .comingSoon: return .soon
@@ -71,6 +74,14 @@ struct StatusBadge: View {
     var compact = false
     /// `.bigbadge` — the title page's library badge (height 32, 13/600).
     var large = false
+    /// How far a download is (0–100), shown after "Downloading".
+    var progress: Int? = nil
+
+    private var text: String {
+        let label = compact ? status.compactLabel : status.label
+        guard status == .trackedDownloading, let progress else { return label }
+        return "\(label) · \(progress)%"
+    }
 
     private var colors: (foreground: Color, background: Color, border: Color) {
         status.tone.resolvedPalette
@@ -84,7 +95,7 @@ struct StatusBadge: View {
                     .fill(colors.foreground)
                     .frame(width: dotSize, height: dotSize)
                     .overlay(Circle().strokeBorder(colors.foreground.opacity(0.18), lineWidth: large ? 3 : 0))
-                Text(compact ? status.compactLabel : status.label)
+                Text(text)
             }
             .font(.system(size: Metrics.text(large ? 13 : (compact ? 10 : 11.5)), weight: compact || large ? .semibold : .medium))
             .foregroundStyle(colors.foreground)

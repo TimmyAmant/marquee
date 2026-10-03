@@ -28,7 +28,11 @@ export function myRequestBadge(
   // The declined tone keeps it neutral, and older apps know that tone.
   if (removed) return { label: t("requests.statusRemoved"), tone: "declined" };
   if (libraryStatus === "owned") return { label: t("requests.statusInLibrary"), tone: "owned" };
-  if (libraryStatus === "tracked_downloading") return { label: t("requests.statusDownloading"), tone: "downloading" };
+  // Ready to move is the admin's last step, not news for whoever asked: to
+  // them it's still on its way.
+  if (libraryStatus === "tracked_downloading" || libraryStatus === "ready_to_move") {
+    return { label: t("requests.statusDownloading"), tone: "downloading" };
+  }
   if (libraryStatus === "coming_soon") return { label: t("requests.statusComingSoon"), tone: "coming_soon" };
   // Sonarr/Radarr never actually took this one — the admin is adding it by
   // hand, so it'll never resolve to a real libraryStatus on its own.

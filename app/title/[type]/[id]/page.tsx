@@ -112,6 +112,7 @@ export default async function TitlePage({
         credits={credits}
         keywords={keywords}
         status={libraryStatus.status}
+        downloadProgress={libraryStatus.downloadProgress ?? null}
         configured={libraryStatus.configured}
         links={{
           trailerKey: trailer?.key ?? null,

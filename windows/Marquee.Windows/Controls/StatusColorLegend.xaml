@@ -29,6 +29,7 @@
                         <Grid Width="12" Height="12" Margin="0,3,0,0" VerticalAlignment="Top">
                             <Ellipse Visibility="{x:Bind IsOwnedTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
                             <Ellipse Visibility="{x:Bind IsDownloadingTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource DownloadingBadgeForegroundBrush}" />
+                            <Ellipse Visibility="{x:Bind IsReadyTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource ReadyBadgeForegroundBrush}" />
                             <Ellipse Visibility="{x:Bind IsMissingTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
                             <Ellipse Visibility="{x:Bind IsUnmonitoredTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
                             <Ellipse Visibility="{x:Bind IsSoonTone, Converter={StaticResource BoolToVisibility}}" Fill="{ThemeResource SoonBadgeForegroundBrush}" />

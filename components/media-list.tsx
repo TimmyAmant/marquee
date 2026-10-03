@@ -75,6 +75,7 @@ const STATUS_FILTER_LABELS: Record<StatusFilter, MessageKey> = {
   all: "discover.filterAll",
   owned: "discover.statusOwned",
   tracked_downloading: "discover.statusDownloading",
+  ready_to_move: "title.statusReadyToMoveName",
   tracked_monitored: "discover.statusMissing",
   tracked_unmonitored: "discover.statusNotMonitored",
   coming_soon: "discover.statusComingSoon",
@@ -99,6 +100,7 @@ const VISIBLE_STATUS_FILTERS: StatusFilter[] = [
   "all",
   "owned",
   "tracked_downloading",
+  "ready_to_move",
   "tracked_monitored",
   "coming_soon",
 ];

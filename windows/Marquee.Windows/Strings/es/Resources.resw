@@ -1660,6 +1660,9 @@
   <data name="Enum_StatusCompactTrackedDownloading" xml:space="preserve">
     <value>Descargando</value>
   </data>
+  <data name="Enum_StatusCompactReadyToMove" xml:space="preserve">
+    <value>Listo para mover</value>
+  </data>
   <data name="Enum_StatusCompactTrackedMonitored" xml:space="preserve">
     <value>Falta</value>
   </data>
@@ -1677,6 +1680,9 @@
   </data>
   <data name="Enum_StatusLabelTrackedDownloading" xml:space="preserve">
     <value>Descargando</value>
+  </data>
+  <data name="Enum_StatusLabelReadyToMove" xml:space="preserve">
+    <value>Listo para mover</value>
   </data>
   <data name="Enum_StatusLabelTrackedMonitored" xml:space="preserve">
     <value>Falta</value>
@@ -1696,6 +1702,9 @@
   <data name="Enum_StatusMeaningTrackedDownloading" xml:space="preserve">
     <value>Se está descargando o está en cola ahora mismo.</value>
   </data>
+  <data name="Enum_StatusMeaningReadyToMove" xml:space="preserve">
+    <value>Descarga terminada. Muévelo a tu biblioteca y aparecerá como en tu biblioteca.</value>
+  </data>
   <data name="Enum_StatusMeaningTrackedMonitored" xml:space="preserve">
     <value>Monitorizado, pero Sonarr/Radarr aún no ha encontrado una copia; sigue buscando.</value>
   </data>
@@ -1713,6 +1722,9 @@
   </data>
   <data name="Enum_StatusNameTrackedDownloading" xml:space="preserve">
     <value>Descargando</value>
+  </data>
+  <data name="Enum_StatusNameReadyToMove" xml:space="preserve">
+    <value>Listo para mover</value>
   </data>
   <data name="Enum_StatusNameTrackedMonitored" xml:space="preserve">
     <value>Falta</value>

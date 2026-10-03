@@ -1,5 +1,5 @@
 import { seasonsForAdd, seasonsForUpdate, seasonsForWholeSeries } from "@/lib/sonarr/season-monitoring";
-import { isActiveQueueRecord, type ArrQueueRecord } from "@/lib/integrations/arr-status-logic";
+import { summarizeQueue, type ArrQueueRecord, type QueueSummary } from "@/lib/integrations/arr-status-logic";
 
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
@@ -243,15 +243,26 @@ export function getAllEpisodes(config: ArrConfig, seriesId: number): Promise<Son
   return sonarrFetch<SonarrEpisode[]>(config, `/episode?seriesId=${seriesId}`, { timeoutMs: LIBRARY_TIMEOUT_MS });
 }
 
-/** IDs of series with an active entry in Sonarr's download queue right now
- * — a real-time signal, unlike file-count statistics which only reflect the
- * last completed sync and only update once an episode finishes importing. */
-export async function getQueuedSeriesIds(config: ArrConfig): Promise<Set<number>> {
+/** One series by Sonarr's own id. */
+export function getSeries(config: ArrConfig, seriesId: number): Promise<SonarrSeries> {
+  return sonarrFetch<SonarrSeries>(config, `/series/${seriesId}`);
+}
+
+/** Has Sonarr look in the series' folder again, so episodes moved there by
+ * hand are picked up. Fire-and-forget: Sonarr runs it in the background. */
+export async function rescanSeries(config: ArrConfig, seriesId: number): Promise<void> {
+  await sonarrFetch(config, "/command", { method: "POST", body: { name: "RescanSeries", seriesId } });
+}
+
+/** The queue, one summary per series (lib/integrations/arr-status-logic.ts).
+ * Every record is in it, finished ones included: a title with any record has
+ * had a release found for it. */
+export async function getQueueSummaries(config: ArrConfig): Promise<Map<number, QueueSummary>> {
   const res = await sonarrFetch<{ records: ({ seriesId: number } & ArrQueueRecord)[] }>(
     config,
-    "/queue?pageSize=250",
+    "/queue?pageSize=1000",
   );
-  return new Set(res.records.filter(isActiveQueueRecord).map((r) => r.seriesId));
+  return summarizeQueue(res.records, (r) => r.seriesId);
 }
 
 export interface SonarrCalendarEpisode {

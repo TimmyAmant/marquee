@@ -66,7 +66,7 @@ export async function loadTitleStatus(
   const access = viewer.userId ? await getAccess(viewer.userId).catch(() => null) : null;
   const permissions = access ? permissionMap(access) : NO_PERMISSIONS;
   const libraryStatus: Pick<TitleLibraryStatus, "status" | "configured" | "file"> &
-    Partial<Pick<TitleLibraryStatus, "provider">> = viewer.libraryOwnerId
+    Partial<Pick<TitleLibraryStatus, "provider" | "downloadProgress">> = viewer.libraryOwnerId
     ? await getTitleLibraryStatus(viewer.libraryOwnerId, type, tmdbId, tvdbId)
     : { status: "untracked" as const, configured: false, file: null };
 

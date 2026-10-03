@@ -21,6 +21,9 @@ public sealed record TitleLibraryInfo
 
     /// <summary>The "File details" card; non-null only for <c>owned</c> titles.</summary>
     public FileDetails? File { get; init; }
+
+    /// <summary>0.71+: how far the download is (0–100) while it's downloading; null otherwise, and from an older server.</summary>
+    public int? DownloadProgress { get; init; }
 }
 
 /// <summary>
@@ -327,7 +330,7 @@ public sealed record FourKViewerState
         get
         {
             if (Status == LibraryStatus.Owned) return Loc.Get("Library_FourKOwned");
-            if (Status == LibraryStatus.TrackedDownloading) return Loc.Get("Library_FourKDownloading");
+            if (Status == LibraryStatus.TrackedDownloading || Status == LibraryStatus.ReadyToMove) return Loc.Get("Library_FourKDownloading");
             if (Status == LibraryStatus.TrackedMonitored) return Loc.Get("Library_FourKMissing");
             if (Status == LibraryStatus.TrackedUnmonitored) return Loc.Get("Library_FourKNotMonitored");
             if (Status == LibraryStatus.ComingSoon) return Loc.Get("Library_FourKComingSoon");

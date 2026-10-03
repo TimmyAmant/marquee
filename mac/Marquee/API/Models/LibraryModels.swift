@@ -14,6 +14,9 @@ extension API {
         /// The "File details" card; non-nil for `owned` titles and for a show
         /// Sonarr has some episodes of.
         let file: FileDetails?
+        /// 0.71+: how far the download is (0–100) while it's downloading;
+        /// nil otherwise, and from an older server.
+        var downloadProgress: Int? = nil
     }
 
     /// The "File details" card. Movie-only fields are nil for TV.
@@ -206,7 +209,7 @@ extension API {
         var statusLabel: String? {
             switch status {
             case .owned: String(localized: "In 4K")
-            case .trackedDownloading: String(localized: "4K downloading")
+            case .trackedDownloading, .readyToMove: String(localized: "4K downloading")
             case .trackedMonitored: String(localized: "4K missing")
             case .trackedUnmonitored: String(localized: "4K not monitored")
             case .comingSoon: String(localized: "4K coming soon")

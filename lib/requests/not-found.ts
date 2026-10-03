@@ -117,9 +117,10 @@ function queueCache() {
     let queue = queues.get(server.id);
     if (!queue) {
       const config = arrConfig(server);
-      queue = (server.kind === "radarr" ? radarr.getQueuedMovieIds(config) : sonarr.getQueuedSeriesIds(config)).catch(
-        () => null,
-      );
+      // Any record counts, a finished download included: a release was found.
+      queue = (server.kind === "radarr" ? radarr.getQueueSummaries(config) : sonarr.getQueueSummaries(config))
+        .then((summaries) => new Set(summaries.keys()))
+        .catch(() => null);
       queues.set(server.id, queue);
     }
     return queue;

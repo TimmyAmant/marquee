@@ -4,7 +4,7 @@ import { runExclusive, singleFlight, whenIdle } from "@/lib/async/single-flight"
 import { arrStatusCache } from "@/lib/db/schema";
 import type { ArrProvider } from "@/lib/db/schema";
 import { IntegrationDisconnectedError } from "@/lib/integrations/credentials";
-import { deriveRadarrStatus, deriveSonarrStatus } from "@/lib/integrations/arr-status-logic";
+import { deriveRadarrStatus, deriveSonarrStatus, statusWithQueue, type QueueSummary } from "@/lib/integrations/arr-status-logic";
 import type { LibraryStatus } from "@/components/status-badge";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
@@ -41,7 +41,47 @@ type RowFields = {
   /** Sonarr: a series poster's have/aired, specials left out. */
   episodesHave?: number | null;
   episodesAired?: number | null;
+  /** How far its download is, while it's downloading. */
+  downloadProgress: number | null;
 };
+
+/** A Radarr movie's cache row. The queue is real-time; file count/monitored
+ * flags only reflect Radarr's last look, so a movie mid-download (no file
+ * yet) would otherwise show as merely "monitored" until it lands. Also used
+ * by the minute-by-minute download watch (lib/arr/download-watch.ts). */
+export function radarrRowFields(movie: radarr.RadarrMovie, queue: QueueSummary | undefined): RowFields {
+  const { status, progress } = statusWithQueue(deriveRadarrStatus(movie), queue);
+  return {
+    arrId: movie.id,
+    status,
+    monitored: movie.monitored,
+    sizeBytes: movie.movieFile?.size ?? null,
+    filePath: movie.movieFile?.path ?? movie.path ?? null,
+    qualityCutoffNotMet: movie.movieFile?.qualityCutoffNotMet ?? null,
+    qualityName: movie.movieFile?.quality?.quality?.name ?? null,
+    dynamicRange: movie.movieFile?.mediaInfo?.videoDynamicRangeType || null,
+    audioCodec: movie.movieFile?.mediaInfo?.audioCodec || null,
+    downloadProgress: progress,
+  };
+}
+
+/** A Sonarr series' cache row — see radarrRowFields. Episode-file counts
+ * don't move until an episode is imported, so the queue says what's coming. */
+export function sonarrRowFields(series: sonarr.SonarrSeries, queue: QueueSummary | undefined): RowFields {
+  const { status, progress } = statusWithQueue(deriveSonarrStatus(series), queue);
+  const counts = sonarrEpisodeCounts(series.seasons, series.monitored);
+  return {
+    arrId: series.id,
+    status,
+    monitored: series.monitored,
+    sizeBytes: series.statistics?.sizeOnDisk ?? null,
+    filePath: series.path ?? null,
+    episodeCount: series.statistics?.episodeFileCount ?? null,
+    episodesHave: counts?.have ?? null,
+    episodesAired: counts?.total ?? null,
+    downloadProgress: progress,
+  };
+}
 
 /** Throws when this kind's standard servers are no longer the ones this run
  * started with (one was removed, added or moved to 4K): a server removed
@@ -53,21 +93,23 @@ async function assertSameServers(userId: string, kind: ArrProvider, ids: readonl
   if (!same) throw new IntegrationDisconnectedError(kind);
 }
 
-type Listing<T> = { server: ArrServer; items: T[]; queued: Set<number> } | { server: ArrServer; failed: unknown };
+type Listing<T> =
+  | { server: ArrServer; items: T[]; queue: Map<number, QueueSummary> }
+  | { server: ArrServer; failed: unknown };
 
 async function listEach<T>(
   servers: ArrServer[],
   list: (server: ArrServer) => Promise<T[]>,
-  queue: (server: ArrServer) => Promise<Set<number>>,
+  queue: (server: ArrServer) => Promise<Map<number, QueueSummary>>,
 ): Promise<Listing<T>[]> {
   return Promise.all(
     servers.map(async (server) => {
       try {
-        const [items, queued] = await Promise.all([
+        const [items, queueSummaries] = await Promise.all([
           list(server),
-          queue(server).catch(() => new Set<number>()),
+          queue(server).catch(() => new Map<number, QueueSummary>()),
         ]);
-        return { server, items, queued };
+        return { server, items, queue: queueSummaries };
       } catch (failed) {
         return { server, failed };
       }
@@ -88,7 +130,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
     const movieListings = await listEach(
       servers,
       (s) => radarr.getAllMovies(arrConfig(s)),
-      (s) => radarr.getQueuedMovieIds(arrConfig(s)),
+      (s) => radarr.getQueueSummaries(arrConfig(s)),
     );
     listings = movieListings;
     const overrides = new Map<number, number>();
@@ -100,24 +142,10 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           tmdbId = await applyTmdbIdOverride(userId, "movie", movie.tmdbId).catch(() => movie.tmdbId);
           overrides.set(movie.tmdbId, tmdbId);
         }
-        // The queue is real-time; file count/monitored flags only reflect the
-        // last sync, so a movie mid-download (no file yet) would otherwise
-        // show as merely "monitored" until the download completes.
-        const status = listing.queued.has(movie.id) ? "tracked_downloading" : deriveRadarrStatus(movie);
         copies.push({
           serverId: listing.server.id,
           tmdbId,
-          fields: {
-            arrId: movie.id,
-            status,
-            monitored: movie.monitored,
-            sizeBytes: movie.movieFile?.size ?? null,
-            filePath: movie.movieFile?.path ?? movie.path ?? null,
-            qualityCutoffNotMet: movie.movieFile?.qualityCutoffNotMet ?? null,
-            qualityName: movie.movieFile?.quality?.quality?.name ?? null,
-            dynamicRange: movie.movieFile?.mediaInfo?.videoDynamicRangeType || null,
-            audioCodec: movie.movieFile?.mediaInfo?.audioCodec || null,
-          },
+          fields: radarrRowFields(movie, listing.queue.get(movie.id)),
         });
       }
     }
@@ -125,7 +153,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
     const seriesListings = await listEach(
       servers,
       (s) => sonarr.getAllSeries(arrConfig(s)),
-      (s) => sonarr.getQueuedSeriesIds(arrConfig(s)),
+      (s) => sonarr.getQueueSummaries(arrConfig(s)),
     );
     listings = seriesListings;
     const resolved = new Map<number, number | null>();
@@ -147,23 +175,10 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           resolved.set(series.tvdbId, tmdbId);
         }
         if (!tmdbId) continue;
-        // The queue is real-time; episode-file-count statistics only reflect
-        // the last sync and don't move until an episode finishes importing.
-        const status = listing.queued.has(series.id) ? "tracked_downloading" : deriveSonarrStatus(series);
-        const counts = sonarrEpisodeCounts(series.seasons, series.monitored);
         copies.push({
           serverId: listing.server.id,
           tmdbId,
-          fields: {
-            arrId: series.id,
-            status,
-            monitored: series.monitored,
-            sizeBytes: series.statistics?.sizeOnDisk ?? null,
-            filePath: series.path ?? null,
-            episodeCount: series.statistics?.episodeFileCount ?? null,
-            episodesHave: counts?.have ?? null,
-            episodesAired: counts?.total ?? null,
-          },
+          fields: sonarrRowFields(series, listing.queue.get(series.id)),
         });
       }
     }

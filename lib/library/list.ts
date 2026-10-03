@@ -22,6 +22,7 @@ export const LIBRARY_SOURCES: readonly LibrarySource[] = ["plex", "jellyfin", "r
 export const LIBRARY_STATUS_FILTERS: readonly LibraryStatus[] = [
   "owned",
   "tracked_downloading",
+  "ready_to_move",
   "tracked_monitored",
   "tracked_unmonitored",
   "coming_soon",
