@@ -150,16 +150,26 @@ describe("deriveSonarrStatus", () => {
 
 describe("isActiveQueueRecord", () => {
   it("doesn't count a download that's already imported (e.g. a torrent still seeding)", () => {
-    expect(isActiveQueueRecord({ trackedDownloadState: "imported" })).toBe(false);
+    expect(isActiveQueueRecord({ trackedDownloadState: "imported", sizeleft: 0 })).toBe(false);
   });
 
-  it("counts a download that's still on its way in, including an upgrade of a title already on disk", () => {
-    for (const state of ["downloading", "importPending", "importing", "importBlocked", "failedPending"]) {
-      expect(isActiveQueueRecord({ trackedDownloadState: state })).toBe(true);
-    }
+  it("doesn't count a finished download that was never imported", () => {
+    // qBittorrent saving straight into its download folder: Radarr/Sonarr
+    // leave it "downloading" with nothing left, for good.
+    expect(isActiveQueueRecord({ trackedDownloadState: "downloading", sizeleft: 0 })).toBe(false);
+    expect(isActiveQueueRecord({ trackedDownloadState: "importBlocked", sizeleft: 0 })).toBe(false);
   });
 
-  it("counts a record with no tracked state, as before", () => {
+  it("counts a download with bytes left, including an upgrade of a title already on disk", () => {
+    expect(isActiveQueueRecord({ trackedDownloadState: "downloading", sizeleft: 1024 })).toBe(true);
+  });
+
+  it("counts a download being imported right now", () => {
+    expect(isActiveQueueRecord({ trackedDownloadState: "importPending", sizeleft: 0 })).toBe(true);
+    expect(isActiveQueueRecord({ trackedDownloadState: "importing", sizeleft: 0 })).toBe(true);
+  });
+
+  it("counts a record that doesn't say how much is left, as before", () => {
     expect(isActiveQueueRecord({})).toBe(true);
   });
 });
