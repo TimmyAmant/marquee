@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.70.0",
+    date: "2026-10-03",
+    changes: [
+      "Finished downloads that Radarr or Sonarr can't import (for example torrents saved straight into the download folder) no longer show as Downloading forever. They show as Owned once the file is in your library, or Missing if it isn't.",
+      "A download still on its way in, including an upgrade of something you already have, still shows as Downloading.",
+      "Email notifications: updated the email library to fix security issues.",
+    ],
+  },
+  {
     version: "0.69.0",
     date: "2026-10-03",
     changes: [

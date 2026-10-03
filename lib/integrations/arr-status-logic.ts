@@ -42,14 +42,20 @@ export function deriveSonarrStatus(series: SonarrSeries): LibraryStatus {
 }
 
 /** One record from Radarr's or Sonarr's /queue. */
-export type ArrQueueRecord = { trackedDownloadState?: string };
+export type ArrQueueRecord = { trackedDownloadState?: string; sizeleft?: number };
 
 /**
- * Whether a queue record is still on its way in. A download that has been
- * imported stays in the queue for as long as the client keeps it (e.g.
- * seeding a torrent), but the title is already on disk by then — counting it
- * would show a finished movie or show as "Downloading" until it's removed.
+ * Whether a queue record is still on its way in: bytes left to download, or
+ * being imported right now. A finished download can sit in the queue for
+ * good — imported and seeding, or never imported at all (e.g. a torrent
+ * saved straight into the client's download folder, which Radarr and Sonarr
+ * won't import, so it stays "downloading" with nothing left). Counting those
+ * would show the title as "Downloading" forever; leaving them out lets what's
+ * actually on disk decide (Owned with a file, Missing without).
  */
 export function isActiveQueueRecord(record: ArrQueueRecord): boolean {
-  return record.trackedDownloadState !== "imported";
+  const state = record.trackedDownloadState;
+  if (state === "imported") return false;
+  if (state === "importPending" || state === "importing") return true;
+  return record.sizeleft == null || record.sizeleft > 0;
 }
