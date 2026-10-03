@@ -11,6 +11,7 @@ type Task = { stop: () => void };
 
 declare global {
   var __marqueeCronTasks: Map<JobId, Task> | undefined;
+  var __marqueeDownloadWatchTask: Task | undefined;
 }
 
 function tasks(): Map<JobId, Task> {
@@ -45,7 +46,27 @@ export async function startScheduler(): Promise<void> {
     return {};
   });
   for (const jobId of JOB_IDS) await scheduleJob(jobId, stored);
+  await startDownloadWatch();
   console.info(`[jobs] scheduled ${JOB_IDS.length} jobs`);
+}
+
+/** The download watch (lib/arr/download-watch.ts): every minute, not one of
+ * Settings › Jobs — it's how the hourly Sonarr/Radarr sync keeps up with
+ * downloads in between, and costs next to nothing when nothing's coming. */
+async function startDownloadWatch(): Promise<void> {
+  const cron = await import("node-cron");
+  globalThis.__marqueeDownloadWatchTask?.stop();
+  let running = false;
+  globalThis.__marqueeDownloadWatchTask = cron.schedule("* * * * *", () => {
+    if (running) return;
+    running = true;
+    import("@/lib/arr/download-watch")
+      .then(({ watchDownloads }) => watchDownloads())
+      .catch((err) => console.error("[download-watch] run failed:", err))
+      .finally(() => {
+        running = false;
+      });
+  });
 }
 
 /** Puts a job on its newly saved schedule. Only where the scheduler runs

@@ -4,6 +4,7 @@
   "pushRequestApproved": "Solicitud aprobada",
   "pushRequestDeclined": "Solicitud rechazada",
   "pushRequestRemoved": "Solicitud retirada",
+  "pushReadyToMove": "Listo para mover",
   "pushProblemReported": "Problema informado",
   "pushProblemFixed": "Problema resuelto",
   "pushNewRequest": "Nueva solicitud",
@@ -313,5 +314,6 @@
   "slackEnterUrl": "Escribe la dirección del webhook entrante.",
   "pushbulletEnterToken": "Escribe tu token de acceso de Pushbullet (Settings › Account › Create access token).",
   "pushbulletBadChannel": "La etiqueta de canal solo lleva letras, números, - y _.",
-  "arrPublicUrlNotFull": "Introduce la URL pública completa, empezando por http:// o https://, o déjala en blanco."
+  "arrPublicUrlNotFull": "Introduce la URL pública completa, empezando por http:// o https://, o déjala en blanco.",
+  "downloadReady": "{title} terminó de descargarse y está listo para moverlo a tu biblioteca."
 }

@@ -29,6 +29,7 @@ describe("notification events", () => {
       "request_pending",
       "request_not_found",
       "issue_reported",
+      "download_ready",
       "watchlist_requests",
     ]);
   });

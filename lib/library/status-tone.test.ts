@@ -18,6 +18,7 @@ describe("statusTone", () => {
   it("gives each library status its own color", () => {
     expect(statusTone("owned")).toBe("owned");
     expect(statusTone("tracked_downloading")).toBe("downloading");
+    expect(statusTone("ready_to_move")).toBe("ready");
     expect(statusTone("tracked_monitored")).toBe("missing");
     expect(statusTone("tracked_unmonitored")).toBe("unmonitored");
     expect(statusTone("coming_soon")).toBe("soon");
@@ -39,6 +40,7 @@ describe("statusTone", () => {
     expect(LIBRARY_STATUSES).toEqual([
       "owned",
       "tracked_downloading",
+      "ready_to_move",
       "tracked_monitored",
       "tracked_unmonitored",
       "coming_soon",

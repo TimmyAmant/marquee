@@ -13,8 +13,8 @@ namespace Marquee.Windows.ViewModels;
 
 /// <summary>
 /// Which palette a pill or badge draws itself in, named for what it means.
-/// Owned (green), Downloading (purple), Missing (red), Unmonitored (orange),
-/// Soon (blue) and Neutral (grey) are the library-status colors
+/// Owned (green), Downloading (purple), Ready (teal), Missing (red),
+/// Unmonitored (orange), Soon (blue) and Neutral (grey) are the library-status colors
 /// (<see cref="StatusTone"/>, the same as Radarr's and Sonarr's legends).
 /// Info is the same blue as Soon for pills that aren't a library status:
 /// pending, requested, a monitored season, 4K, an admin tag.
@@ -23,6 +23,7 @@ public enum BadgeTone
 {
     Owned,
     Downloading,
+    Ready,
     Missing,
     Unmonitored,
     Soon,
@@ -59,7 +60,7 @@ public sealed partial class PosterItem : ObservableObject
     private int errorGeneration;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(StatusLabel), nameof(StatusName), nameof(Tone), nameof(IsOwnedTone), nameof(IsDownloadingTone), nameof(IsMissingTone), nameof(IsUnmonitoredTone), nameof(IsSoonTone), nameof(IsNeutralTone), nameof(AccessibleName))]
+    [NotifyPropertyChangedFor(nameof(StatusLabel), nameof(StatusName), nameof(Tone), nameof(IsOwnedTone), nameof(IsDownloadingTone), nameof(IsReadyTone), nameof(IsMissingTone), nameof(IsUnmonitoredTone), nameof(IsSoonTone), nameof(IsNeutralTone), nameof(AccessibleName))]
     private LibraryStatus? status;
 
     [ObservableProperty]
@@ -143,6 +144,7 @@ public sealed partial class PosterItem : ObservableObject
 
     public bool IsOwnedTone => Tone == BadgeTone.Owned;
     public bool IsDownloadingTone => Tone == BadgeTone.Downloading;
+    public bool IsReadyTone => Tone == BadgeTone.Ready;
     public bool IsMissingTone => Tone == BadgeTone.Missing;
     public bool IsUnmonitoredTone => Tone == BadgeTone.Unmonitored;
     public bool IsSoonTone => Tone == BadgeTone.Soon;

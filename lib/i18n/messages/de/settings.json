@@ -258,6 +258,7 @@
   "eventRequestPending": "Neue Anfrage wartet auf Prüfung",
   "eventRequestNotFound": "Sonarr/Radarr findet eine Anfrage nicht",
   "eventIssueReported": "Neue Problemmeldung",
+  "eventDownloadReady": "Fertig heruntergeladen, bereit zum Verschieben",
   "eventWatchlistRequests": "Anfragen aus der Plex Watchlist",
   "activityVerbRequested": "hat angefragt",
   "activityVerbApproved": "hat genehmigt",

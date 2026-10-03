@@ -146,6 +146,7 @@ export async function TitleHero({
   credits,
   keywords,
   status,
+  downloadProgress = null,
   configured,
   links,
   favorited,
@@ -181,6 +182,8 @@ export async function TitleHero({
   credits: CreditEntry[];
   keywords: string[];
   status: LibraryStatus;
+  /** How far its download is (0–100), while it's downloading. */
+  downloadProgress?: number | null;
   configured: boolean;
   links: ExternalLinksData;
   /** Omitted entirely (no button shown) when signed out. */
@@ -335,6 +338,7 @@ export async function TitleHero({
                 name={name}
                 posterPath={posterPath}
                 status={status}
+                downloadProgress={downloadProgress}
                 configured={configured}
                 isAdmin={isAdmin}
                 alreadyRequested={alreadyRequested}

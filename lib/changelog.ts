@@ -11,6 +11,18 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.71.0",
+    date: "2026-10-03",
+    changes: [
+      "Download watch: while anything is downloading, Marquee checks Sonarr and Radarr every minute instead of every hour. Title pages show how far along a download is, like \"Downloading · 63%\".",
+      "New \"Ready to move\" status (teal) for a download that finished but Sonarr or Radarr didn't import, so it's waiting in your download folder. The admin gets one \"Finished downloading, ready to move\" notification for it (it can be turned off in Settings › Notifications).",
+      "Once you move the file into the movie's or show's folder, Marquee asks Sonarr or Radarr to look again, and it turns Owned within a couple of minutes (a show once every episode is there). Whoever requested it is told it's ready to watch.",
+      "Title pages now show Downloading while Sonarr or Radarr is downloading something, instead of Missing.",
+      "Fixed: a finished download that wasn't imported could be flagged as \"Couldn't find it\".",
+      "On the website and the Mac, iPhone, iPad and Windows apps.",
+    ],
+  },
+  {
     version: "0.70.0",
     date: "2026-10-03",
     changes: [

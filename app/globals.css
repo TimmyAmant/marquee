@@ -32,6 +32,8 @@
   --marquee-unmonitored-bg: #2a1a0e;
   --marquee-soon: #5d9cec;
   --marquee-soon-bg: #10202f;
+  --marquee-ready: #3cc6b8;
+  --marquee-ready-bg: #0f2624;
   /* Neutral information that isn't a library status — pending/requested
      pills, 4K, "Upgrade available" — in the soon blue. */
   --marquee-info: #5d9cec;
@@ -80,6 +82,8 @@
   --marquee-unmonitored-bg: #fff0e5;
   --marquee-soon: #2f6fb0;
   --marquee-soon-bg: #e5f0fa;
+  --marquee-ready: #0b6d63;
+  --marquee-ready-bg: #e0f5f2;
   --marquee-info: #2f6fb0;
   --marquee-info-bg: #e5f0fa;
   --marquee-untracked-bg: #efece3;
@@ -118,6 +122,8 @@
     --marquee-unmonitored-bg: #fff0e5;
     --marquee-soon: #2f6fb0;
     --marquee-soon-bg: #e5f0fa;
+    --marquee-ready: #0b6d63;
+    --marquee-ready-bg: #e0f5f2;
     --marquee-info: #2f6fb0;
     --marquee-info-bg: #e5f0fa;
     --marquee-untracked-bg: #efece3;
@@ -164,6 +170,8 @@
   --color-unmonitored-bg: var(--marquee-unmonitored-bg);
   --color-soon: var(--marquee-soon);
   --color-soon-bg: var(--marquee-soon-bg);
+  --color-ready: var(--marquee-ready);
+  --color-ready-bg: var(--marquee-ready-bg);
   --color-info: var(--marquee-info);
   --color-info-bg: var(--marquee-info-bg);
   --color-untracked-bg: var(--marquee-untracked-bg);

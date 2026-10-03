@@ -8,12 +8,16 @@ export type { LibraryStatus };
 export function StatusBadge({
   status,
   compact = false,
+  progress = null,
 }: {
   status: LibraryStatus;
   compact?: boolean;
+  /** How far a download is (0–100), shown after "Downloading". */
+  progress?: number | null;
 }) {
   const t = useT();
   const text = statusText(t, status);
+  const percent = status === "tracked_downloading" && progress != null ? ` · ${progress}%` : "";
   const className = statusClasses(status).pill;
 
   // Both sizes come from the design mockup: the poster-corner pill is 17px
@@ -26,6 +30,7 @@ export function StatusBadge({
       >
         <span className="h-[5px] w-[5px] rounded-full bg-current" />
         {text.compactLabel}
+        {percent}
       </span>
     );
   }
@@ -36,6 +41,7 @@ export function StatusBadge({
     >
       <span className="h-2 w-2 rounded-full bg-current" />
       {text.label}
+      {percent}
     </span>
   );
 }

@@ -15,6 +15,8 @@ import type { MessageKey } from "@/lib/i18n/translator";
 const FOURK_LABEL: Record<FourKViewerState["status"], MessageKey | null> = {
   owned: "title.fourKOwned",
   tracked_downloading: "title.fourKDownloading",
+  // Finished; still to be moved in by hand — to the viewer, on its way.
+  ready_to_move: "title.fourKDownloading",
   tracked_monitored: "title.fourKMissing",
   tracked_unmonitored: "title.fourKUnmonitored",
   coming_soon: "title.fourKComingSoon",

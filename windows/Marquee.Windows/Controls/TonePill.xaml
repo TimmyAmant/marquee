@@ -88,6 +88,20 @@
                 Foreground="{ThemeResource SoonBadgeForegroundBrush}" />
         </Border>
         <Border
+            x:Name="ReadyBorder"
+            Visibility="Collapsed"
+            Padding="8,2"
+            CornerRadius="10"
+            Background="{ThemeResource ReadyBadgeBackgroundBrush}"
+            BorderBrush="{ThemeResource ReadyBadgeBorderBrush}"
+            BorderThickness="1">
+            <TextBlock
+                x:Name="ReadyText"
+                FontSize="11"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource ReadyBadgeForegroundBrush}" />
+        </Border>
+        <Border
             x:Name="InfoBorder"
             Visibility="Collapsed"
             Padding="8,2"

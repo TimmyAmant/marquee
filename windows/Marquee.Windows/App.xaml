@@ -55,6 +55,8 @@
                     <SolidColorBrush x:Key="UnmonitoredBadgeBackgroundBrush" Color="#FFF0E5" />
                     <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#2F6FB0" />
                     <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#E5F0FA" />
+                    <SolidColorBrush x:Key="ReadyBadgeForegroundBrush" Color="#0B6D63" />
+                    <SolidColorBrush x:Key="ReadyBadgeBackgroundBrush" Color="#E0F5F2" />
                     <SolidColorBrush x:Key="InfoBadgeForegroundBrush" Color="#2F6FB0" />
                     <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="#E5F0FA" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#5C574C" />
@@ -64,6 +66,7 @@
                     <SolidColorBrush x:Key="MissingBadgeBorderBrush" Color="#4DC42B2B" />
                     <SolidColorBrush x:Key="UnmonitoredBadgeBorderBrush" Color="#4DB34D00" />
                     <SolidColorBrush x:Key="SoonBadgeBorderBrush" Color="#4D2F6FB0" />
+                    <SolidColorBrush x:Key="ReadyBadgeBorderBrush" Color="#4D0B6D63" />
                     <SolidColorBrush x:Key="InfoBadgeBorderBrush" Color="#4D2F6FB0" />
                     <SolidColorBrush x:Key="NeutralBadgeBorderBrush" Color="#E1DCCD" />
 
@@ -141,6 +144,8 @@
                     <SolidColorBrush x:Key="UnmonitoredBadgeBackgroundBrush" Color="#2A1A0E" />
                     <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="#5D9CEC" />
                     <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="#10202F" />
+                    <SolidColorBrush x:Key="ReadyBadgeForegroundBrush" Color="#3CC6B8" />
+                    <SolidColorBrush x:Key="ReadyBadgeBackgroundBrush" Color="#0F2624" />
                     <SolidColorBrush x:Key="InfoBadgeForegroundBrush" Color="#5D9CEC" />
                     <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="#10202F" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="#A8A4B3" />
@@ -150,6 +155,7 @@
                     <SolidColorBrush x:Key="MissingBadgeBorderBrush" Color="#4DF25B5B" />
                     <SolidColorBrush x:Key="UnmonitoredBadgeBorderBrush" Color="#4DE8833A" />
                     <SolidColorBrush x:Key="SoonBadgeBorderBrush" Color="#4D5D9CEC" />
+                    <SolidColorBrush x:Key="ReadyBadgeBorderBrush" Color="#4D3CC6B8" />
                     <SolidColorBrush x:Key="InfoBadgeBorderBrush" Color="#4D5D9CEC" />
                     <SolidColorBrush x:Key="NeutralBadgeBorderBrush" Color="#2C2A35" />
 
@@ -227,6 +233,8 @@
                     <SolidColorBrush x:Key="UnmonitoredBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="SoonBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="SoonBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="ReadyBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="ReadyBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="InfoBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="InfoBadgeBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
@@ -236,6 +244,7 @@
                     <SolidColorBrush x:Key="MissingBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="UnmonitoredBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="SoonBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="ReadyBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="InfoBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="NeutralBadgeBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
 

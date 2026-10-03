@@ -87,13 +87,15 @@ export function fileDetails(file: FileInfo | null): Dto.FileDetails | null {
 }
 
 export function libraryInfo(
-  status: Pick<TitleLibraryStatus, "status" | "configured" | "file"> & Partial<Pick<TitleLibraryStatus, "provider">>,
+  status: Pick<TitleLibraryStatus, "status" | "configured" | "file"> &
+    Partial<Pick<TitleLibraryStatus, "provider" | "downloadProgress">>,
 ): Dto.TitleLibraryInfo {
   return {
     status: status.status,
     provider: status.provider ?? null,
     configured: status.configured,
     file: fileDetails(status.file),
+    downloadProgress: status.status === "tracked_downloading" ? (status.downloadProgress ?? null) : null,
   };
 }
 
@@ -122,7 +124,7 @@ export function fourKViewerState(
 /** A problem can be reported once there's something to have a problem
  * with: a copy in the library, or one downloading. */
 export function canReportProblem(status: LibraryStatus, fourKStatus: LibraryStatus | null): boolean {
-  const has = (s: LibraryStatus | null) => s === "owned" || s === "tracked_downloading";
+  const has = (s: LibraryStatus | null) => s === "owned" || s === "tracked_downloading" || s === "ready_to_move";
   return has(status) || has(fourKStatus);
 }
 

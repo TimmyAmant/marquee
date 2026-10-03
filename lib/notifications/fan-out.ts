@@ -35,6 +35,7 @@ export const EVENT_EMOJI: Record<NotificationEventType, string> = {
   request_comment: "💬",
   issue_comment: "💬",
   request_removed: "🗑️",
+  download_ready: "📦",
 };
 
 export type OutgoingNotification = {

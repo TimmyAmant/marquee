@@ -30,6 +30,7 @@ export function AddToLibraryButton({
   canRequest = true,
   advanced = false,
   autoApprove = false,
+  downloadProgress = null,
 }: {
   mediaType: MediaType;
   tmdbId: number;
@@ -53,6 +54,8 @@ export function AddToLibraryButton({
   advanced?: boolean;
   /** Their requests are approved at once (autoApproveMovies / autoApproveTv). */
   autoApprove?: boolean;
+  /** How far its download is (0–100), while it's downloading. */
+  downloadProgress?: number | null;
   /** A TV show's seasons for a member's season picker; omitted for movies
    * and admins, who keep the whole-title Request/Add buttons. */
   seasonPicker?: {
@@ -138,7 +141,10 @@ export function AddToLibraryButton({
         </form>
       )}
 
-      <StatusBadge status={state?.success ? "tracked_monitored" : status} />
+      <StatusBadge
+        status={state?.success ? "tracked_monitored" : status}
+        progress={state?.success ? null : downloadProgress}
+      />
 
       {isAdmin === false && alreadyRequested && (open || requestedSeasonsLabel) && (
         <span className={`${PILL} bg-info-bg px-4 font-medium text-info`}>

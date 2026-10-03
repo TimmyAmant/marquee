@@ -9,6 +9,7 @@ final class StatusToneTests: XCTestCase {
     func testEveryStatusHasItsOwnTone() {
         XCTAssertEqual(API.LibraryStatus.owned.tone, .owned)
         XCTAssertEqual(API.LibraryStatus.trackedDownloading.tone, .downloading)
+        XCTAssertEqual(API.LibraryStatus.readyToMove.tone, .ready)
         XCTAssertEqual(API.LibraryStatus.trackedMonitored.tone, .missing)
         XCTAssertEqual(API.LibraryStatus.trackedUnmonitored.tone, .unmonitored)
         XCTAssertEqual(API.LibraryStatus.comingSoon.tone, .soon)
@@ -23,7 +24,7 @@ final class StatusToneTests: XCTestCase {
     func testStatusesAreListedInDisplayOrder() {
         XCTAssertEqual(
             API.LibraryStatus.knownCases.map(\.rawValue),
-            ["owned", "tracked_downloading", "tracked_monitored", "tracked_unmonitored", "coming_soon", "untracked"]
+            ["owned", "tracked_downloading", "ready_to_move", "tracked_monitored", "tracked_unmonitored", "coming_soon", "untracked"]
         )
     }
 
@@ -37,6 +38,16 @@ final class StatusToneTests: XCTestCase {
         XCTAssertEqual(holder.status.compactLabel, "Not monitored")
         XCTAssertEqual(holder.status.name, "Not monitored")
         XCTAssertEqual(holder.status.meaning, "In Sonarr/Radarr but not monitored — it won't download on its own.")
+    }
+
+    func testDecodesReadyToMove() throws {
+        struct Holder: Decodable { let status: API.LibraryStatus }
+        let holder = try APIClient.decoder.decode(Holder.self, from: Data(#"{"status":"ready_to_move"}"#.utf8))
+        XCTAssertEqual(holder.status, .readyToMove)
+        XCTAssertEqual(holder.status.label, "Ready to move")
+        XCTAssertEqual(holder.status.compactLabel, "Ready to move")
+        XCTAssertEqual(holder.status.meaning, "Finished downloading. Move it into your library and it shows as owned.")
+        XCTAssertEqual(Theme.statusStrip(.readyToMove), Theme.ready)
     }
 
     func testOnlyTitlesInTheLibraryGetAPosterStrip() {
@@ -78,7 +89,7 @@ final class StatusToneTests: XCTestCase {
         XCTAssertEqual(StatusColorKeyList.footnote, "Same colors as Radarr and Sonarr.")
         XCTAssertEqual(
             StatusColorKey.pillStatuses,
-            [.owned, .trackedDownloading, .trackedMonitored, .trackedUnmonitored, .comingSoon]
+            [.owned, .trackedDownloading, .readyToMove, .trackedMonitored, .trackedUnmonitored, .comingSoon]
         )
         XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .movie, status: .trackedMonitored), "Movie · Missing")
         XCTAssertEqual(SuggestionKindPill.accessibilityText(kind: .tv, status: .trackedUnmonitored), "TV · Not monitored")

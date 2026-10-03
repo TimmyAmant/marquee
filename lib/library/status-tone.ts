@@ -3,11 +3,12 @@ import type { MessageKey, Translator } from "@/lib/i18n/translator";
 // corner badge, the strip along a poster's bottom edge, the search
 // suggestion pill, the title page's status capsule and the color key all
 // agree. The hues follow Radarr's and Sonarr's own legends (green on disk,
-// purple downloading, red missing, orange not monitored, blue unreleased),
+// purple downloading, red missing, orange not monitored, blue unreleased;
+// teal for a finished download waiting to be moved in by hand),
 // so a title reads the same here as it does there. The colors themselves
 // are the --marquee-{owned,downloading,missing,unmonitored,soon} tokens in
 // app/globals.css (dark + light); the Mac (Theme.swift) and Windows
-// (App.xaml) apps define the same six tones.
+// (App.xaml) apps define the same seven tones.
 //
 // Every class below is a complete literal string so Tailwind's scanner
 // generates it.
@@ -15,6 +16,10 @@ import type { MessageKey, Translator } from "@/lib/i18n/translator";
 export type LibraryStatus =
   | "owned"
   | "tracked_downloading"
+  /** Finished downloading but never imported: sitting in the download
+   * folder until it's moved into the library by hand. 0.71+; older apps read
+   * it as an unknown status (neutral). */
+  | "ready_to_move"
   | "tracked_monitored"
   /** In Sonarr/Radarr, but not monitored and nothing on disk — it won't
    * download on its own. Newer than the other values: older apps read it as
@@ -23,13 +28,14 @@ export type LibraryStatus =
   | "coming_soon"
   | "untracked";
 
-/** The six colors a status can wear. */
-export type StatusTone = "owned" | "downloading" | "missing" | "unmonitored" | "soon" | "neutral";
+/** The seven colors a status can wear. */
+export type StatusTone = "owned" | "downloading" | "ready" | "missing" | "unmonitored" | "soon" | "neutral";
 
 /** Display order everywhere the statuses are listed (the color key). */
 export const LIBRARY_STATUSES: readonly LibraryStatus[] = [
   "owned",
   "tracked_downloading",
+  "ready_to_move",
   "tracked_monitored",
   "tracked_unmonitored",
   "coming_soon",
@@ -51,6 +57,8 @@ export function statusTone(status: LibraryStatus | null | undefined): StatusTone
       return "owned";
     case "tracked_downloading":
       return "downloading";
+    case "ready_to_move":
+      return "ready";
     case "tracked_monitored":
       return "missing";
     case "tracked_unmonitored":
@@ -80,6 +88,12 @@ const STATUS_TEXT_KEYS: Record<LibraryStatus, Record<keyof StatusText, MessageKe
     compactLabel: "title.statusDownloadingName",
     name: "title.statusDownloadingName",
     meaning: "title.statusDownloadingMeaning",
+  },
+  ready_to_move: {
+    label: "title.statusReadyToMoveName",
+    compactLabel: "title.statusReadyToMoveName",
+    name: "title.statusReadyToMoveName",
+    meaning: "title.statusReadyToMoveMeaning",
   },
   tracked_monitored: {
     label: "title.statusMissingName",
@@ -134,6 +148,10 @@ export const TONE_CLASS: Record<StatusTone, ToneClasses> = {
   downloading: {
     pill: "bg-downloading-bg text-downloading border-downloading/30",
     strip: "bg-downloading",
+  },
+  ready: {
+    pill: "bg-ready-bg text-ready border-ready/30",
+    strip: "bg-ready",
   },
   missing: {
     pill: "bg-missing-bg text-missing border-missing/30",

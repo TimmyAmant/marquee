@@ -25,6 +25,9 @@ export const notificationPreferenceEventValues = [
   // "Couldn't find …": an approved request Sonarr/Radarr hasn't found.
   "request_not_found",
   "issue_reported",
+  // A finished download Sonarr/Radarr didn't import, waiting to be moved
+  // into the library by hand (lib/arr/download-watch.ts).
+  "download_ready",
   "watchlist_requests",
 ] as const;
 export type NotificationPreferenceEvent = (typeof notificationPreferenceEventValues)[number];
@@ -69,6 +72,8 @@ export const NOTIFICATION_EVENTS: Record<NotificationPreferenceEvent, EventInfo>
   request_pending: { labelKey: "settings.eventRequestPending", audience: "reviewers", channelDefault: true, householdDefault: true },
   request_not_found: { labelKey: "settings.eventRequestNotFound", audience: "reviewers", channelDefault: true, householdDefault: true },
   issue_reported: { labelKey: "settings.eventIssueReported", audience: "admin", channelDefault: true, householdDefault: true },
+  // For whoever moves the files: the admin, on their own devices only.
+  download_ready: { labelKey: "settings.eventDownloadReady", audience: "admin", channelDefault: true, householdDefault: false, personalOnly: true },
   watchlist_requests: { labelKey: "settings.eventWatchlistRequests", audience: "reviewers", channelDefault: true, householdDefault: true },
 };
 
@@ -128,6 +133,8 @@ export function preferenceEventFor(eventType: NotificationEventType): Notificati
     case "request_comment":
     case "issue_comment":
       return "request_comment";
+    case "download_ready":
+      return "download_ready";
   }
 }
 

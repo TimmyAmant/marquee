@@ -1660,6 +1660,9 @@
   <data name="Enum_StatusCompactTrackedDownloading" xml:space="preserve">
     <value>Lädt</value>
   </data>
+  <data name="Enum_StatusCompactReadyToMove" xml:space="preserve">
+    <value>Bereit zum Verschieben</value>
+  </data>
   <data name="Enum_StatusCompactTrackedMonitored" xml:space="preserve">
     <value>Fehlt</value>
   </data>
@@ -1677,6 +1680,9 @@
   </data>
   <data name="Enum_StatusLabelTrackedDownloading" xml:space="preserve">
     <value>Wird heruntergeladen</value>
+  </data>
+  <data name="Enum_StatusLabelReadyToMove" xml:space="preserve">
+    <value>Bereit zum Verschieben</value>
   </data>
   <data name="Enum_StatusLabelTrackedMonitored" xml:space="preserve">
     <value>Fehlt</value>
@@ -1696,6 +1702,9 @@
   <data name="Enum_StatusMeaningTrackedDownloading" xml:space="preserve">
     <value>Wird gerade heruntergeladen oder steht in der Warteschlange.</value>
   </data>
+  <data name="Enum_StatusMeaningReadyToMove" xml:space="preserve">
+    <value>Fertig heruntergeladen. Verschiebe es in deine Mediathek, dann gilt es als vorhanden.</value>
+  </data>
   <data name="Enum_StatusMeaningTrackedMonitored" xml:space="preserve">
     <value>Überwacht, aber Sonarr/Radarr hat noch keine Kopie gefunden – es sucht weiter.</value>
   </data>
@@ -1713,6 +1722,9 @@
   </data>
   <data name="Enum_StatusNameTrackedDownloading" xml:space="preserve">
     <value>Wird heruntergeladen</value>
+  </data>
+  <data name="Enum_StatusNameReadyToMove" xml:space="preserve">
+    <value>Bereit zum Verschieben</value>
   </data>
   <data name="Enum_StatusNameTrackedMonitored" xml:space="preserve">
     <value>Fehlt</value>

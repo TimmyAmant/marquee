@@ -41,6 +41,8 @@
   "statusOwnedMeaning": "El archivo está en tu biblioteca, listo para ver.",
   "statusDownloadingName": "Descargando",
   "statusDownloadingMeaning": "Se está descargando o está en cola ahora mismo.",
+  "statusReadyToMoveName": "Listo para mover",
+  "statusReadyToMoveMeaning": "Descarga terminada. Muévelo a tu biblioteca y aparecerá como en tu biblioteca.",
   "statusMissingName": "Falta",
   "statusMissingMeaning": "Monitorizado, pero Sonarr/Radarr aún no ha encontrado una copia; sigue buscando.",
   "statusUnmonitoredName": "No monitorizado",

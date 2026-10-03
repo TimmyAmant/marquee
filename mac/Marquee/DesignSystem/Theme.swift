@@ -25,7 +25,7 @@ enum Theme {
     // The library-status tones, named for what they mean and matching
     // Radarr's/Sonarr's own legends (lib/library/status-tone.ts on the
     // website): green in the library, purple downloading, red missing,
-    // orange not monitored, blue coming soon.
+    // orange not monitored, blue coming soon, teal ready to move.
     static let owned = dynamic(light: 0x2F7A52, dark: 0x4CAF7D)
     static let ownedBg = dynamic(light: 0xE3F3EA, dark: 0x14251C)
     static let downloading = dynamic(light: 0x7048B8, dark: 0xA98BE8)
@@ -36,6 +36,9 @@ enum Theme {
     static let unmonitoredBg = dynamic(light: 0xFFF0E5, dark: 0x2A1A0E)
     static let soon = dynamic(light: 0x2F6FB0, dark: 0x5D9CEC)
     static let soonBg = dynamic(light: 0xE5F0FA, dark: 0x10202F)
+    /// A finished download waiting to be moved into the library by hand.
+    static let ready = dynamic(light: 0x0B6D63, dark: 0x3CC6B8)
+    static let readyBg = dynamic(light: 0xE0F5F2, dark: 0x0F2624)
     /// Not a library status: pending / requested / monitored-season / 4K
     /// pills and other informational chips. Same blue as `soon`.
     static let info = dynamic(light: 0x2F6FB0, dark: 0x5D9CEC)

@@ -161,6 +161,10 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
 {
     public static readonly LibraryStatus Owned = new("owned");
     public static readonly LibraryStatus TrackedDownloading = new("tracked_downloading");
+
+    /// <summary>0.71+: finished downloading but not imported — waiting to be moved into the library by hand.</summary>
+    public static readonly LibraryStatus ReadyToMove = new("ready_to_move");
+
     public static readonly LibraryStatus TrackedMonitored = new("tracked_monitored");
 
     /// <summary>In Sonarr/Radarr but not monitored: it won't download on its own.</summary>
@@ -170,7 +174,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     public static readonly LibraryStatus Untracked = new("untracked");
 
     /// <summary>Every status, in the order the color key lists them.</summary>
-    public static IReadOnlyList<LibraryStatus> Known { get; } = [Owned, TrackedDownloading, TrackedMonitored, TrackedUnmonitored, ComingSoon, Untracked];
+    public static IReadOnlyList<LibraryStatus> Known { get; } = [Owned, TrackedDownloading, ReadyToMove, TrackedMonitored, TrackedUnmonitored, ComingSoon, Untracked];
     public static LibraryStatus FromValue(string value) => new(value);
     public bool IsKnown => Known.Contains(this);
     public override string ToString() => Value;
@@ -185,6 +189,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
         {
             if (this == Owned) return Loc.Get("Enum_StatusLabelOwned");
             if (this == TrackedDownloading) return Loc.Get("Enum_StatusLabelTrackedDownloading");
+            if (this == ReadyToMove) return Loc.Get("Enum_StatusLabelReadyToMove");
             if (this == TrackedMonitored) return Loc.Get("Enum_StatusLabelTrackedMonitored");
             if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusLabelTrackedUnmonitored");
             if (this == ComingSoon) return Loc.Get("Enum_StatusLabelComingSoon");
@@ -200,6 +205,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
         {
             if (this == Owned) return Loc.Get("Enum_StatusCompactOwned");
             if (this == TrackedDownloading) return Loc.Get("Enum_StatusCompactTrackedDownloading");
+            if (this == ReadyToMove) return Loc.Get("Enum_StatusCompactReadyToMove");
             if (this == TrackedMonitored) return Loc.Get("Enum_StatusCompactTrackedMonitored");
             if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusCompactTrackedUnmonitored");
             if (this == ComingSoon) return Loc.Get("Enum_StatusCompactComingSoon");
@@ -209,7 +215,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
     }
 
     /// <summary>In the library in any form (owned or tracked by Sonarr/Radarr).</summary>
-    public bool IsInLibrary => this == Owned || this == TrackedDownloading || this == TrackedMonitored || this == TrackedUnmonitored || this == ComingSoon;
+    public bool IsInLibrary => this == Owned || this == TrackedDownloading || this == ReadyToMove || this == TrackedMonitored || this == TrackedUnmonitored || this == ComingSoon;
 
     /// <summary>
     /// The color this status wears on a badge, a poster's strip and the
@@ -223,6 +229,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
         {
             if (this == Owned) return StatusTone.Owned;
             if (this == TrackedDownloading) return StatusTone.Downloading;
+            if (this == ReadyToMove) return StatusTone.Ready;
             if (this == TrackedMonitored) return StatusTone.Missing;
             if (this == TrackedUnmonitored) return StatusTone.Unmonitored;
             if (this == ComingSoon) return StatusTone.Soon;
@@ -237,6 +244,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
         {
             if (this == Owned) return Loc.Get("Enum_StatusNameOwned");
             if (this == TrackedDownloading) return Loc.Get("Enum_StatusNameTrackedDownloading");
+            if (this == ReadyToMove) return Loc.Get("Enum_StatusNameReadyToMove");
             if (this == TrackedMonitored) return Loc.Get("Enum_StatusNameTrackedMonitored");
             if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusNameTrackedUnmonitored");
             if (this == ComingSoon) return Loc.Get("Enum_StatusNameComingSoon");
@@ -252,6 +260,7 @@ public readonly record struct LibraryStatus(string Value) : IOpenEnum<LibrarySta
         {
             if (this == Owned) return Loc.Get("Enum_StatusMeaningOwned");
             if (this == TrackedDownloading) return Loc.Get("Enum_StatusMeaningTrackedDownloading");
+            if (this == ReadyToMove) return Loc.Get("Enum_StatusMeaningReadyToMove");
             if (this == TrackedMonitored) return Loc.Get("Enum_StatusMeaningTrackedMonitored");
             if (this == TrackedUnmonitored) return Loc.Get("Enum_StatusMeaningTrackedUnmonitored");
             if (this == ComingSoon) return Loc.Get("Enum_StatusMeaningComingSoon");
@@ -273,6 +282,9 @@ public enum StatusTone
 
     /// <summary>Purple: downloading or queued.</summary>
     Downloading,
+
+    /// <summary>Teal: finished downloading, waiting to be moved into the library.</summary>
+    Ready,
 
     /// <summary>Red: monitored, Sonarr/Radarr still looking.</summary>
     Missing,

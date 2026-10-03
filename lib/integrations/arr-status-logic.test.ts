@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveRadarrStatus, deriveSonarrStatus, isActiveQueueRecord } from "./arr-status-logic";
+import { deriveRadarrStatus, deriveSonarrStatus, isActiveQueueRecord, statusWithQueue, summarizeQueue } from "./arr-status-logic";
 import type { RadarrMovie } from "@/lib/radarr/client";
 import type { SonarrSeries } from "@/lib/sonarr/client";
 
@@ -171,5 +171,54 @@ describe("isActiveQueueRecord", () => {
 
   it("counts a record that doesn't say how much is left, as before", () => {
     expect(isActiveQueueRecord({})).toBe(true);
+  });
+});
+
+describe("summarizeQueue", () => {
+  const record = (id: number, state: string, size: number, sizeleft: number) => ({ id, trackedDownloadState: state, size, sizeleft });
+
+  it("adds up a title's downloads into one progress", () => {
+    // A season pack's episodes: 300 of 1000 left.
+    const summary = summarizeQueue(
+      [record(1, "downloading", 600, 100), record(1, "downloading", 400, 200), record(2, "downloading", 10, 10)],
+      (r) => r.id,
+    );
+    expect(summary.get(1)).toEqual({ active: true, progress: 70, finished: false });
+    expect(summary.get(2)).toEqual({ active: true, progress: 0, finished: false });
+  });
+
+  it("says a finished download that wasn't imported is waiting, and an imported one isn't", () => {
+    const summary = summarizeQueue(
+      [record(1, "downloading", 500, 0), record(2, "imported", 500, 0), record(3, "importBlocked", 500, 0)],
+      (r) => r.id,
+    );
+    expect(summary.get(1)).toEqual({ active: false, progress: null, finished: true });
+    expect(summary.get(2)).toEqual({ active: false, progress: null, finished: false });
+    expect(summary.get(3)).toEqual({ active: false, progress: null, finished: true });
+  });
+
+  it("keeps progress to the downloads still going when some episodes are done", () => {
+    const summary = summarizeQueue([record(1, "downloading", 500, 0), record(1, "downloading", 500, 250)], (r) => r.id);
+    expect(summary.get(1)).toEqual({ active: true, progress: 50, finished: true });
+  });
+});
+
+describe("statusWithQueue", () => {
+  const queue = (active: boolean, finished: boolean, progress: number | null = null) => ({ active, finished, progress });
+
+  it("shows a download on its way, an upgrade of an owned title included", () => {
+    expect(statusWithQueue("tracked_monitored", queue(true, false, 40))).toEqual({ status: "tracked_downloading", progress: 40 });
+    expect(statusWithQueue("owned", queue(true, false, 10))).toEqual({ status: "tracked_downloading", progress: 10 });
+  });
+
+  it("is ready to move when a finished download isn't in the library yet", () => {
+    expect(statusWithQueue("tracked_monitored", queue(false, true))).toEqual({ status: "ready_to_move", progress: null });
+    // A show with some episodes already on disk.
+    expect(statusWithQueue("tracked_downloading", queue(false, true))).toEqual({ status: "ready_to_move", progress: null });
+  });
+
+  it("goes by what's on disk otherwise", () => {
+    expect(statusWithQueue("owned", queue(false, true))).toEqual({ status: "owned", progress: null });
+    expect(statusWithQueue("tracked_monitored", undefined)).toEqual({ status: "tracked_monitored", progress: null });
   });
 });

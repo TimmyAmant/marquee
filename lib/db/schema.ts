@@ -548,6 +548,10 @@ export const arrStatusCache = pgTable(
     // Null for Radarr rows, and from a sync older than the columns.
     episodesHave: integer("episodes_have"),
     episodesAired: integer("episodes_aired"),
+    // How far a download in Sonarr/Radarr's queue is, 0–100, while the row
+    // is "tracked_downloading" (lib/arr/download-watch.ts keeps it current).
+    // Null otherwise, and when the queue doesn't say.
+    downloadProgress: integer("download_progress"),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],
@@ -579,6 +583,10 @@ export const notificationEventTypeValues = [
   // Your approved request's title was taken off Sonarr/Radarr again
   // (lib/arr/remove.ts), with the admin's reason when they gave one.
   "request_removed",
+  // A download finished but Sonarr/Radarr didn't import it: it's in the
+  // download folder, waiting to be moved into the library by hand
+  // (lib/arr/download-watch.ts). To the library owner.
+  "download_ready",
 ] as const;
 export type NotificationEventType = (typeof notificationEventTypeValues)[number];
 
@@ -620,7 +628,7 @@ export const notifications = pgTable(
     index("notifications_user_read_created_idx").on(table.userId, table.read, table.createdAt),
     check(
       "notifications_event_type_check",
-      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found','request_comment','issue_comment','request_removed')`,
+      sql`${table.eventType} in ('grabbed','downloaded','request_approved','request_rejected','issue_reported','issue_resolved','request_created','title_shared','request_not_found','request_comment','issue_comment','request_removed','download_ready')`,
     ),
   ],
 );

@@ -26,6 +26,7 @@
             <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                 <Ellipse Width="6" Height="6" Fill="{ThemeResource OwnedBadgeForegroundBrush}" />
                 <Ellipse Width="6" Height="6" Fill="{ThemeResource DownloadingBadgeForegroundBrush}" />
+                <Ellipse Width="6" Height="6" Fill="{ThemeResource ReadyBadgeForegroundBrush}" />
                 <Ellipse Width="6" Height="6" Fill="{ThemeResource MissingBadgeForegroundBrush}" />
                 <Ellipse Width="6" Height="6" Fill="{ThemeResource UnmonitoredBadgeForegroundBrush}" />
                 <Ellipse Width="6" Height="6" Fill="{ThemeResource SoonBadgeForegroundBrush}" />

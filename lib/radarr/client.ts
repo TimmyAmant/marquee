@@ -1,4 +1,4 @@
-import { isActiveQueueRecord, type ArrQueueRecord } from "@/lib/integrations/arr-status-logic";
+import { summarizeQueue, type ArrQueueRecord, type QueueSummary } from "@/lib/integrations/arr-status-logic";
 
 export type ArrConfig = { baseUrl: string; apiKey: string };
 
@@ -155,16 +155,26 @@ export async function searchMovie(config: ArrConfig, movieId: number): Promise<v
   });
 }
 
-/** IDs of movies with an active entry in Radarr's download queue right now
- * — a real-time signal, unlike `hasFile`/`monitored` which only reflect the
- * last completed sync. Paged, but a single page comfortably covers any
- * realistic queue size for a self-hosted instance. */
-export async function getQueuedMovieIds(config: ArrConfig): Promise<Set<number>> {
+/** One movie by Radarr's own id. */
+export function getMovie(config: ArrConfig, movieId: number): Promise<RadarrMovie> {
+  return radarrFetch<RadarrMovie>(config, `/movie/${movieId}`);
+}
+
+/** Has Radarr look in the movie's folder again, so a file moved there by
+ * hand is picked up. Fire-and-forget: Radarr runs it in the background. */
+export async function rescanMovie(config: ArrConfig, movieId: number): Promise<void> {
+  await radarrFetch(config, "/command", { method: "POST", body: { name: "RescanMovie", movieId } });
+}
+
+/** The queue, one summary per movie (lib/integrations/arr-status-logic.ts).
+ * Every record is in it, finished ones included: a title with any record has
+ * had a release found for it. */
+export async function getQueueSummaries(config: ArrConfig): Promise<Map<number, QueueSummary>> {
   const res = await radarrFetch<{ records: ({ movieId: number } & ArrQueueRecord)[] }>(
     config,
-    "/queue?pageSize=250",
+    "/queue?pageSize=1000",
   );
-  return new Set(res.records.filter(isActiveQueueRecord).map((r) => r.movieId));
+  return summarizeQueue(res.records, (r) => r.movieId);
 }
 
 export interface RadarrCalendarMovie extends RadarrMovie {

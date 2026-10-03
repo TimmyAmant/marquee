@@ -1728,6 +1728,9 @@
   <data name="Enum_StatusCompactTrackedDownloading" xml:space="preserve">
     <value>Downloading</value>
   </data>
+  <data name="Enum_StatusCompactReadyToMove" xml:space="preserve">
+    <value>Ready to move</value>
+  </data>
   <data name="Enum_StatusCompactTrackedMonitored" xml:space="preserve">
     <value>Missing</value>
   </data>
@@ -1747,6 +1750,9 @@
   <data name="Enum_StatusLabelTrackedDownloading" xml:space="preserve">
     <value>Downloading</value>
   </data>
+  <data name="Enum_StatusLabelReadyToMove" xml:space="preserve">
+    <value>Ready to move</value>
+  </data>
   <data name="Enum_StatusLabelTrackedMonitored" xml:space="preserve">
     <value>Missing</value>
   </data>
@@ -1765,6 +1771,9 @@
   <data name="Enum_StatusMeaningTrackedDownloading" xml:space="preserve">
     <value>It's downloading or queued right now.</value>
   </data>
+  <data name="Enum_StatusMeaningReadyToMove" xml:space="preserve">
+    <value>Finished downloading. Move it into your library and it shows as owned.</value>
+  </data>
   <data name="Enum_StatusMeaningTrackedMonitored" xml:space="preserve">
     <value>Monitored, but Sonarr/Radarr hasn't found a copy yet — it keeps looking.</value>
   </data>
@@ -1782,6 +1791,9 @@
   </data>
   <data name="Enum_StatusNameTrackedDownloading" xml:space="preserve">
     <value>Downloading</value>
+  </data>
+  <data name="Enum_StatusNameReadyToMove" xml:space="preserve">
+    <value>Ready to move</value>
   </data>
   <data name="Enum_StatusNameTrackedMonitored" xml:space="preserve">
     <value>Missing</value>

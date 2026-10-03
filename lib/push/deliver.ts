@@ -111,6 +111,7 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], MessageKey> = {
   request_comment: "notify.pushNewComment",
   issue_comment: "notify.pushNewComment",
   request_removed: "notify.pushRequestRemoved",
+  download_ready: "notify.pushReadyToMove",
 };
 
 /** What the service worker (public/sw.js) shows. `requestId`: a new

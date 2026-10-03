@@ -17,6 +17,8 @@ export type RequestStatus = "pending" | "approved" | "rejected";
 export type LibraryStatus =
   | "owned"
   | "tracked_downloading"
+  /** 0.71+: finished downloading, waiting to be moved into the library. */
+  | "ready_to_move"
   | "tracked_monitored"
   | "tracked_unmonitored"
   | "coming_soon"
@@ -45,7 +47,10 @@ export type NotificationEventType =
   | "issue_comment"
   /** 0.68+: your approved request's title was removed from Sonarr/Radarr
    * again; the message carries the admin's reason when they gave one. */
-  | "request_removed";
+  | "request_removed"
+  /** 0.71+: a download finished but wasn't imported — it's in the download
+   * folder, ready to be moved into the library. To the admin. */
+  | "download_ready";
 export type ActivityEventType =
   | "request_created"
   | "request_approved"
@@ -562,6 +567,9 @@ export type TitleLibraryInfo = {
   /** The library owner's Sonarr/Radarr (for this media type) has a root folder and quality profile. */
   configured: boolean;
   file: FileDetails | null;
+  /** 0.71+: how far its download is (0–100) while `status` is
+   * "tracked_downloading"; null otherwise or when the queue doesn't say. */
+  downloadProgress: number | null;
 };
 
 export type ArrTracking = { arrId: number; monitored: boolean };

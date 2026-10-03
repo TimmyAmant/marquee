@@ -167,6 +167,12 @@
                         Background="{ThemeResource SoonBadgeForegroundBrush}"
                         ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
                         AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
+                    <Border
+                        Visibility="{x:Bind Item.IsReadyTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource StatusStripStyle}"
+                        Background="{ThemeResource ReadyBadgeForegroundBrush}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}"
+                        AutomationProperties.Name="{x:Bind Item.StatusName, Mode=OneWay}" />
 
                     <!-- Top-left: "MOVIE" (blue) / "SERIES" (magenta) on rows that mix both. -->
                     <Border
@@ -285,6 +291,21 @@
                                     Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
                                     Style="{StaticResource StatusPillTextStyle}"
                                     Foreground="{ThemeResource SoonBadgeForegroundBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Grid
+                        Visibility="{x:Bind Item.IsReadyTone, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                        Style="{StaticResource StatusPillStyle}"
+                        ToolTipService.ToolTip="{x:Bind Item.StatusName, Mode=OneWay}">
+                        <Border Style="{StaticResource StatusPillFillStyle}" Background="{ThemeResource ReadyBadgeBackgroundBrush}" />
+                        <Border Style="{StaticResource StatusPillRingStyle}" BorderBrush="{ThemeResource ReadyBadgeBorderBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <Ellipse Style="{StaticResource StatusPillDotStyle}" Fill="{ThemeResource ReadyBadgeForegroundBrush}" />
+                                <TextBlock
+                                    Text="{x:Bind Item.StatusLabel, Mode=OneWay}"
+                                    Style="{StaticResource StatusPillTextStyle}"
+                                    Foreground="{ThemeResource ReadyBadgeForegroundBrush}" />
                             </StackPanel>
                         </Border>
                     </Grid>

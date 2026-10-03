@@ -258,6 +258,7 @@
   "eventRequestPending": "New request waiting for review",
   "eventRequestNotFound": "Sonarr/Radarr can't find a request",
   "eventIssueReported": "New problem report",
+  "eventDownloadReady": "Finished downloading, ready to move",
   "eventWatchlistRequests": "Plex Watchlist requests",
   "activityVerbRequested": "requested",
   "activityVerbApproved": "approved",

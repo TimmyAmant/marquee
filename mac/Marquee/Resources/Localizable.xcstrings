@@ -15282,6 +15282,34 @@
         }
       }
     },
+    "Finished downloading. Move it into your library and it shows as owned." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig heruntergeladen. Verschiebe es in deine Mediathek, dann gilt es als vorhanden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descarga terminada. Muévelo a tu biblioteca y aparecerá como en tu biblioteca."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Téléchargement terminé. Déplace-le dans ta bibliothèque et il apparaîtra comme possédé."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download concluído. Mova para a sua biblioteca e ele aparecerá como seu."
+          }
+        }
+      }
+    },
     "First Air Date" : {
       "localizations" : {
         "de" : {
@@ -27676,6 +27704,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pronto"
+          }
+        }
+      }
+    },
+    "Ready to move" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereit zum Verschieben"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo para mover"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prêt à déplacer"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronto para mover"
           }
         }
       }

@@ -41,6 +41,8 @@
   "statusOwnedMeaning": "Die Datei ist in deiner Mediathek, bereit zum Ansehen.",
   "statusDownloadingName": "Wird heruntergeladen",
   "statusDownloadingMeaning": "Wird gerade heruntergeladen oder steht in der Warteschlange.",
+  "statusReadyToMoveName": "Bereit zum Verschieben",
+  "statusReadyToMoveMeaning": "Fertig heruntergeladen. Verschiebe es in deine Mediathek, dann gilt es als vorhanden.",
   "statusMissingName": "Fehlt",
   "statusMissingMeaning": "Überwacht, aber Sonarr/Radarr hat noch keine Kopie gefunden – es sucht weiter.",
   "statusUnmonitoredName": "Nicht überwacht",

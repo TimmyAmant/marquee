@@ -31,8 +31,14 @@ export function isDroppedArrRow(status: string | null, monitored: boolean | null
 export function arrRowStatus(
   status: string | null,
   monitored: boolean | null,
-): "owned" | "tracked_downloading" | "tracked_monitored" | "tracked_unmonitored" | "coming_soon" {
-  if (status === "owned" || status === "tracked_downloading") return status;
+):
+  | "owned"
+  | "tracked_downloading"
+  | "ready_to_move"
+  | "tracked_monitored"
+  | "tracked_unmonitored"
+  | "coming_soon" {
+  if (status === "owned" || status === "tracked_downloading" || status === "ready_to_move") return status;
   if (monitored === false) return "tracked_unmonitored";
   if (status === "untracked" || status === "tracked_unmonitored") {
     // Start monitoring flips only the flag until the next sync rewrites the

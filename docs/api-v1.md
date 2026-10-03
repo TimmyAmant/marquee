@@ -321,7 +321,10 @@ card alone: `canQuickAdd` → Add, else `requested` → Requested, else
 `canRequest` → Request, else nothing.
 
 `LibraryStatus`: `"owned"` (badge "Owned" / "Already in your library"),
-`"tracked_downloading"` ("Downloading"), `"tracked_monitored"` ("Missing"),
+`"tracked_downloading"` ("Downloading"), `"ready_to_move"` ("Ready to move" —
+0.71+: the download finished but Sonarr/Radarr didn't import it, so it's in
+the download folder waiting to be moved into the library by hand; older
+servers send `"tracked_downloading"`), `"tracked_monitored"` ("Missing"),
 `"tracked_unmonitored"` ("Not monitored" — newer servers only: in Sonarr/Radarr but not
 monitored, nothing on disk, so it won't download on its own; older servers
 send `"untracked"` or null for these), `"coming_soon"` ("Coming soon"),
@@ -329,8 +332,9 @@ send `"untracked"` or null for these), `"coming_soon"` ("Coming soon"),
 any value you don't know as neutral (no color, no strip).
 
 Colors, the same as Radarr's and Sonarr's own legends: `owned` green,
-`tracked_downloading` purple, `tracked_monitored` red, `tracked_unmonitored`
-orange, `coming_soon` blue, `untracked` none (grey label, no poster strip).
+`tracked_downloading` purple, `ready_to_move` teal, `tracked_monitored` red,
+`tracked_unmonitored` orange, `coming_soon` blue, `untracked` none (grey
+label, no poster strip).
 `tracked_unmonitored` is still requestable (`canRequest`) — an approved
 request turns monitoring back on — and admins get "Start monitoring"
 (`arrTracking`) rather than Add.
@@ -1224,8 +1228,8 @@ open.
 
 `status` (movies and series only; absent for people) is the
 viewer's library status — the same `LibraryStatus` values as elsewhere
-(`owned`, `tracked_downloading`, `tracked_monitored`, `tracked_unmonitored`,
-`coming_soon`, `untracked`), from the locally synced Sonarr/Radarr/Plex/Jellyfin state, never
+(`owned`, `tracked_downloading`, `ready_to_move`, `tracked_monitored`,
+`tracked_unmonitored`, `coming_soon`, `untracked`), from the locally synced Sonarr/Radarr/Plex/Jellyfin state, never
 a live Sonarr/Radarr call. Treat it as an open set, and a missing field (an
 older server) as unknown. The website tints the Movie/TV pill with it: green
 in the library, purple downloading, red missing, orange not monitored, blue
@@ -1312,6 +1316,7 @@ Everything the title page renders. `type` is `movie` or `tv`.
     "status": "owned",
     "provider": "plex",
     "configured": true,
+    "downloadProgress": null,
     "file": {
       "path": "/movies/The Matrix (1999)/The Matrix.mkv",
       "sizeBytes": 31229390464,
@@ -1412,6 +1417,10 @@ Field notes:
 - `library.status`/`provider`: where ownership came from (`plex`, `jellyfin`,
   `sonarr`, `radarr`, or null). `configured`: the library owner's
   Radarr (movies) / Sonarr (TV) has a root folder and quality profile.
+- `library.downloadProgress` (0.71+): how far the download is, 0–100, while
+  `status` is `tracked_downloading` ("Downloading · 63%"); null otherwise or
+  when Sonarr/Radarr's queue doesn't say. Kept current once a minute by the
+  server's download watch. Missing on older servers: treat as null.
 - `viewer.fourK` (0.37+; an older server omits it): the 4K copy, when the
   admin has set up a 4K Radarr (movies) / 4K Sonarr (TV); null otherwise.
   `status` is how the 4K instance has the title (read live; "untracked" when
@@ -2968,7 +2977,11 @@ was given; without one it's just `"The Matrix" was declined.` (0.68+: for a
 request that had been approved, `"The Matrix" couldn't be added: …`). From
 0.68 `request_removed` (🗑️, "Request removed"): your approved request's
 title was removed from Sonarr/Radarr, with the admin's reason after a colon
-when given; it follows your "declined" notification choices.
+when given; it follows your "declined" notification choices. From 0.71
+`download_ready` (📦, "Ready to move"), to the admin only: a download
+finished but Sonarr/Radarr didn't import it, so it's waiting in the download
+folder to be moved into the library — sent once per title; its preference
+event is `download_ready`.
 
 ### `GET /notifications/unread-count` — user
 
@@ -3193,7 +3206,8 @@ for"), `issue_updated` ("A problem I reported is fixed"), from 0.45.1
 `title_shared` ("Someone shares a title with me"); for the admin and
 trusted members also `request_pending`, `request_not_found` (0.46+,
 "Sonarr/Radarr can't find a request") and `watchlist_requests` (a Plex
-Watchlist batch); for the admin `issue_reported`. `request_comment` is
+Watchlist batch); for the admin `issue_reported` and, from 0.71,
+`download_ready` ("Finished downloading, ready to move"). `request_comment` is
 reserved for comments on requests and not sent yet. Clients show `label`
 as it comes and keep any `event` they don't know, so a new one needs no
 app update. `reviewerOnly`: group these under "For reviewers".
@@ -4725,7 +4739,7 @@ page.
 | Query | Type | Default | |
 |---|---|---|---|
 | `type` | `movie` \| `tv` | — | |
-| `status` | `LibraryStatus` | — | `owned`, `tracked_downloading`, `tracked_monitored`, `tracked_unmonitored`, `coming_soon` (never `untracked`) |
+| `status` | `LibraryStatus` | — | `owned`, `tracked_downloading`, `ready_to_move` (0.71+), `tracked_monitored`, `tracked_unmonitored`, `coming_soon` (never `untracked`) |
 | `source` | `plex` \| `jellyfin` \| `sonarr` \| `radarr` | — | which server the row came from |
 | `resolution` | `4K` \| `1080p` \| `720p` \| `SD` | — | the file's tier (`SD` = known, below 720p) |
 | `hdr` | `true`/`false`/`1`/`0` | — | only files with HDR or Dolby Vision |
