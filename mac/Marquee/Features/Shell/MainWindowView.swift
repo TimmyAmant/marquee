@@ -12,6 +12,7 @@ struct MainWindowView: View {
     var body: some View {
         @Bindable var model = model
         @Bindable var whatsNew = model.whatsNew
+        @Bindable var collectionOffer = model.collectionOffer
         let railPosition = NavRailPosition(stored: railPositionValue)
         let railInsets = railPosition.contentInsets(labeled: railShowsLabels)
 
@@ -84,6 +85,11 @@ struct MainWindowView: View {
             WhatsNewSheet(content: content) {
                 model.open(.changelog)
             }
+        }
+        // After a movie's add or request: the rest of its collection too?
+        .sheet(item: $collectionOffer.offer, onDismiss: { model.collectionOffer.decline() }) { offer in
+            CollectionOfferSheet(offer: offer)
+                .environment(model)
         }
         .onAppear {
             // `LiveUpdates` keeps the counts current; this just catches up when

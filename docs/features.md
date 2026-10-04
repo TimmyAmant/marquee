@@ -169,6 +169,14 @@ one go. The usual rules still apply to each one: limits, blocklist and
 auto-approve. It tells you how many went through and why any didn't. The
 admin sees **Add all** in the same place. *Everyone.*
 
+### The rest of the collection
+Add or request a movie that's part of a collection you don't fully have,
+and Marquee asks whether you'd like the rest too: "Part of The Matrix
+Collection — 3 other movies aren't in your library yet." **Add all** (the
+admin) or **Request all** gets them in one go, with the same rules as
+**Request all missing**; **Not now** won't ask again about that collection
+for a while. *Everyone.*
+
 ### Can't find
 Sometimes Sonarr or Radarr accepts a title but never finds a download. If an
 approved, released title still has nothing after a day, reviewers get a

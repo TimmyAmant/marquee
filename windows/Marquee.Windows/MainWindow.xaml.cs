@@ -102,6 +102,7 @@ public sealed partial class MainWindow : Window, INavigator
         model.Navigator = this;
         model.Notifications.AskPermission = AskForNotificationsAsync;
         model.ShowWhatsNew = ShowWhatsNewAsync;
+        model.ShowCollectionOffer = ShowCollectionOfferAsync;
         model.PropertyChanged += OnModelPropertyChanged;
         model.SessionChanged += OnSessionChanged;
         updater.PropertyChanged += OnUpdaterPropertyChanged;
@@ -503,6 +504,43 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
+    // MARK: The rest of the collection (components/collection-prompt.tsx)
+
+    /// <summary>
+    /// After a movie's add or request: "Part of The Matrix Collection — add
+    /// the other 3 too?". Not now (or Escape) isn't asked again for that
+    /// collection while the app runs; false when another dialog was open.
+    /// </summary>
+    private async Task<bool> ShowCollectionOfferAsync(int movieTmdbId, CollectionRest rest)
+    {
+        if (Root.XamlRoot is not { } xamlRoot || rest.Collection is not { } collection)
+        {
+            return false;
+        }
+        var accepted = false;
+        var dialog = CollectionOfferDialog.Create(rest, async () =>
+        {
+            var result = await model.AcceptCollectionAsync(movieTmdbId, rest);
+            accepted = true;
+            return result;
+        });
+        dialog.XamlRoot = xamlRoot;
+        try
+        {
+            await dialog.ShowAsync();
+        }
+        catch (COMException)
+        {
+            // "Only a single ContentDialog can be open at any time."
+            return false;
+        }
+        if (!accepted)
+        {
+            model.DeclineCollection(collection.Id);
+        }
+        return true;
+    }
+
     // MARK: Rail (components/nav-menu.tsx)
 
     /// <summary>
@@ -763,6 +801,7 @@ public sealed partial class MainWindow : Window, INavigator
         // later click on a notification launch the app afresh.
         model.Notifications.AskPermission = null;
         model.ShowWhatsNew = null;
+        model.ShowCollectionOffer = null;
         model.Notifications.Shutdown();
         if (ReferenceEquals(model.Navigator, this))
         {

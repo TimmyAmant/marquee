@@ -137,6 +137,16 @@ describe("the download watch", () => {
     expect(radarr.rescanMovie).not.toHaveBeenCalled();
   });
 
+  it("doesn't look up a title that's 'downloading' but was never in the queue (a show with some episodes)", async () => {
+    const { db } = await testDatabase();
+    await db.update(arrStatusCache).set({ status: "tracked_downloading" }).where(eq(arrStatusCache.externalId, tmdbId));
+    radarr.getQueueSummaries.mockResolvedValue(new Map());
+    await watchDownloads();
+    await watchDownloads();
+    expect(radarr.getMovie).not.toHaveBeenCalled();
+    expect(await row()).toMatchObject({ status: "tracked_downloading" });
+  });
+
   it("leaves a title alone when Radarr doesn't answer", async () => {
     radarr.getQueueSummaries.mockRejectedValue(new Error("down"));
     await watchDownloads();

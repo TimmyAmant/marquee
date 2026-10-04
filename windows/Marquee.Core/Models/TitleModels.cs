@@ -585,3 +585,53 @@ public sealed class SeasonPickerSelection
         ? Loc.Get("TitleModel_RequestSeasons")
         : Loc.Plural("TitleModel_RequestNSeasons", selected.Count);
 }
+
+/// <summary>
+/// <c>GET /titles/movie/{tmdbId}/collection-rest</c> (0.72+): the other movies
+/// of a movie's collection the viewer can still add (the admin) or request (a
+/// member), offered once the movie itself is added or requested.
+/// </summary>
+public sealed record CollectionRest
+{
+    /// <summary>Null when there's nothing to offer.</summary>
+    public CollectionRestCollection? Collection { get; init; }
+
+    /// <summary><c>"add"</c> (the admin) or <c>"request"</c> (a member).</summary>
+    public required string Action { get; init; }
+
+    public required IReadOnlyList<TitleCard> Items { get; init; }
+
+    public bool IsAdd => Action == "add";
+
+    /// <summary>Something to offer: a collection with movies left in it.</summary>
+    public bool HasOffer => Collection != null && Items.Count > 0;
+}
+
+public sealed record CollectionRestCollection
+{
+    public required int Id { get; init; }
+    public required string Name { get; init; }
+}
+
+/// <summary><c>POST /titles/movie/{tmdbId}/collection-rest</c>: "Add them too".</summary>
+public sealed record CollectionRestResult
+{
+    public required bool Ok { get; init; }
+    public required string Action { get; init; }
+    public required int Total { get; init; }
+
+    /// <summary>Added or requested.</summary>
+    public required int Done { get; init; }
+
+    public required IReadOnlyList<CollectionRestFailure> Failed { get; init; }
+
+    /// <summary>The line to show: "Added all 2" / "Requested 1 of 2. …".</summary>
+    public required string Message { get; init; }
+}
+
+public sealed record CollectionRestFailure
+{
+    public required int TmdbId { get; init; }
+    public required string Title { get; init; }
+    public required string Error { get; init; }
+}

@@ -1,0 +1,41 @@
+{
+  "collection": {
+    "id": 2344,
+    "name": "The Matrix Collection"
+  },
+  "action": "request",
+  "items": [
+    {
+      "mediaType": "movie",
+      "tmdbId": 604,
+      "name": "The Matrix Reloaded",
+      "posterPath": "/9TGHDvWrqKBzwDxDodHYXEmOE6J.jpg",
+      "year": "2003",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": null,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": true,
+      "episodes": null
+    },
+    {
+      "mediaType": "movie",
+      "tmdbId": 605,
+      "name": "The Matrix Revolutions",
+      "posterPath": "/t1wm4PgOQ8e4z1C6tk1yDYrb1yS.jpg",
+      "year": "2003",
+      "subtitle": null,
+      "overview": null,
+      "rating": null,
+      "status": null,
+      "favorited": null,
+      "requested": null,
+      "canQuickAdd": false,
+      "canRequest": true,
+      "episodes": null
+    }
+  ]
+}

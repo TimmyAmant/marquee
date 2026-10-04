@@ -152,6 +152,23 @@ public sealed class TitlesEndpoints(MarqueeApi.Transport transport)
         transport.MutateAsync<RequestAllMissingResult>(HttpMethod.Post, $"{Path(type, tmdbId)}/request-all-missing",
             timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Requests | ServerChange.Library, ct: ct);
 
+    /// <summary>
+    /// <c>GET /titles/movie/{tmdbId}/collection-rest</c> (0.72+): the rest of a
+    /// movie's collection the viewer can still add or request, asked right
+    /// after the movie's own add or request. An older server answers NotFound.
+    /// </summary>
+    public Task<CollectionRest> CollectionRestAsync(int movieTmdbId, CancellationToken ct = default) =>
+        transport.GetAsync<CollectionRest>($"{Path(MediaType.Movie, movieTmdbId)}/collection-rest", timeout: MarqueeApi.Timeouts.Tmdb, ct: ct);
+
+    /// <summary>
+    /// <c>POST /titles/movie/{tmdbId}/collection-rest</c> (0.72+): "Add them
+    /// too" — the admin adds them, a member requests them. A partial result
+    /// still succeeds, with its message.
+    /// </summary>
+    public Task<CollectionRestResult> AddCollectionRestAsync(int movieTmdbId, CancellationToken ct = default) =>
+        transport.MutateAsync<CollectionRestResult>(HttpMethod.Post, $"{Path(MediaType.Movie, movieTmdbId)}/collection-rest",
+            timeout: MarqueeApi.Timeouts.Integrations, changes: ServerChange.Library | ServerChange.Requests, ct: ct);
+
     /// <summary><c>/titles/{type}/{tmdbId}</c>, the prefix every title route shares.</summary>
     public static string Path(MediaType type, int tmdbId) => $"/titles/{MarqueeApi.Segment(type)}/{tmdbId}";
 }

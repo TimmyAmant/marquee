@@ -12,6 +12,7 @@ struct PhoneRootView: View {
 
     var body: some View {
         @Bindable var whatsNew = model.whatsNew
+        @Bindable var collectionOffer = model.collectionOffer
         Group {
             if horizontalSizeClass == .regular {
                 PadSplitView(showsNotifications: $showsNotifications)
@@ -50,6 +51,12 @@ struct PhoneRootView: View {
         .sheet(item: $whatsNew.content, onDismiss: { model.whatsNew.dismiss() }) { content in
             PhoneWhatsNewView(content: content)
                 .environment(model)
+        }
+        // After a movie's add or request: the rest of its collection too?
+        .sheet(item: $collectionOffer.offer, onDismiss: { model.collectionOffer.decline() }) { offer in
+            CollectionOfferSheet(offer: offer)
+                .environment(model)
+                .presentationDetents([.medium, .large])
         }
         .onAppear {
             model.refreshCounts()

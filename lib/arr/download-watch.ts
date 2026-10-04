@@ -17,27 +17,36 @@ import * as sonarr from "@/lib/sonarr/client";
 // and the library owner is told once; and once its file has been moved into
 // the library by hand it turns Owned and whoever asked for it hears it's
 // ready to watch. Only the titles in the queue or already downloading/ready
-// are looked at, so a quiet library costs one /queue call per server.
+// are looked at, so a quiet library costs one /queue call per server. A show
+// with only some of its episodes on disk is "tracked_downloading" for good;
+// unless it's been in the queue it's left to the hourly sync.
 
 /** How often a title waiting to be moved has its folder looked at again. */
 const RESCAN_EVERY_MS = 2 * 60 * 1000;
 /** …slowing down once it's been waiting a while. */
 const RESCAN_SLOW_AFTER_MS = 60 * 60 * 1000;
 const RESCAN_SLOW_EVERY_MS = 15 * 60 * 1000;
-/** "Ready to move" is told about once per title in this long. */
+/** "Ready to move" is told about once per movie in this long… */
 const READY_NOTICE_DEDUPE_MS = 30 * 24 * 60 * 60 * 1000;
+/** …and once a day per show, whose next episode is new news. */
+const READY_NOTICE_DEDUPE_TV_MS = 24 * 60 * 60 * 1000;
 
 const WATCHED: readonly string[] = ["tracked_downloading", "ready_to_move"];
 
 declare global {
-  var __marqueeDownloadWatch: { rescannedAt: Map<string, number>; readySince: Map<string, number>; told: Set<string> } | undefined;
+  var __marqueeDownloadWatch:
+    | { rescannedAt: Map<string, number>; readySince: Map<string, number>; told: Set<string>; queued: Set<string> }
+    | undefined;
 }
 
 const state = (globalThis.__marqueeDownloadWatch ??= {
   rescannedAt: new Map(),
   readySince: new Map(),
   told: new Set(),
+  queued: new Set(),
 });
+// A state object from before `queued` existed (a dev hot reload).
+state.queued ??= new Set();
 
 /** Due for another rescan? Pure apart from the clock it's handed. */
 export function rescanDue(now: number, readySince: number, lastRescan: number | undefined): boolean {
@@ -102,6 +111,7 @@ async function watchOwner(userId: string, kind: ArrProvider): Promise<void> {
     if (!server || !queue || row.arrId == null) continue;
     const summary = queue.get(row.arrId);
     const key = `${server.id}:${row.arrId}`;
+    if (summary) state.queued.add(key);
 
     if (summary?.active) {
       state.readySince.delete(key);
@@ -115,6 +125,9 @@ async function watchOwner(userId: string, kind: ArrProvider): Promise<void> {
     }
     // Owned with only a finished download left in the queue: nothing to do.
     if (row.status === "owned") continue;
+    // Never seen in the queue: a show with some episodes on disk, which
+    // stays "tracked_downloading" — the hourly sync looks after it.
+    if (!summary && row.status === "tracked_downloading" && !state.queued.has(key)) continue;
 
     // Waiting to be moved: have Sonarr/Radarr look in its folder again, so a
     // file moved there by hand is seen within a couple of minutes.
@@ -129,6 +142,8 @@ async function watchOwner(userId: string, kind: ArrProvider): Promise<void> {
 
     const fields = await freshFields(server, kind, row.arrId, summary).catch(() => null);
     if (!fields) continue;
+    // Out of the queue and looked at once since: done with it.
+    if (!summary) state.queued.delete(key);
     if (fields.status !== row.status || fields.downloadProgress !== row.downloadProgress) {
       await db
         .update(arrStatusCache)
@@ -180,7 +195,7 @@ async function tellReady(userId: string, mediaType: "movie" | "tv", tmdbId: numb
     eventType: "download_ready",
     message: (t) => t("notify.downloadReady", { title: name }),
     relay: false,
-    dedupeSince: new Date(Date.now() - READY_NOTICE_DEDUPE_MS),
+    dedupeSince: new Date(Date.now() - (mediaType === "tv" ? READY_NOTICE_DEDUPE_TV_MS : READY_NOTICE_DEDUPE_MS)),
   });
   state.told.add(key);
 }

@@ -267,5 +267,11 @@
   "removingFromArr": "Wird entfernt…",
   "removeAndDelete": "Entfernen und Dateien löschen",
   "removedFromArr": "Aus {app} entfernt",
-  "openIn": "In {name} öffnen"
+  "openIn": "In {name} öffnen",
+  "collectionPromptHeading": "Teil von {collection}",
+  "collectionPromptBodyAdd": "{count, plural, one {# weiterer Film dieser Sammlung ist noch nicht in deiner Mediathek. Auch hinzufügen?} other {# weitere Filme dieser Sammlung sind noch nicht in deiner Mediathek. Auch hinzufügen?}}",
+  "collectionPromptBodyRequest": "{count, plural, one {# weiterer Film dieser Sammlung ist noch nicht in der Mediathek. Auch anfragen?} other {# weitere Filme dieser Sammlung sind noch nicht in der Mediathek. Auch anfragen?}}",
+  "collectionPromptAdd": "{count, plural, one {Hinzufügen} other {Alle # hinzufügen}}",
+  "collectionPromptRequest": "{count, plural, one {Anfragen} other {Alle # anfragen}}",
+  "collectionPromptNotNow": "Jetzt nicht"
 }

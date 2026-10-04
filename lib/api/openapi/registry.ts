@@ -135,6 +135,8 @@ export const API_OPERATIONS: ApiOperation[] = [
   ...group("Requests", [
     ["POST", "/titles/{type}/{id}/request", "user", "Request a title (or some seasons of a series)."],
     ["POST", "/titles/{type}/{id}/request-all-missing", "user", "Request every missing season of a series."],
+    ["GET", "/titles/{type}/{id}/collection-rest", "user", "The rest of a movie's collection the viewer can still add or request (offered after adding or requesting it)."],
+    ["POST", "/titles/{type}/{id}/collection-rest", "user", "Add (the admin) or request (a member) the rest of a movie's collection."],
     ["GET", "/requests/mine", "user", "The signed-in account's own requests."],
     ["GET", "/requests/pending", "viewRequests", "Requests waiting for review."],
     ["GET", "/requests/history", "viewRequests", "Reviewed requests (paginated)."],

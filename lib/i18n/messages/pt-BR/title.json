@@ -267,5 +267,11 @@
   "removingFromArr": "Removendo…",
   "removeAndDelete": "Remover e apagar arquivos",
   "removedFromArr": "Removido do {app}",
-  "openIn": "Abrir no {name}"
+  "openIn": "Abrir no {name}",
+  "collectionPromptHeading": "Parte de {collection}",
+  "collectionPromptBodyAdd": "{count, plural, one {# outro filme desta coleção ainda não está na sua biblioteca. Adicionar também?} other {# outros filmes desta coleção ainda não estão na sua biblioteca. Adicionar também?}}",
+  "collectionPromptBodyRequest": "{count, plural, one {# outro filme desta coleção ainda não está na biblioteca. Pedir também?} other {# outros filmes desta coleção ainda não estão na biblioteca. Pedir também?}}",
+  "collectionPromptAdd": "{count, plural, one {Adicionar} other {Adicionar os #}}",
+  "collectionPromptRequest": "{count, plural, one {Pedir} other {Pedir os #}}",
+  "collectionPromptNotNow": "Agora não"
 }

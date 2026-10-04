@@ -213,6 +213,14 @@ where the real server needed something the core contract didn't spell out.
     records (requests, library, favorites, notifications) keep English
     names unless a translation has been saved already. A server older than
     this answers in English whatever the language.
+26. **The rest of the collection (0.72+, additive).** New
+    `GET /titles/movie/{tmdbId}/collection-rest` lists the other movies of
+    a movie's TMDb collection the viewer can still add (the admin) or
+    request (a member), and `POST …/collection-rest` adds or requests them
+    all. The apps ask right after a movie's own Add or Request goes
+    through, and offer them in one go ("Part of The Matrix Collection — 3
+    other movies aren't in your library yet. Add them too?"). A server
+    older than this answers `404` — offer nothing.
 
 ---
 
@@ -2072,6 +2080,56 @@ for a week. You can ask again in 7 days." / "Couldn't request any of the 4.
 
 Errors: `403 forbidden` (the admin); `404 not_found` (no such title, or it
 isn't part of a collection); `502 upstream` (TMDb).
+
+### `GET /titles/movie/{tmdbId}/collection-rest` — user
+
+The rest of a movie's collection (0.72+): the other movies of its TMDb
+collection that this viewer can still add (the admin, with Radarr
+connected) or request (a member: not in the library, not already asked for
+by them, not blocked, and they may request movies). Ask right after the
+movie's own Add or Request goes through, and offer them in one go —
+"Part of {name}", with Not now and Add all / Request all. `action` says
+which the `POST` does. `collection` is null (and `items` empty) when
+there's nothing to offer: a series, a movie in no collection, or a
+collection that's complete. `items` are `TitleCard`s.
+
+```json
+{
+  "collection": { "id": 2344, "name": "The Matrix Collection" },
+  "action": "request",
+  "items": [
+    { "mediaType": "movie", "tmdbId": 604, "name": "The Matrix Reloaded", "posterPath": "/9TGHDvWrqKBzwDxDodHYXEmOE6J.jpg", "year": "2003", "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": null, "canQuickAdd": false, "canRequest": true, "episodes": null },
+    { "mediaType": "movie", "tmdbId": 605, "name": "The Matrix Revolutions", "posterPath": "/t1wm4PgOQ8e4z1C6tk1yDYrb1yS.jpg", "year": "2003", "subtitle": null, "overview": null, "rating": null, "status": null, "favorited": null, "requested": null, "canQuickAdd": false, "canRequest": true, "episodes": null }
+  ]
+}
+```
+
+Errors: `404` (no such title); `502 upstream` (TMDb).
+
+### `POST /titles/movie/{tmdbId}/collection-rest` — user
+
+"Add them too" (0.72+). No body; the server works the set out again, as
+`GET` lists it. The admin's are added to Radarr one by one, as
+`POST …/add` would; a member's are requested exactly as
+`request-all-missing` does (one alert to reviewers for the lot), so request
+limits and the blocklist can refuse some — still `200`. `done` is how many
+went through, `failed` the rest with the reason, `message` the line to
+show ("Added all 2" / "Added 1 of 2 — 1 failed" / "Requested all 3." /
+"Requested 1 of 3. …").
+
+```json
+{
+  "ok": true,
+  "action": "request",
+  "total": 2,
+  "done": 2,
+  "failed": [],
+  "message": "Requested all 2."
+}
+```
+
+Errors: `404 not_found` (no such title, a series, or a movie that isn't
+part of a collection); `502 upstream` (TMDb).
 
 ### `GET /requests/mine` — user
 
