@@ -1,4 +1,5 @@
 import { seasonsForAdd, seasonsForUpdate, seasonsForWholeSeries } from "@/lib/sonarr/season-monitoring";
+import { arrRequestError } from "@/lib/arr/errors";
 import { summarizeQueue, type ArrQueueRecord, type QueueSummary } from "@/lib/integrations/arr-status-logic";
 
 export type ArrConfig = { baseUrl: string; apiKey: string };
@@ -9,6 +10,9 @@ const REQUEST_TIMEOUT_MS = 8000;
 
 // See LIBRARY_TIMEOUT_MS in lib/radarr/client.ts.
 const LIBRARY_TIMEOUT_MS = 120_000;
+
+// See ADD_TIMEOUT_MS in lib/radarr/client.ts.
+const ADD_TIMEOUT_MS = 45_000;
 
 async function sonarrFetch<T>(
   config: ArrConfig,
@@ -26,9 +30,7 @@ async function sonarrFetch<T>(
     signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS),
   });
 
-  if (!res.ok) {
-    throw new Error(`Sonarr request failed: ${path} (${res.status})`);
-  }
+  if (!res.ok) throw await arrRequestError("Sonarr", path, res);
 
   // A delete answers with nothing to read (or an empty object).
   if (res.status === 204 || options.method === "DELETE") return undefined as T;
@@ -79,6 +81,7 @@ export function lookupByTvdbId(config: ArrConfig, tvdbId: number) {
   return sonarrFetch<SonarrSeriesLookupResult[]>(
     config,
     `/series/lookup?term=${encodeURIComponent(`tvdb:${tvdbId}`)}`,
+    { timeoutMs: ADD_TIMEOUT_MS },
   );
 }
 
@@ -331,6 +334,7 @@ export function buildAddSeriesBody(input: AddSeriesInput) {
 export function addSeries(config: ArrConfig, input: AddSeriesInput) {
   return sonarrFetch<SonarrSeries>(config, "/series", {
     method: "POST",
+    timeoutMs: ADD_TIMEOUT_MS,
     body: buildAddSeriesBody(input),
   });
 }
