@@ -4207,6 +4207,15 @@
   <data name="Shell_RailUpdateButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Atualizar o Marquee</value>
   </data>
+  <data name="Shell_RecentSearches" xml:space="preserve">
+    <value>Pesquisas recentes</value>
+  </data>
+  <data name="Shell_RecentSearchesClear.Content" xml:space="preserve">
+    <value>Limpar</value>
+  </data>
+  <data name="Shell_RemoveRecentSearch" xml:space="preserve">
+    <value>Remover “{0}” das pesquisas recentes</value>
+  </data>
   <data name="Shell_RequestsLabel" xml:space="preserve">
     <value>Pedidos</value>
   </data>

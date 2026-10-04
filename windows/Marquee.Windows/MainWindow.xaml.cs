@@ -62,6 +62,15 @@ public sealed partial class MainWindow : Window, INavigator
 
     private CancellationTokenSource? suggestCancellation;
 
+    /// <summary>
+    /// What was typed in the search box, as opposed to the suggestion the
+    /// arrow keys put there: the search a picked suggestion is remembered by.
+    /// </summary>
+    private string typedQuery = "";
+
+    /// <summary>This PC's recent searches (<see cref="RecentSearches"/>), newest first.</summary>
+    private IReadOnlyList<string> recentSearches = [];
+
     public MainWindow()
     {
         model = AppServices.Model;
@@ -609,12 +618,19 @@ public sealed partial class MainWindow : Window, INavigator
     /// real errors. Under two characters the server would answer nothing,
     /// so the list is cleared without a request.
     /// </summary>
-    private async void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    private void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
     {
         if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
         {
             return;
         }
+        typedQuery = sender.Text;
+        UpdateRecentSearches();
+        Suggest(sender);
+    }
+
+    private async void Suggest(AutoSuggestBox sender)
+    {
         suggestCancellation?.Cancel();
         var query = sender.Text.Trim();
         if (query.Length < 2 || model.Phase != AppPhase.Ready)
@@ -631,7 +647,10 @@ public sealed partial class MainWindow : Window, INavigator
             var suggestions = await model.Api.Search.SuggestionsAsync(query, token);
             if (!token.IsCancellationRequested)
             {
-                sender.ItemsSource = SuggestionItem.Grouped(suggestions);
+                var items = SuggestionItem.Grouped(suggestions);
+                sender.ItemsSource = items;
+                // Typing opens the list itself; a recent search put back in the box doesn't.
+                sender.IsSuggestionListOpen = items.Count > 0;
             }
         }
         catch (OperationCanceledException)
@@ -644,15 +663,20 @@ public sealed partial class MainWindow : Window, INavigator
         }
     }
 
-    /// <summary>Enter searches the typed text; picking a suggestion opens it directly.</summary>
+    /// <summary>
+    /// Enter searches the typed text; picking a suggestion opens it directly.
+    /// Either way what was typed joins the recent searches.
+    /// </summary>
     private void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
         if (args.ChosenSuggestion is SuggestionItem picked)
         {
+            RecentSearches.Remember(model.Settings, typedQuery);
             picked.Open(model);
         }
         else if (!string.IsNullOrWhiteSpace(args.QueryText))
         {
+            RecentSearches.Remember(model.Settings, args.QueryText);
             model.Search(args.QueryText);
         }
         else
@@ -670,6 +694,8 @@ public sealed partial class MainWindow : Window, INavigator
             return;
         }
         SearchLayer.Visibility = Visibility.Visible;
+        recentSearches = RecentSearches.Read(model.Settings);
+        UpdateRecentSearches();
         // Collapsed a moment ago: focus once it's in the layout.
         model.Dispatcher.TryEnqueue(() => SearchBox.Focus(FocusState.Programmatic));
     }
@@ -679,8 +705,94 @@ public sealed partial class MainWindow : Window, INavigator
     {
         suggestCancellation?.Cancel();
         SearchBox.Text = "";
+        typedQuery = "";
         SearchBox.ItemsSource = null;
         SearchLayer.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// The recent searches under the box, like the website's: shown under two
+    /// characters, a click puts one back in the box with its suggestions
+    /// coming up, × forgets it, Clear forgets them all.
+    /// </summary>
+    private void UpdateRecentSearches()
+    {
+        var shown = SearchBox.Text.Trim().Length < 2 && recentSearches.Count > 0;
+        RecentSearchesPanel.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+        RecentSearchesList.Children.Clear();
+        if (!shown)
+        {
+            return;
+        }
+        RecentSearchesHeading.Text = Loc.Get("Shell_RecentSearches").ToUpper(System.Globalization.CultureInfo.CurrentCulture);
+        foreach (var query in recentSearches)
+        {
+            RecentSearchesList.Children.Add(RecentSearchRow(query));
+        }
+    }
+
+    private Grid RecentSearchRow(string query)
+    {
+        var muted = (Brush)Application.Current.Resources["MarqueeNavTextSecondaryBrush"];
+        var label = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        label.Children.Add(new FontIcon { Glyph = "", FontSize = 14, Foreground = muted });
+        label.Children.Add(new TextBlock { Text = query, FontSize = 14, MaxLines = 1, TextTrimming = TextTrimming.CharacterEllipsis });
+        var search = new Button
+        {
+            Template = (ControlTemplate)Root.Resources["NavPillTemplate"],
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            Foreground = (Brush)Application.Current.Resources["MarqueeNavTextBrush"],
+            BorderThickness = new Thickness(0),
+            CornerRadius = new CornerRadius(10),
+            Padding = new Thickness(10, 8, 10, 8),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Content = label,
+        };
+        AutomationProperties.SetName(search, query);
+        search.Click += (_, _) =>
+        {
+            SearchBox.Text = query;
+            typedQuery = query;
+            UpdateRecentSearches();
+            SearchBox.Focus(FocusState.Programmatic);
+            Suggest(SearchBox);
+        };
+
+        var remove = new Button
+        {
+            Style = railStyle,
+            Width = 28,
+            Height = 28,
+            CornerRadius = new CornerRadius(14),
+            VerticalAlignment = VerticalAlignment.Center,
+            Content = new FontIcon { Glyph = "", FontSize = 11 },
+        };
+        var removeLabel = Loc.Format("Shell_RemoveRecentSearch", query);
+        AutomationProperties.SetName(remove, removeLabel);
+        ToolTipService.SetToolTip(remove, removeLabel);
+        remove.Click += (_, _) =>
+        {
+            recentSearches = RecentSearches.Remove(recentSearches, query);
+            RecentSearches.Write(model.Settings, recentSearches);
+            UpdateRecentSearches();
+        };
+
+        var row = new Grid { ColumnSpacing = 4 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.Children.Add(search);
+        Grid.SetColumn(remove, 1);
+        row.Children.Add(remove);
+        return row;
+    }
+
+    private void OnClearRecentSearchesClick(object sender, RoutedEventArgs e)
+    {
+        recentSearches = [];
+        RecentSearches.Write(model.Settings, recentSearches);
+        UpdateRecentSearches();
+        SearchBox.Focus(FocusState.Programmatic);
     }
 
     private void OnFindInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)

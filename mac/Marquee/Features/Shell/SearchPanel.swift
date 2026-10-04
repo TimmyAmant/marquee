@@ -4,6 +4,7 @@ import SwiftUI
 /// Search button and Edit › Find (⌘F) open it over the page. Type-ahead
 /// suggestions appear as you type (↑↓ to pick one); Return opens the picked
 /// suggestion or searches for the text; Escape or a click outside closes it.
+/// Under two characters, this Mac's recent searches show instead.
 struct SearchPanel: View {
     @Environment(AppModel.self) private var model
 
@@ -11,6 +12,10 @@ struct SearchPanel: View {
     @State private var suggestions: [API.SearchSuggestion] = []
     /// The suggestion ↑↓ has picked; nil means Return searches the text.
     @State private var highlighted: Int?
+    /// This Mac's recent searches (`RecentSearches`), newest first.
+    @State private var recents: [String] = []
+    /// The recent search the pointer is over.
+    @State private var hoveredRecent: String?
     @FocusState private var fieldFocused: Bool
 
     static let width: CGFloat = 560
@@ -30,6 +35,9 @@ struct SearchPanel: View {
                 if !suggestions.isEmpty {
                     Divider().overlay(Theme.glassBorder)
                     results
+                } else if showsRecents {
+                    Divider().overlay(Theme.glassBorder)
+                    recentList
                 }
             }
             .frame(width: Self.width)
@@ -39,7 +47,10 @@ struct SearchPanel: View {
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Search")
         }
-        .onAppear { fieldFocused = true }
+        .onAppear {
+            fieldFocused = true
+            recents = RecentSearches.load()
+        }
         .onKeyPress(.escape) {
             close()
             return .handled
@@ -113,6 +124,82 @@ struct SearchPanel: View {
         }
     }
 
+    private var showsRecents: Bool {
+        query.trimmingCharacters(in: .whitespaces).count < 2 && !recents.isEmpty
+    }
+
+    /// Recent searches, like the website's: a click puts one back in the
+    /// field, its suggestions coming up; × forgets it, Clear forgets them all.
+    private var recentList: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text("Recent searches")
+                    .font(.system(size: Metrics.text(10.5), weight: .semibold))
+                    .textCase(.uppercase)
+                    .kerning(0.6)
+                    .foregroundStyle(Theme.textMuted)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                Button("Clear") {
+                    recents = []
+                    RecentSearches.save([])
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: Metrics.text(11)))
+                .foregroundStyle(Theme.textMuted)
+            }
+            .padding(.horizontal, 10)
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+            ForEach(recents, id: \.self) { recent in
+                recentRow(recent)
+            }
+        }
+        .padding(6)
+    }
+
+    private func recentRow(_ recent: String) -> some View {
+        HStack(spacing: 4) {
+            Button {
+                query = recent
+                fieldFocused = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "clock")
+                        .font(.system(size: Metrics.text(14)))
+                        .foregroundStyle(Theme.textMuted)
+                    Text(recent)
+                        .font(.system(size: Metrics.text(14)))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: 8)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button {
+                recents = RecentSearches.removing(recent, from: recents)
+                RecentSearches.save(recents)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: Metrics.text(11), weight: .medium))
+                    .foregroundStyle(Theme.textMuted)
+                    .frame(width: 24, height: 24)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help("Remove “\(recent)” from recent searches")
+            .accessibilityLabel("Remove “\(recent)” from recent searches")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(hoveredRecent == recent ? Theme.textPrimary.opacity(0.1) : .clear)
+        )
+        .onHover { hoveredRecent = $0 ? recent : (hoveredRecent == recent ? nil : hoveredRecent) }
+    }
+
     /// The suggestions as labelled runs, in the order the server sent them
     /// (already grouped), each keeping its index in the flat list; a kind
     /// this app can't open is left out. Pure; unit tested.
@@ -159,11 +246,14 @@ struct SearchPanel: View {
         }
         let text = query.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
+        RecentSearches.remember(text)
         close()
         model.search(text)
     }
 
     private func open(_ suggestion: API.SearchSuggestion) {
+        // What was typed, not the name picked: the search to come back to.
+        RecentSearches.remember(query)
         close()
         if let titleID = suggestion.titleID {
             model.openTitle(titleID)

@@ -11,6 +11,17 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.73.0",
+    date: "2026-10-04",
+    changes: [
+      "Recent searches: tap an empty search box to see your last 8 searches and tap one to search it again, no retyping. Remove one with its ×, or Clear them all. On the website and the Mac, iPhone, iPad and Windows apps.",
+      "Pick a title from the search suggestions on a phone and swipe back, and your search is still there with its suggestions open, instead of an empty box.",
+      "The search box has an × to clear what you typed.",
+      "The Requests page now shows new requests on its own within about 20 seconds, so you don't have to leave it and come back.",
+      "Fixed: approving a movie or show could fail with \"Couldn't add\" when Radarr or Sonarr was slow, most often while approving several at once. Marquee now waits longer, tries Radarr's search too if its direct lookup comes up empty, and checks whether the add went through anyway before calling it a failure. When it really fails, the message now says why.",
+    ],
+  },
+  {
     version: "0.72.1",
     date: "2026-10-04",
     changes: [

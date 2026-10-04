@@ -6,6 +6,7 @@ import type { MediaType, SonarrSeriesType } from "@/lib/db/schema";
 import { findLibraryCopies } from "@/lib/integrations/status";
 import { arrConfig, type ArrServer } from "@/lib/arr/servers";
 import { kindLabel } from "@/lib/arr/instances";
+import { describeArrError } from "@/lib/arr/errors";
 import { hasOverrides, resolveAdd, type AddDefaults, type AddOverrides } from "@/lib/arr/add-options";
 import { pickServer, titleIsAnime } from "@/lib/arr/add-options-server";
 import { statusRank } from "@/lib/arr/fan-out";
@@ -149,6 +150,7 @@ export async function addMovieToRadarrForUser(
 
   let added: { id: number };
   let addedNew = false;
+  let adding = false;
   try {
     const config = arrConfig(server);
 
@@ -161,7 +163,9 @@ export async function addMovieToRadarrForUser(
       await radarr.setMovieMonitored(config, existing.id, true);
       added = existing;
     } else {
-      const lookupResult = await radarr.lookupByTmdbId(config, tmdbId);
+      adding = true;
+      const title = await getOrFetchTitle("movie", tmdbId).catch(() => undefined);
+      const lookupResult = await radarr.lookupByTmdbId(config, tmdbId, title?.imdbId);
       added = await radarr.addMovie(config, {
         lookupResult,
         qualityProfileId: resolved.qualityProfileId!,
@@ -170,12 +174,26 @@ export async function addMovieToRadarrForUser(
       });
       addedNew = true;
     }
-  } catch {
-    return fail("upstream", t("notify.addMovieFailed", { server: serverLabel(t, server) }));
+  } catch (err) {
+    console.error("[arr] adding movie %d to %s failed:", tmdbId, server.name, err);
+    // A timed-out add often went through anyway, and a duplicate means it's
+    // there already: either way Radarr has it, which is all the add was for.
+    const there = adding ? await radarr.getMovieByTmdbId(arrConfig(server), tmdbId).catch(() => null) : null;
+    if (!there) {
+      return fail("upstream", withReason(t("notify.addMovieFailed", { server: serverLabel(t, server) }), err));
+    }
+    added = there;
+    addedNew = true;
   }
 
   await recordAdd(userId, server, "movie", tmdbId, added.id);
   return { ok: true, placement: placement(target, addedNew) };
+}
+
+/** "Couldn't add …" plus Sonarr/Radarr's own reason, when there is one. */
+function withReason(message: string, err: unknown): string {
+  const reason = describeArrError(err);
+  return reason ? `${message} (${reason})` : message;
 }
 
 /** How errors name a server: the old wording ("Radarr", "the 4K Radarr")
@@ -217,6 +235,7 @@ export async function addSeriesToSonarrForUser(
 
   let added: { id: number };
   let addedNew = false;
+  let adding = false;
   try {
     const config = arrConfig(server);
 
@@ -249,6 +268,7 @@ export async function addSeriesToSonarrForUser(
       await sonarr.setSeriesMonitored(config, existing.id, true);
       added = existing;
     } else {
+      adding = true;
       const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);
       if (!lookupResult) throw new Error("No lookup result");
       if (seasons && seasonsSonarrKnows(lookupResult.seasons ?? [], seasons).length === 0) {
@@ -265,8 +285,15 @@ export async function addSeriesToSonarrForUser(
       });
       addedNew = true;
     }
-  } catch {
-    return fail("upstream", t("notify.addSeriesFailed", { server: serverLabel(t, server) }));
+  } catch (err) {
+    console.error("[arr] adding series %d to %s failed:", tmdbId, server.name, err);
+    // See addMovieToRadarrForUser: a timed-out add often went through.
+    const there = adding ? await sonarr.getSeriesByTvdbId(arrConfig(server), title.tvdbId).catch(() => null) : null;
+    if (!there) {
+      return fail("upstream", withReason(t("notify.addSeriesFailed", { server: serverLabel(t, server) }), err));
+    }
+    added = there;
+    addedNew = true;
   }
 
   await recordAdd(userId, server, "tv", tmdbId, added.id);

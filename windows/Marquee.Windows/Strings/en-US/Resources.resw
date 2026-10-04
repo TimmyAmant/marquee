@@ -4393,6 +4393,16 @@
   <data name="Shell_RailUpdateButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Update Marquee</value>
   </data>
+  <data name="Shell_RecentSearches" xml:space="preserve">
+    <value>Recent searches</value>
+  </data>
+  <data name="Shell_RecentSearchesClear.Content" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="Shell_RemoveRecentSearch" xml:space="preserve">
+    <value>Remove “{0}” from recent searches</value>
+    <comment>Screen-reader name and tooltip of the × on a recent search in the search panel; {0} is what was searched for.</comment>
+  </data>
   <data name="Shell_RequestsLabel" xml:space="preserve">
     <value>Requests</value>
   </data>

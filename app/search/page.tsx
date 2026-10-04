@@ -61,8 +61,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       <div className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h1 className="font-display text-3xl text-text-primary">{t("discover.searchTitle")}</h1>
         <div className="mt-8">
-          {/* The menu's Search item lands here, ready to type. */}
-          <SearchBar autoFocus />
+          {/* The menu's Search item lands here, ready to type — or, coming
+              back from a title picked here, with that search still open. */}
+          <SearchBar autoFocus restoreOnBack />
         </div>
       </div>
     );
