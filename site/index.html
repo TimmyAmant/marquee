@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Marquee — a self-hosted dashboard for Plex, Jellyfin, Sonarr and Radarr</title>
-<meta name="description" content="Look up any film, show, actor or studio and see instantly whether it's already in your Plex or Jellyfin library, then send what's missing to Sonarr or Radarr. Open source, and it runs in Docker on your own server.">
+<title>Marquee — a self-hosted dashboard for Plex, Jellyfin, Emby, Sonarr and Radarr</title>
+<meta name="description" content="Look up any film, show, actor or studio and see instantly whether it's already in your Plex, Jellyfin or Emby library, then send what's missing to Sonarr or Radarr, or let the household request it. Open source, runs in Docker on your own server, with apps for Mac, Windows and iPhone.">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#0a0a0c" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)">
-<link rel="canonical" href="https://timmyamant.github.io/marquee/">
+<link rel="canonical" href="https://marqueeapp.dev/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Marquee">
 <meta property="og:title" content="Marquee — your library, in lights">
-<meta property="og:description" content="A self-hosted media dashboard: browse TMDb, see instantly what's already in your Plex or Jellyfin library, and send what's missing to Sonarr or Radarr. Open source.">
-<meta property="og:url" content="https://timmyamant.github.io/marquee/">
-<meta property="og:image" content="https://timmyamant.github.io/marquee/assets/og.jpg">
+<meta property="og:description" content="A self-hosted media dashboard and request app: browse TMDb, see instantly what's already in your Plex, Jellyfin or Emby library, and send what's missing to Sonarr or Radarr. Open source.">
+<meta property="og:url" content="https://marqueeapp.dev/">
+<meta property="og:image" content="https://marqueeapp.dev/assets/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Marquee, a self-hosted media dashboard, showing a title page with an Already in your library badge.">
@@ -48,6 +48,8 @@
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1Z"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 1.8H4.4L6 16.5ZM10 20.8a2.2 2.2 0 0 0 4 0"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M8 3h8a1.5 1.5 0 0 1 1.5 1.5v15A1.5 1.5 0 0 1 16 21H8a1.5 1.5 0 0 1-1.5-1.5v-15A1.5 1.5 0 0 1 8 3ZM10.5 18h3"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></symbol>
 </svg>
 
@@ -59,8 +61,8 @@
         <li><a href="#library">At a glance</a></li>
         <li><a href="#connects">How it connects</a></li>
         <li><a href="#requests">Requests</a></li>
-        <li><a href="#mac">Mac</a></li>
-        <li><a href="#windows">Windows</a></li>
+        <li><a href="#more">What’s new</a></li>
+        <li><a href="#mac">Apps</a></li>
         <li><a href="#install">Install</a></li>
       </ul>
     </nav>
@@ -78,12 +80,12 @@
   <div class="wrap hero-copy">
     <p class="eyebrow">Self-hosted media dashboard</p>
     <h1 id="hero-title">Your library, <em>in&nbsp;lights.</em></h1>
-    <p class="lede">Look up any film, show, actor or studio and see instantly whether it’s already in your Plex or Jellyfin library, then send what’s missing to Sonarr or Radarr, or let the household request it.</p>
+    <p class="lede">Look up any film, show, actor or studio and see instantly whether it’s already in your Plex, Jellyfin or Emby library, then send what’s missing to Sonarr or Radarr, or let the household request it.</p>
     <div class="cta-row">
       <a class="btn btn-primary" href="#install">Install with Docker</a>
       <a class="btn btn-ghost" href="https://github.com/TimmyAmant/marquee">View the source</a>
     </div>
-    <p class="fineprint"><span class="nw">Open source under MIT</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">One container for amd64 and arm64</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">In beta, <a href="https://github.com/TimmyAmant/marquee/releases/latest">v0.29.0</a></span></p>
+    <p class="fineprint"><span class="nw">Open source under MIT</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">One Docker container</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">Apps for Mac, Windows and iPhone</span> <span class="dot" aria-hidden="true">·</span> <span class="nw">In beta, <a href="https://github.com/TimmyAmant/marquee/releases/latest">v0.71.0</a></span></p>
   </div>
 
   <div class="wrap">
@@ -102,7 +104,7 @@
         </picture>
       </div>
     </figure>
-    <p class="works-with">Works with the <strong>Plex</strong>, <strong>Jellyfin</strong>, <strong>Sonarr</strong> and <strong>Radarr</strong> you already run.</p>
+    <p class="works-with">Works with the <strong>Plex</strong>, <strong>Jellyfin</strong>, <strong>Emby</strong>, <strong>Sonarr</strong> and <strong>Radarr</strong> you already run.</p>
   </div>
 </section>
 
@@ -114,25 +116,33 @@
         <p class="eyebrow">At a glance</p>
         <h2 id="library-title">Know instantly what’s <em>already yours.</em></h2>
       </div>
-      <p class="section-intro">Every poster carries its status, checked against Plex, Jellyfin, Sonarr and Radarr: on Discover, in search results, across an actor’s filmography and a studio’s whole catalog. No more opening three apps to find out you already have it.</p>
+      <p class="section-intro">Every poster carries its status, in the same colors Sonarr and Radarr use, checked against Plex, Jellyfin, Emby, Sonarr and Radarr: on Discover, in search results, across an actor’s filmography and a studio’s whole catalog. No more opening three apps to find out you already have it.</p>
     </div>
 
     <dl class="legend reveal">
       <div class="legend-item">
         <dt><span class="status st-owned"><i></i>Owned</span></dt>
-        <dd>In Plex or Jellyfin, or already on disk through Radarr or Sonarr.</dd>
+        <dd>The file is in your library, ready to watch. Shows count their episodes, like 96/96.</dd>
       </div>
       <div class="legend-item">
-        <dt><span class="status st-tracked"><i></i>Downloading</span></dt>
-        <dd>In the download queue now, or a series that’s only partly on disk.</dd>
+        <dt><span class="status st-downloading"><i></i>Downloading · 63%</span></dt>
+        <dd>Downloading or queued right now, with how far along it is.</dd>
       </div>
       <div class="legend-item">
-        <dt><span class="status st-tracked is-missing"><i></i>Missing</span></dt>
-        <dd>Monitored and released, but nothing on disk yet.</dd>
+        <dt><span class="status st-ready"><i></i>Ready to move</span></dt>
+        <dd>Finished downloading but not imported. Move it into your library and it turns Owned on its own.</dd>
+      </div>
+      <div class="legend-item">
+        <dt><span class="status st-missing"><i></i>Missing</span></dt>
+        <dd>Monitored, but Sonarr or Radarr hasn’t found a copy yet. It keeps looking.</dd>
+      </div>
+      <div class="legend-item">
+        <dt><span class="status st-unmonitored"><i></i>Not monitored</span></dt>
+        <dd>In Sonarr or Radarr, but it won’t download on its own.</dd>
       </div>
       <div class="legend-item">
         <dt><span class="status st-soon"><i></i>Coming soon</span></dt>
-        <dd>Tracked but not out yet, so it never looks like something’s missing.</dd>
+        <dd>Added, but not released yet, so it never looks like something’s missing.</dd>
       </div>
       <div class="legend-item">
         <dt><span class="status st-none">No badge</span></dt>
@@ -140,7 +150,7 @@
       </div>
     </dl>
 
-    <p class="aside reveal">Open any title for the rest: every season with each episode’s have-it-or-missing status, cast and crew, franchises and “More like this”, and the file itself, down to its location, size, resolution, codecs, HDR and audio.</p>
+    <p class="aside reveal">Open any title for the rest: full-width artwork and the title’s own logo, IMDb, Rotten Tomatoes and Metacritic ratings, where it’s streaming, every season with each episode’s status, cast and crew, Play on Plex, Jellyfin or Emby, and the file itself, down to its location, size, resolution, codecs, HDR and audio. While something downloads, Marquee checks every minute, so the status keeps up.</p>
   </div>
 </section>
 
@@ -179,43 +189,34 @@
       </figure>
 
       <figure class="menu-shot reveal">
-        <div class="stage stage-panel" role="img" aria-label="On a phone, the full menu opens as a frosted drawer: Jordan’s profile at the top, Search and Discover, then Movies, highlighted, and Series under Browse, and Favorites, Calendar and Requests, with 2 waiting, under Library.">
-          <picture>
-            <source media="(prefers-color-scheme: light)" srcset="assets/img/menu-light-1520.webp">
-            <img class="stage-shot" src="assets/img/menu-dark-1520.webp" width="760" height="680" alt="" loading="lazy" decoding="async">
-          </picture>
-          <div class="navp">
-            <div class="navp-main">
-              <div class="navp-me">
-                <span class="av av-38">J</span>
-                <span class="navp-who"><span class="navp-name">Jordan</span><span class="navp-host">marquee.local</span></span>
-                <svg class="ic"><use href="#i-chevron"/></svg>
-              </div>
-              <div class="navp-rows">
-                <span class="navp-row big"><svg class="ic"><use href="#i-search"/></svg>Search</span>
-                <span class="navp-row big"><svg class="ic"><use href="#i-discover"/></svg>Discover</span>
-                <span class="navp-head">Browse</span>
-                <span class="navp-row is-current"><svg class="ic"><use href="#i-movies"/></svg>Movies</span>
-                <span class="navp-row"><svg class="ic"><use href="#i-series"/></svg>Series</span>
-                <span class="navp-head">Library</span>
-                <span class="navp-row"><svg class="ic"><use href="#i-favorites"/></svg>Favorites</span>
-                <span class="navp-row"><svg class="ic"><use href="#i-calendar"/></svg>Calendar</span>
-                <span class="navp-row"><svg class="ic"><use href="#i-requests"/></svg>Requests<span class="navp-count">2</span></span>
-              </div>
+        <div class="stage stage-phone" role="img" aria-label="Marquee on a phone: a title page with the poster over its blurred artwork, the title Paper Harbor, an Owned badge and Play and More buttons, and a frosted tab bar along the bottom with Discover, Search, Requests with 2 waiting, Calendar and More.">
+          <div class="phone">
+            <div class="phone-art" aria-hidden="true">
+              <img class="phone-backdrop" src="assets/img/poster-paper-harbor.webp" width="192" height="288" alt="" loading="lazy" decoding="async">
+              <img class="phone-poster" src="assets/img/poster-paper-harbor.webp" width="192" height="288" alt="" loading="lazy" decoding="async">
             </div>
-            <div class="navp-foot">
-              <span class="navp-mark">Marquee</span>
-              <span class="navp-theme"><svg class="ic ic-moon"><use href="#i-moon"/></svg><svg class="ic ic-sun"><use href="#i-sun"/></svg></span>
+            <div class="phone-copy">
+              <p class="ph-title">Paper Harbor</p>
+              <p class="ph-meta">Movie · 2024 · 1h 52m</p>
+              <span class="status st-owned"><i></i>Owned</span>
+              <div class="ph-btns"><span class="is-primary">Play on Plex</span><span>…</span></div>
+            </div>
+            <div class="tabbar">
+              <span><svg class="ic"><use href="#i-discover"/></svg>Discover</span>
+              <span><svg class="ic"><use href="#i-search"/></svg>Search</span>
+              <span class="is-current"><svg class="ic"><use href="#i-requests"/></svg>Requests<i class="tab-count">2</i></span>
+              <span><svg class="ic"><use href="#i-calendar"/></svg>Calendar</span>
+              <span><svg class="ic"><use href="#i-more"/></svg>More</span>
             </div>
           </div>
         </div>
-        <figcaption><strong>On a phone, the same sections by name.</strong> There’s no room for the rail, so the menu button at the top opens them as a drawer, with your account.</figcaption>
+        <figcaption><strong>On a phone, tabs along the bottom.</strong> The website and the iPhone app share the same five: Discover, Search, Requests (with how many are waiting), Calendar and More.</figcaption>
       </figure>
     </div>
 
     <dl class="fine-grid reveal">
       <div><dt>Room for the page</dt><dd>Nothing sits beside the page any more, so a title’s backdrop runs right to the edge of the window.</dd></div>
-      <div><dt>The same everywhere</dt><dd>The website, the Mac app and the Windows app share the rail and the menu, frosted glass and all.</dd></div>
+      <div><dt>The same everywhere</dt><dd>The website, the Mac, Windows and iPad apps share the rail, frosted glass and all; phones get the tab bar.</dd></div>
       <div><dt>Your photo, on your server</dt><dd>Add one in Settings › Account and it tops the rail and shows next to each household member. It’s stripped of location and camera details and never leaves your Marquee server.</dd></div>
     </dl>
   </div>
@@ -227,7 +228,7 @@
     <div class="section-head centered">
       <p class="eyebrow">How it connects</p>
       <h2 id="connects-title">It sits in front of the stack <em>you already run.</em></h2>
-      <p class="section-intro">Marquee doesn’t replace Plex, Jellyfin, Sonarr or Radarr. Connect whichever you use from Settings and it keeps them in step: your libraries sync every hour, and Sonarr and Radarr webhooks report each grab and finished download as it happens.</p>
+      <p class="section-intro">Marquee doesn’t replace Plex, Jellyfin, Emby, Sonarr or Radarr. Connect whichever you use from Settings and it keeps them in step: your libraries sync on a schedule you set, Sonarr and Radarr webhooks report each grab and finished download as it happens, and while anything is downloading Marquee checks every minute.</p>
     </div>
 
     <div class="flow reveal">
@@ -235,9 +236,10 @@
         <h3 class="flow-label">Reads from</h3>
         <dl class="credits">
           <div class="credit"><dt>Metadata</dt><dd>TMDb <span class="sep" aria-hidden="true">·</span> TheTVDB</dd></div>
-          <div class="credit"><dt>Libraries</dt><dd>Plex <span class="sep" aria-hidden="true">·</span> Jellyfin</dd></div>
-          <div class="credit"><dt>Downloads</dt><dd>Sonarr <span class="sep" aria-hidden="true">·</span> Radarr</dd></div>
-          <div class="credit"><dt>Lists</dt><dd>Trakt</dd></div>
+          <div class="credit"><dt>Libraries</dt><dd>Plex <span class="sep" aria-hidden="true">·</span> Jellyfin <span class="sep" aria-hidden="true">·</span> Emby</dd></div>
+          <div class="credit"><dt>Downloads</dt><dd>Sonarr <span class="sep" aria-hidden="true">·</span> Radarr <span class="sep" aria-hidden="true">·</span> 4K servers</dd></div>
+          <div class="credit"><dt>Lists</dt><dd>Trakt <span class="sep" aria-hidden="true">·</span> Plex Watchlist</dd></div>
+          <div class="credit"><dt>Ratings</dt><dd>IMDb <span class="sep" aria-hidden="true">·</span> Rotten Tomatoes</dd></div>
         </dl>
       </div>
 
@@ -254,13 +256,13 @@
         <dl class="credits">
           <div class="credit"><dt>The admin</dt><dd>adds titles, approves requests</dd></div>
           <div class="credit"><dt>The household</dt><dd>browses, favorites, requests</dd></div>
-          <div class="credit"><dt>Alerts</dt><dd>the bell, your devices, Discord, ntfy, webhooks</dd></div>
-          <div class="credit"><dt>Anywhere</dt><dd>browser, phone, Mac and Windows apps, JSON API</dd></div>
+          <div class="credit"><dt>Alerts</dt><dd>your devices, email, Discord, Slack, Telegram, ntfy and more</dd></div>
+          <div class="credit"><dt>Anywhere</dt><dd>browser, phone, Mac, Windows and iPhone apps, API</dd></div>
         </dl>
       </div>
     </div>
 
-    <p class="flow-notes reveal">Browsing runs on TMDb, and its API key is free. Plex and Jellyfin can run side by side, or just one. TheTVDB fills in posters TMDb doesn’t have yet, Trakt imports public lists, and only the admin can connect or change any of it.</p>
+    <p class="flow-notes reveal">Browsing runs on TMDb, and its API key is free. Plex, Jellyfin and Emby can run side by side, or just one, and you can add several Sonarr and Radarr servers, including separate 4K ones. TheTVDB fills in posters TMDb doesn’t have yet, a free OMDb key adds the ratings, and only the admin can connect or change any of it.</p>
   </div>
 </section>
 
@@ -272,7 +274,7 @@
         <p class="eyebrow">For the household</p>
         <h2 id="requests-title">Requests, <em>without the group chat.</em></h2>
       </div>
-      <p class="section-intro">Give everyone at home an account of their own. They get the whole app (Discover, Search, Calendar, Favorites), but instead of adding titles to Sonarr or Radarr they hit Request. You approve from one queue, and they hear back either way.</p>
+      <p class="section-intro">Give everyone at home an account of their own, or let them sign in with Plex, Jellyfin or your single sign-on. They get the whole app (Discover, Search, Calendar, Favorites), but instead of adding titles to Sonarr or Radarr they hit Request, down to the seasons they want. You approve from one queue, and they hear back either way.</p>
     </div>
 
     <ol class="tickets">
@@ -301,7 +303,7 @@
         <div class="step-body">
           <p class="step-no">2</p>
           <h3>You approve</h3>
-          <p>Everything waiting sits on one Requests page. Approve all clears the queue; a decline asks you why.</p>
+          <p>Everything waiting sits on one Requests page. Approve all clears the queue; a decline, or a “Can’t get it” later on, asks you why.</p>
           <div class="mini mini-queue" aria-hidden="true">
             <div class="queue-head"><span>Pending</span><span class="queue-all">Approve all</span></div>
             <div class="queue-row">
@@ -318,7 +320,7 @@
         </div>
         <div class="stub">
           <span class="stub-label">Sam’s Requests tab</span>
-          <span class="rbadge rb-tracked">Approved</span><span class="stub-then" aria-hidden="true">→</span><span class="rbadge rb-tracked">Downloading</span>
+          <span class="rbadge rb-tracked">Approved</span><span class="stub-then" aria-hidden="true">→</span><span class="rbadge rb-downloading">Downloading</span>
         </div>
       </li>
 
@@ -326,7 +328,7 @@
         <div class="step-body">
           <p class="step-no">3</p>
           <h3>Sam hears back</h3>
-          <p>When Radarr finishes the download, a notification lands on Sam’s phone, once per request. A decline comes with your reason.</p>
+          <p>Once the whole thing is in (the movie, or every episode of the seasons Sam asked for), a notification lands on Sam’s phone, once. A decline comes with your reason.</p>
           <div class="mini mini-phone" aria-hidden="true">
             <p class="phone-time">9:41</p>
             <div class="notif">
@@ -352,21 +354,47 @@
       <div class="push-head">
         <span class="push-bell" aria-hidden="true"><svg class="ic"><use href="#i-bell"/></svg></span>
         <h3>Notifications, from <em>your own server.</em></h3>
-        <p>After you sign in, Marquee asks whether this device should get notifications: a request approved or declined, a title ready to watch. Your server sends them itself, so there’s no third-party service to sign up for and no API key to paste in.</p>
+        <p>After you sign in, Marquee asks whether this device should get notifications: a request approved or declined, a title ready to watch. Your server sends them itself, so there’s no third-party service to sign up for. Each person also picks their own extra channels and which events they want.</p>
       </div>
       <dl class="push-facts">
         <div><dt>Sealed</dt><dd>On the website they’re standard Web Push, encrypted end to end so only your device can read them. The browser’s own push relay carries the sealed message and nothing more.</dd></div>
         <div><dt>On your phone</dt><dd>Open Marquee over https, for example through a tunnel or reverse proxy. On iPhone and iPad, add it to the Home Screen first.</dd></div>
-        <div><dt>No relay at all</dt><dd>The Mac and Windows apps get them straight from your server, over a live connection.</dd></div>
+        <div><dt>No relay at all</dt><dd>The Mac, Windows and iPhone apps get them straight from your server, over a live connection, while they’re open.</dd></div>
         <div><dt>Your devices</dt><dd>Settings › Account › Notifications turns them on or off, lists your devices and sends a test.</dd></div>
       </dl>
     </div>
 
     <dl class="fine-grid reveal">
-      <div><dt>Trusted members skip the line</dt><dd>Auto-approve one member’s movie requests, TV requests, or both, and they go straight to Radarr or Sonarr.</dd></div>
-      <div><dt>Bring a watchlist</dt><dd>Paste a public Trakt list or watchlist, and anything you don’t already have or haven’t requested joins the queue.</dd></div>
-      <div><dt>Tell the whole house</dt><dd>Grabs, finished downloads, approvals and declines can also post to a Discord channel, an ntfy topic or any webhook.</dd></div>
+      <div><dt>Trusted members and limits</dt><dd>Auto-approve a member’s movies, shows or both, let trusted members review requests, and give anyone a request limit, like five movies a week.</dd></div>
+      <div><dt>Bring a watchlist</dt><dd>Add something to your Plex Watchlist, or a public Trakt list, and anything you don’t already have joins the queue by itself.</dd></div>
+      <div><dt>Tell the whole house</dt><dd>Grabs, finished downloads, approvals and declines can post to Discord, Slack, Telegram, ntfy, Gotify, Pushover, Pushbullet, email or any webhook.</dd></div>
     </dl>
+  </div>
+</section>
+
+<!-- ───────────────────────── What's new ───────────────────────── -->
+<section class="section" id="more" aria-labelledby="more-title">
+  <div class="wrap">
+    <div class="section-head split">
+      <div>
+        <p class="eyebrow">And a lot more</p>
+        <h2 id="more-title">Everything Seerr does, <em>and your library too.</em></h2>
+      </div>
+      <p class="section-intro">Marquee started as a way to see what you already own. It’s grown into a full request app for the household, with the admin tools to run it, while keeping the library and file details front and center.</p>
+    </div>
+
+    <dl class="whatsnew reveal">
+      <div><dt>The Library page</dt><dd>Everything in Plex, Jellyfin, Emby, Sonarr and Radarr in one place, with filters for 4K, HDR, codec and more, franchises you only partly own, duplicates, and a forecast of when your disks fill up.</dd></div>
+      <div><dt>Download watch</dt><dd>Title pages show how far a download has got. A finished download that wasn’t imported shows as Ready to move, and turns Owned once you move it into place.</dd></div>
+      <div><dt>Your own Discover</dt><dd>Reorder, hide or add rows: a keyword like anime, a genre, a studio like A24, a network, a TMDb or Trakt list, or what was just added to your server.</dd></div>
+      <div><dt>Search that sorts itself</dt><dd>Results come in Movies, TV Shows, People and Studios &amp; Networks. Type “dune 1984” for that version, or a name to put people first.</dd></div>
+      <div><dt>People and studios</dt><dd>Every actor, director, studio and network has a page with their whole catalog, each poster wearing its status, over artwork from what they’re best known for.</dd></div>
+      <div><dt>Five languages</dt><dd>English, Spanish, French, German and Portuguese, down to titles, overviews and posters from TMDb and the notifications each person gets.</dd></div>
+      <div><dt>Admin tools</dt><dd>Override rules that send requests to the right server, profile and folder; job schedules; a log viewer; an automatic blocklist by age rating; and Remove from Radarr or Sonarr.</dd></div>
+      <div><dt>Comments and problem reports</dt><dd>Anyone can report a problem with a title, and talk it through with the admin in a thread on the request or the report.</dd></div>
+      <div><dt>Coming from Seerr?</dt><dd>Import your users, requests, problem reports and blocklist from Seerr, Overseerr or Jellyseerr. You see a preview first, and nobody gets notified.</dd></div>
+    </dl>
+    <p class="whatsnew-more reveal">See <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/features.md">everything Marquee can do</a>, or the <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/migrating-from-seerr.md">guide to moving from Seerr</a>.</p>
   </div>
 </section>
 
@@ -376,7 +404,7 @@
     <div class="mac-copy feature-copy">
       <p class="eyebrow">Marquee for Mac</p>
       <h2 id="mac-title">Your server, <em>in a native window.</em></h2>
-      <p class="section-intro">A real SwiftUI app with no library of its own. It finds the Marquee server on your home network by itself, signs in with a token kept in your Keychain, and shows exactly what the website shows. On a phone, the website works just as well.</p>
+      <p class="section-intro">A real SwiftUI app with no library of its own. It finds the Marquee server on your home network by itself, stays signed in across updates, and shows exactly what the website shows, Settings included. If your server restarts, it waits and reconnects on its own.</p>
 
       <ul class="points">
         <li><strong>Notifications straight from your server.</strong> System banners and a Dock badge, over a live connection with no relay in between. Click one and the title opens, even if the app was closed.</li>
@@ -412,7 +440,7 @@
         <li><span class="keycombo"><kbd>⌃</kbd><kbd>⌘</kbd><kbd>S</kbd></span> menu</li>
         <li><span class="keycombo"><kbd>⇧</kbd><kbd>⌘</kbd><kbd>E</kbd></span> surprise me</li>
       </ul>
-      <p class="mac-req">Needs macOS 15 Sequoia or later and a Marquee server on 0.22.0 or newer; profile photos and live notifications need 0.29.0. Free and open source, like the server.</p>
+      <p class="mac-req">Needs macOS 15 Sequoia or later. Keep the app and the server on the same version for everything to line up; the app tells you when either has an update. Free and open source, like the server.</p>
     </div>
   </div>
 </section>
@@ -471,14 +499,14 @@
       <div class="win-copy feature-copy">
         <p class="eyebrow">Marquee for Windows <span class="tag">Preview</span></p>
         <h2 id="windows-title">And now, <em>on Windows.</em></h2>
-        <p class="section-intro">A native WinUI 3 app, built alongside the Mac one: the same menu and the same pages, talking to the same server. Type in your server’s address, sign in, and the household’s library is there.</p>
+        <p class="section-intro">A native WinUI 3 app, built alongside the Mac one: the same rail, the same pages and the same Settings, talking to the same server. Type in your server’s address, sign in, and the household’s library is there.</p>
 
         <ul class="points">
-          <li><strong>Everything the house uses.</strong> Discover, Movies and Series, search, title pages with Add or Request, favorites, the calendar, and requests with their decline reasons.</li>
+          <li><strong>Everything the house uses.</strong> Discover, Movies and Series, the Library, search, title pages with Add or Request and the season picker, favorites, the calendar, and requests.</li>
           <li><strong>Notifications with no relay.</strong> While Marquee is open, your server’s notifications show up as Windows notifications, straight over a live connection.</li>
-          <li><strong>Run the household from it.</strong> Add, edit and remove members, and give each one a photo.</li>
+          <li><strong>Run the server from it.</strong> Members, media servers, Sonarr and Radarr, notifications, Discover rows, the blocklist and jobs, all in Settings.</li>
         </ul>
-        <p class="win-later">Not there yet: integrations settings (use the website for now), <code>marquee://</code> links, and finding your server on the network by itself.</p>
+        <p class="win-later">Not there yet: <code>marquee://</code> links, and finding your server on the network by itself.</p>
 
         <div class="get">
           <div class="get-row">
@@ -486,7 +514,59 @@
             <a class="btn btn-ghost" href="https://github.com/TimmyAmant/marquee/blob/main/windows/README.md">Build instructions <span aria-hidden="true">→</span></a>
           </div>
           <p class="get-note">Run it: it installs Marquee for your account (no admin prompt), adds it to the Start menu and opens it. It isn’t code-signed yet, so if SmartScreen says “Windows protected your PC”, choose <span class="nw">More info › Run anyway</span>. A newer installer updates it in place.</p>
-          <p class="get-note">Needs Windows 10 1809 or later, or Windows 11, and a Marquee server on 0.22.0 or newer; photos and notifications need 0.29.0.</p>
+          <p class="get-note">Needs Windows 10 1809 or later, or Windows 11.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────── iPhone and iPad ───────────────────────── -->
+<section class="section section-alt ios" id="iphone" aria-labelledby="iphone-title">
+  <div class="wrap">
+    <div class="ios-grid">
+      <div class="ios-copy feature-copy">
+        <p class="eyebrow">Marquee for iPhone and iPad <span class="tag">Preview</span></p>
+        <h2 id="iphone-title">In your pocket, <em>from the same code.</em></h2>
+        <p class="section-intro">Built from the Mac app’s SwiftUI code, so it looks and behaves the same, sized for the phone. Sign in with your server, Plex, Jellyfin or single sign-on, and the household’s library is there.</p>
+
+        <ul class="points">
+          <li><strong>Tabs along the bottom.</strong> Discover, Search, Requests, Calendar and More, the same five as the website on a phone. On iPad, a sidebar like the Mac’s.</li>
+          <li><strong>Approve from the couch.</strong> Requests are full-width cards with Approve and Decline, and the title pages have Request and the season picker.</li>
+          <li><strong>Settings built in.</strong> The same tabs as the Mac, from members to notifications, without opening the website.</li>
+        </ul>
+
+        <div class="get">
+          <div class="get-row">
+            <a class="btn btn-ghost" href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md#iphone-app"><svg class="ic" aria-hidden="true"><use href="#i-phone"/></svg>Install from Xcode <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="get-note">It isn’t on the App Store: you build it onto your own iPhone or iPad with Xcode. Notifications arrive while the app is open; for alerts when it’s closed, add the website to your Home Screen, or use ntfy, Pushover or Telegram. Needs iOS 18.</p>
+        </div>
+      </div>
+
+      <div class="ios-visual reveal" role="img" aria-label="Marquee on an iPhone, on its Requests page: two pending requests as cards, Paper Harbor from Sam and Holloway Picture House from Alex, each with Decline and Approve buttons, above the tab bar with Requests selected.">
+        <div class="phone">
+          <div class="ios-page">
+            <p class="ph-head">Requests</p>
+            <p class="ph-sub">Pending · 2</p>
+            <div class="ph-card">
+              <img src="assets/img/poster-paper-harbor.webp" width="192" height="288" alt="" loading="lazy" decoding="async">
+              <div><p class="ph-name">Paper Harbor</p><p class="ph-by">Movie · Sam</p></div>
+              <div class="ph-btns"><span>Decline</span><span class="is-approve">Approve</span></div>
+            </div>
+            <div class="ph-card">
+              <img src="assets/img/poster-holloway.webp" width="192" height="288" alt="" loading="lazy" decoding="async">
+              <div><p class="ph-name">Holloway Picture House</p><p class="ph-by">Series · Seasons 1–2 · Alex</p></div>
+              <div class="ph-btns"><span>Decline</span><span class="is-approve">Approve</span></div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <span><svg class="ic"><use href="#i-discover"/></svg>Discover</span>
+            <span><svg class="ic"><use href="#i-search"/></svg>Search</span>
+            <span class="is-current"><svg class="ic"><use href="#i-requests"/></svg>Requests<i class="tab-count">2</i></span>
+            <span><svg class="ic"><use href="#i-calendar"/></svg>Calendar</span>
+            <span><svg class="ic"><use href="#i-more"/></svg>More</span>
+          </div>
         </div>
       </div>
     </div>
@@ -501,7 +581,7 @@
         <p class="eyebrow">Runs on your server</p>
         <h2 id="install-title">One container. <em>Your hardware.</em></h2>
       </div>
-      <p class="section-intro">Marquee is a single Docker image with Postgres built in, so there’s nothing else to install or wire up. Run it on Unraid, a Synology or a spare box, next to the Plex, Jellyfin, Sonarr and Radarr it talks to. Database migrations apply on every start.</p>
+      <p class="section-intro">Marquee is a single Docker image with Postgres built in, so there’s nothing else to install or wire up. Run it on Unraid, a Synology or a spare box, next to the Plex, Jellyfin, Emby, Sonarr and Radarr it talks to. Database migrations apply on every start.</p>
     </div>
 
     <div class="admit reveal">
@@ -526,7 +606,7 @@
         <dl>
           <div><dt>Port</dt><dd>3000</dd></div>
           <div><dt>Image</dt><dd>timmyamant/<wbr>marquee</dd></div>
-          <div><dt>Arch</dt><dd>amd64 · arm64</dd></div>
+          <div><dt>Arch</dt><dd>amd64</dd></div>
           <div><dt>License</dt><dd>MIT</dd></div>
         </dl>
       </div>
@@ -535,7 +615,7 @@
     <div class="install-more">
       <div class="more reveal">
         <h3>On Unraid</h3>
-        <p>Marquee is in Community Applications: open the Apps tab, search “marquee”, and fill in the passwords and keys the template asks for. Where the database lives is already filled in.</p>
+        <p>Marquee is in Community Applications: open the Apps tab, search “marquee”, and fill in the passwords and keys the template asks for. Where the database and the logs live is already filled in.</p>
         <p class="more-links"><a href="https://github.com/TimmyAmant/marquee#unraid">Unraid guide</a><a href="https://github.com/TimmyAmant/marquee/blob/main/unraid-templates/marquee.xml">The template</a></p>
       </div>
       <div class="more reveal">
@@ -550,8 +630,8 @@
       <dl class="credits credits-wide">
         <div class="credit"><dt>No cloud</dt><dd>No account with us, no hosted service and no analytics.</dd></div>
         <div class="credit"><dt>Your data</dt><dd>What you own, what the house asked for, who they are and their profile photos live in a Postgres database inside the container, which doesn’t listen outside it.</dd></div>
-        <div class="credit"><dt>Your keys</dt><dd>Saved Plex, Jellyfin, Sonarr and Radarr credentials are encrypted at rest with <span class="nw">AES-256-GCM</span>. Passwords are hashed with argon2 and sign-ins are rate-limited.</dd></div>
-        <div class="credit"><dt>Calls out</dt><dd>Only to what you connect: TMDb for metadata and artwork, plus TheTVDB, Trakt, plex.tv and your notification channels if you use them. Notifications in a browser pass through that browser’s push relay, sealed so it can’t read them.</dd></div>
+        <div class="credit"><dt>Your keys</dt><dd>Saved Plex, Jellyfin, Emby, Sonarr and Radarr credentials are encrypted at rest with <span class="nw">AES-256-GCM</span>. Passwords are hashed with argon2 and sign-ins are rate-limited.</dd></div>
+        <div class="credit"><dt>Calls out</dt><dd>Only to what you connect: TMDb for metadata and artwork, plus TheTVDB, OMDb, Trakt, plex.tv, your sign-on provider and your notification channels if you use them. Notifications in a browser pass through that browser’s push relay, sealed so it can’t read them.</dd></div>
       </dl>
       <p class="beta-note">Marquee is in beta and changes often. Back up your database before updating.</p>
     </div>
@@ -564,15 +644,15 @@
     <article class="release reveal">
       <div class="release-stub" aria-hidden="true"><span>Now showing</span></div>
       <div class="release-body">
-        <p class="release-meta"><span class="eyebrow">Recent release</span><time datetime="2026-09-25">September 25, 2026</time></p>
-        <h2 id="latest-title"><span class="release-version">0.29.0</span> A new menu, photos and notifications</h2>
+        <p class="release-meta"><span class="eyebrow">Recent release</span><time datetime="2026-10-03">October 3, 2026</time></p>
+        <h2 id="latest-title"><span class="release-version">0.71.0</span> Download watch</h2>
         <ul>
-          <li>A frosted rail at the left edge puts every section one click away, after the Plex app on Apple TV, and ☰ opens the full menu. Pages get the room the sidebar took.</li>
-          <li>Profile photos, kept on your Marquee server and shown in the menu and next to each household member.</li>
-          <li>Notifications on your devices, sent by your own server: Web Push on the website, phones included, and a live connection in the Mac and Windows apps.</li>
-          <li>Since 0.28.0: declined requests say why, a round of security fixes, and Marquee for Windows, now in preview.</li>
+          <li>While anything is downloading, Marquee checks Sonarr and Radarr every minute, and title pages show how far along it is, like “Downloading · 63%”.</li>
+          <li>A new teal Ready to move status for a download that finished but wasn’t imported, with one notification for the admin.</li>
+          <li>Move the file into place and Marquee asks Sonarr or Radarr to look again: it turns Owned within a couple of minutes, and whoever asked for it is told it’s ready to watch.</li>
+          <li>Recently: “Can’t get it” for approved requests, native Settings on iPhone and iPad, and movie details in your own language.</li>
         </ul>
-        <p class="release-links"><a href="https://github.com/TimmyAmant/marquee/releases/tag/v0.29.0">Release notes</a><a href="https://github.com/TimmyAmant/marquee/releases">Every release</a></p>
+        <p class="release-links"><a href="https://github.com/TimmyAmant/marquee/releases/tag/v0.71.0">Release notes</a><a href="https://github.com/TimmyAmant/marquee/releases">Every release</a></p>
       </div>
     </article>
   </div>
@@ -588,12 +668,12 @@
     <dl class="end-credits">
       <div><dt>Source</dt><dd><a href="https://github.com/TimmyAmant/marquee">GitHub</a></dd></div>
       <div><dt>Image</dt><dd><a href="https://hub.docker.com/r/timmyamant/marquee">Docker Hub</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/pkgs/container/marquee">GitHub Packages</a></dd></div>
-      <div><dt>Docs</dt><dd><a href="https://github.com/TimmyAmant/marquee#readme">README</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/api-v1.md">API reference</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md">Mac app</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/windows/README.md">Windows app</a></dd></div>
+      <div><dt>Docs</dt><dd><a href="https://github.com/TimmyAmant/marquee#readme">README</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/features.md">All features</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/getting-started.md">Getting started</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/docs/api-v1.md">API reference</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/mac/README.md">Mac app</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/windows/README.md">Windows app</a></dd></div>
       <div><dt>Changelog</dt><dd><a href="https://github.com/TimmyAmant/marquee/releases">Releases</a> <span class="sep" aria-hidden="true">·</span> <a href="https://github.com/TimmyAmant/marquee/blob/main/lib/changelog.ts">Full history</a></dd></div>
       <div><dt>Support</dt><dd><a href="https://github.com/TimmyAmant/marquee/issues">Issues</a></dd></div>
       <div><dt>License</dt><dd><a href="https://github.com/TimmyAmant/marquee/blob/main/LICENSE">MIT</a></dd></div>
     </dl>
-    <p class="legal">This product uses the TMDB API but is not endorsed or certified by TMDB. Plex, Jellyfin, Sonarr, Radarr, Trakt and TheTVDB belong to their respective owners, and Marquee isn’t affiliated with any of them. The films, people and streaming services in the screenshots are made up.</p>
+    <p class="legal">This product uses the TMDB API but is not endorsed or certified by TMDB. Plex, Jellyfin, Emby, Sonarr, Radarr, Seerr, Trakt and TheTVDB belong to their respective owners, and Marquee isn’t affiliated with any of them. The films, people and streaming services in the screenshots are made up.</p>
   </div>
 </footer>
 </body>
