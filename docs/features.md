@@ -303,8 +303,9 @@ list rather than one per title. *Everyone.*
 ### The bell
 The bell on the menu shows a dot when something new happens: your request
 was approved or declined, something you asked for is ready, someone shared a
-title or replied to a comment. Click a notification to open the title.
-*Everyone.*
+title or replied to a comment. Opening the bell reads them, so the dot goes
+away; what's new stays marked while the list is open. Click a notification
+to open the title. *Everyone.*
 
 ### Notifications on your devices
 After you sign in, Marquee asks whether this device should get

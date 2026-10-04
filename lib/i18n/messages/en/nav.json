@@ -9,7 +9,6 @@
   "accountAndSettings": "{name}: account and settings",
   "notifications": "Notifications",
   "notificationsUnread": "{count, plural, one {Notifications, # unread} other {Notifications, # unread}}",
-  "markAllRead": "Mark all read",
   "noNotifications": "No notifications yet.",
   "mainNav": "Main",
   "library": "Library",

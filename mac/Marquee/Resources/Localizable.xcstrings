@@ -20872,34 +20872,6 @@
         }
       }
     },
-    "Mark all read" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle als gelesen markieren"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marcar todo como leído"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout marquer comme lu"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Marcar tudo como lido"
-          }
-        }
-      }
-    },
     "Mark as found" : {
       "localizations" : {
         "de" : {

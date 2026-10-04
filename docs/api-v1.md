@@ -3049,7 +3049,9 @@ event is `download_ready`.
 
 ### `POST /notifications/read-all` — user
 
-"Mark all read". `{ "ok": true }`.
+Everything read. The apps call it when the notifications list is opened
+(0.72+: opening the bell reads them all, so its badge goes), keeping the
+dots on what was new until the list is opened again. `{ "ok": true }`.
 
 ### `POST /notifications/{id}/read` — user
 

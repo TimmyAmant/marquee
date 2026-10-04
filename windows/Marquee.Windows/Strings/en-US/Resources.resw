@@ -3274,9 +3274,6 @@
   <data name="Notifications_EmptyMessage" xml:space="preserve">
     <value>No notifications yet.</value>
   </data>
-  <data name="Notifications_MarkAllRead.Content" xml:space="preserve">
-    <value>Mark all read</value>
-  </data>
   <data name="Notifications_NoteLine" xml:space="preserve">
     <value>“{0}”</value>
     <comment>The note someone wrote when sharing a title, in quotes.</comment>

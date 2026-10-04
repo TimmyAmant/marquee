@@ -899,6 +899,18 @@ public sealed partial class AppModel : ObservableObject
 
     // MARK: Badges
 
+    /// <summary>
+    /// The bell's list was opened, which reads them all: its badge goes at
+    /// once, before the server's read-all answers (the next poll confirms it).
+    /// </summary>
+    public void NotificationsRead()
+    {
+        if (Badges.UnreadNotifications != 0)
+        {
+            Badges = Badges with { UnreadNotifications = 0 };
+        }
+    }
+
     private void StartBadgePolling()
     {
         StopBadgePolling();

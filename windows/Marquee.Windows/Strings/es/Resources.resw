@@ -3139,9 +3139,6 @@
   <data name="Notifications_EmptyMessage" xml:space="preserve">
     <value>Aún no hay notificaciones.</value>
   </data>
-  <data name="Notifications_MarkAllRead.Content" xml:space="preserve">
-    <value>Marcar todo como leído</value>
-  </data>
   <data name="Notifications_NoteLine" xml:space="preserve">
     <value>«{0}»</value>
   </data>
