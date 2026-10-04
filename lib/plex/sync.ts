@@ -155,6 +155,10 @@ async function runSyncPlexLibrary(userId: string): Promise<{ serverCount: number
       await assertSamePlexConnection(userId, credential.authToken);
       for (const [index, item] of items.entries()) {
         if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertSamePlexConnection(userId, credential.authToken);
+        // A show with no episode files (Plex can keep one listed after its
+        // episodes are deleted) isn't in the library: storing it would make
+        // it Owned. Unknown (the episode fetch failed) keeps it.
+        if (mediaType === "tv" && episodeCountByRatingKey.get(item.ratingKey) === 0) continue;
         seenRatingKeys.add(item.ratingKey);
         const parsed = plex.parseExternalIds(item);
         let { tmdbId } = parsed;

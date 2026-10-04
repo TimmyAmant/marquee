@@ -65,6 +65,11 @@ async function runSyncJellyfinLibrary(
   for (const [index, item] of items.entries()) {
     if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertStillConnected(userId, "jellyfin");
     if (item.Type !== "Movie" && item.Type !== "Series") continue;
+    // A show with no episode files — an empty folder Sonarr made when the
+    // show was added — is listed by Jellyfin all the same, but isn't in the
+    // library: storing it would make it Owned. (Unknown, when the episode
+    // listing failed, keeps it.)
+    if (item.Type === "Series" && episodesBySeries && !episodesBySeries.withFiles.has(item.Id)) continue;
     seenItemIds.add(item.Id);
     const mediaType: MediaType = item.Type === "Movie" ? "movie" : "tv";
 
@@ -93,7 +98,7 @@ async function runSyncJellyfinLibrary(
     // request), and a Series entry simply has neither.
     const detail: MediaDetail =
       mediaType === "movie" ? jellyfin.parseMediaDetail(item) : { ...EMPTY_MEDIA_DETAIL };
-    const episodesHave = mediaType === "tv" && episodesBySeries ? (episodesBySeries.get(item.Id) ?? 0) : null;
+    const episodesHave = mediaType === "tv" && episodesBySeries ? (episodesBySeries.counts.get(item.Id) ?? 0) : null;
 
     await db
       .insert(jellyfinLibraryItems)
