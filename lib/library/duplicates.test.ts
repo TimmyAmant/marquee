@@ -43,6 +43,30 @@ describe("findDuplicates", () => {
     ).toEqual([]);
   });
 
+  it("matches a show's folder to the season folders and episodes inside it", () => {
+    expect(
+      findDuplicates([
+        { mediaType: "tv", copies: [copy("sonarr", "/tv/Ahsoka (2023)/"), copy("plex", "/data/Tv Shows/Ahsoka (2023)/Season 01")] },
+        { mediaType: "tv", copies: [copy("sonarr", "/tv/9-1-1 Nashville (2025)"), copy("plex", "/data/Tv Shows/9-1-1 Nashville (2025)/Season 1")] },
+        { mediaType: "tv", copies: [copy("sonarr", "/tv/Andor"), copy("jellyfin", "/media/tv/Andor/Specials/Andor - S00E01.mkv")] },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("still lists a show kept in two different folders", () => {
+    const groups = findDuplicates([
+      { mediaType: "tv" as const, copies: [copy("sonarr", "/tv/Ahsoka (2023)"), copy("plex", "/data/Tv Shows/Ahsoka/Season 01")] },
+    ]);
+    expect(groups.map((g) => g.reason)).toEqual(["paths"]);
+  });
+
+  it("keeps a movie's file name as the key, even next to a show's rules", () => {
+    const groups = findDuplicates([
+      { mediaType: "movie" as const, copies: [copy("radarr", "/movies/a/a.2160p.mkv"), copy("plex", "/data/Movies/a/a.1080p.mkv")] },
+    ]);
+    expect(groups.map((g) => g.reason)).toEqual(["paths"]);
+  });
+
   it("prefers the paths reason when both apply", () => {
     const groups = findDuplicates([{ copies: [copy("plex", "/a", "Tower"), copy("plex", "/b", "Attic")] }]);
     expect(groups[0].reason).toBe("paths");

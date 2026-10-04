@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.71.1",
+    date: "2026-10-04",
+    changes: [
+      "Library › Duplicates no longer lists a show just because Sonarr and Plex (or Jellyfin) see its folder from different places, like /tv/Ahsoka (2023) and /data/Tv Shows/Ahsoka (2023)/Season 01. A show kept in two different folders is still listed.",
+    ],
+  },
+  {
     version: "0.71.0",
     date: "2026-10-03",
     changes: [
