@@ -131,10 +131,14 @@ export interface JellyfinEpisodeItem {
 }
 
 /** Episodes with a file on disk per series id, specials (season 0) left
- * out — a series poster's "have" (lib/library/episode-counts.ts). One
- * listing of every episode, trimmed to the few fields it needs; a missing
- * episode Jellyfin only knows from metadata ("Virtual") doesn't count. */
-export async function getEpisodeFileCountsBySeries(config: JellyfinConfig): Promise<Map<string, number>> {
+ * out — a series poster's "have" (lib/library/episode-counts.ts) — and
+ * which series have any file at all, specials included (an empty show
+ * folder still gets a Series entry). One listing of every episode, trimmed
+ * to the few fields it needs; a missing episode Jellyfin only knows from
+ * metadata ("Virtual") doesn't count. */
+export async function getEpisodeFileCountsBySeries(
+  config: JellyfinConfig,
+): Promise<{ counts: Map<string, number>; withFiles: Set<string> }> {
   const params = new URLSearchParams({
     Recursive: "true",
     IncludeItemTypes: "Episode",
@@ -148,7 +152,17 @@ export async function getEpisodeFileCountsBySeries(config: JellyfinConfig): Prom
     `/Items?${params.toString()}`,
     LIBRARY_TIMEOUT_MS,
   );
-  return countEpisodeFilesBySeries(body.Items ?? []);
+  const items = body.Items ?? [];
+  return { counts: countEpisodeFilesBySeries(items), withFiles: seriesWithEpisodeFiles(items) };
+}
+
+/** The series with at least one episode file, specials included. Pure. */
+export function seriesWithEpisodeFiles(items: readonly JellyfinEpisodeItem[]): Set<string> {
+  const ids = new Set<string>();
+  for (const item of items) {
+    if (item.SeriesId && item.LocationType !== "Virtual") ids.add(item.SeriesId);
+  }
+  return ids;
 }
 
 export function countEpisodeFilesBySeries(items: readonly JellyfinEpisodeItem[]): Map<string, number> {
