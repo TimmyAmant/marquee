@@ -11,6 +11,7 @@ import {
   rankPeople,
   rankTitles,
   searchText,
+  dottedSpelling,
   isNotableCompany,
   isNotablePerson,
   personLeads,
@@ -131,8 +132,11 @@ export async function getSearchSuggestions(
   const text = searchText(query);
 
   const networkMatches = options.includeCompanies ? matchNetworks(CURATED_NETWORKS, text) : [];
-  const [multi, companyResults, networks] = await Promise.all([
+  const dotted = dottedSpelling(text);
+  const [multi, dottedMulti, companyResults, networks] = await Promise.all([
     searchMulti(text).catch(() => null),
+    // "wall-e" only finds "WALL·E" spelled with the dot.
+    dotted ? searchMulti(dotted).catch(() => null) : null,
     options.includeCompanies ? searchCompany(text).catch(() => null) : null,
     Promise.all(
       networkMatches.slice(0, SUGGESTION_LIMITS.company).map(async (network) => {
@@ -149,7 +153,9 @@ export async function getSearchSuggestions(
     name: c.name,
     logoPath: c.logoPath,
   }));
-  const suggestions = groupSuggestions(query, multi.results, [...networks, ...studios]);
+  const seen = new Set(multi.results.map((r) => `${r.media_type}:${r.id}`));
+  const results = [...multi.results, ...(dottedMulti?.results ?? []).filter((r) => !seen.has(`${r.media_type}:${r.id}`))];
+  const suggestions = groupSuggestions(query, results, [...networks, ...studios]);
 
   const titles = suggestions.flatMap((s) =>
     s.mediaType === "movie" || s.mediaType === "tv" ? [{ mediaType: s.mediaType, tmdbId: s.id }] : [],

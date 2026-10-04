@@ -35,6 +35,7 @@ import {
   rankPeople,
   rankTitles,
   searchText,
+  dottedSpelling,
   themePlacement,
   isNotableCompany,
   isNotablePerson,
@@ -137,20 +138,23 @@ function dedupeBy<T>(items: readonly T[], key: (item: T) => string | number): T[
 /**
  * One page of movies or series. TMDb is searched for the query without a
  * trailing year ("dune 2021" → "dune"); on page 1 the whole query is
- * searched too (for titles that end in a number, "Blade Runner 2049"), and
- * the page is re-ranked — exact title first, the hinted year ahead.
+ * searched too (for titles that end in a number, "Blade Runner 2049"), as
+ * is its dotted spelling ("wall-e" → "wall·e", for "WALL·E"), and the page
+ * is re-ranked — exact title first, the hinted year ahead.
  */
 async function searchTitlesPage(query: string, mediaType: MediaType, page: number) {
   const search = mediaType === "movie" ? searchMovies : searchTv;
   const text = searchText(query);
-  const [primary, whole] = await Promise.all([
+  const dotted = page === 1 ? dottedSpelling(text) : null;
+  const [primary, whole, dottedResults] = await Promise.all([
     search(text, page).catch(() => EMPTY_PAGE as TmdbPagedSearch<TmdbTitleSearchResult>),
     page === 1 && text !== query.trim()
       ? search(query.trim(), 1).catch(() => EMPTY_PAGE as TmdbPagedSearch<TmdbTitleSearchResult>)
       : null,
+    dotted ? search(dotted, 1).catch(() => null) : null,
   ]);
   const merged = dedupeBy(
-    [...(whole?.results ?? []), ...primary.results].map((item) => rawTitle(item, mediaType)),
+    [...(whole?.results ?? []), ...primary.results, ...(dottedResults?.results ?? [])].map((item) => rawTitle(item, mediaType)),
     (item) => item.tmdbId,
   );
   return {

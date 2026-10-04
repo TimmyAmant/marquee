@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.72.1",
+    date: "2026-10-04",
+    changes: [
+      "Fixed: searching for a title with a hyphen, like \"wall-e\", now finds WALL·E and other titles spelled with a dot. \"walle\" counts as an exact match too.",
+    ],
+  },
+  {
     version: "0.72.0",
     date: "2026-10-04",
     changes: [
