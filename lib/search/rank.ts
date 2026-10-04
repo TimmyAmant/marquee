@@ -52,15 +52,25 @@ export function searchText(query: string): string {
   return match && normalizeName(match[1]) ? match[1].trim() : trimmed;
 }
 
+/** Another spelling to search TMDb for alongside the query. TMDb splits words
+ * on a hyphen but not on "·", so "wall-e" never finds "WALL·E"; try the
+ * hyphens as dots. Null when the query has no hyphen between letters. */
+export function dottedSpelling(text: string): string | null {
+  const dotted = text.replace(/(\p{L})[-‐‑–](?=\p{L})/gu, "$1·");
+  return dotted === text ? null : dotted;
+}
+
 /** How well one name matches the query: 1000 exactly what was typed, 900
  * exactly it without its year hint ("Dune" for "dune 2021"), 500 starts
- * with it, 300 has every word of it, 0 otherwise. */
+ * with it, 300 has every word of it, 0 otherwise. Word breaks don't count
+ * for an exact match, so "walle" is "WALL·E". */
 export function nameMatchScore(name: string | null | undefined, q: ParsedQuery): number {
   if (!name) return 0;
   const n = normalizeName(name);
   if (!n) return 0;
-  if (n === q.full) return 1000;
-  if (n === q.text) return 900;
+  const compact = n.replace(/ /g, "");
+  if (compact === q.full.replace(/ /g, "")) return 1000;
+  if (compact === q.text.replace(/ /g, "")) return 900;
   if (q.text && (n.startsWith(`${q.text} `) || n.startsWith(q.text))) return 500;
   const words = q.text.split(" ").filter(Boolean);
   const nameWords = new Set(n.split(" "));
