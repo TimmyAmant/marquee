@@ -449,7 +449,9 @@
           and the kind pill tinted by library status), which fills itself from
           its DataContext, keeping this file free of bindings (see the note at
           the top). SuggestionItem.ToString() is still what the box shows
-          while the arrow keys move through the list.
+          while the arrow keys move through the list. Under two characters,
+          this PC's recent searches show under the box instead (rows built in
+          code-behind, like the rest of this file's text).
         -->
         <Grid x:Name="SearchLayer" Grid.Row="1" Visibility="Collapsed" KeyDown="OnSearchLayerKeyDown">
             <Border Background="#47000000" PointerPressed="OnSearchDismissPressed" />
@@ -463,19 +465,41 @@
                 BorderThickness="1"
                 BorderBrush="{ThemeResource MarqueeGlassBorderBrush}"
                 Background="{ThemeResource MarqueeGlassBrush}">
-                <AutoSuggestBox
-                    x:Name="SearchBox"
-                    FontSize="17"
-                    x:Uid="Shell_SearchBox"
-                    QueryIcon="Find"
-                    TextChanged="OnSearchTextChanged"
-                    QuerySubmitted="OnSearchQuerySubmitted">
-                    <AutoSuggestBox.ItemTemplate>
-                        <DataTemplate>
-                            <controls:SuggestionRow />
-                        </DataTemplate>
-                    </AutoSuggestBox.ItemTemplate>
-                </AutoSuggestBox>
+                <StackPanel>
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        FontSize="17"
+                        x:Uid="Shell_SearchBox"
+                        QueryIcon="Find"
+                        TextChanged="OnSearchTextChanged"
+                        QuerySubmitted="OnSearchQuerySubmitted">
+                        <AutoSuggestBox.ItemTemplate>
+                            <DataTemplate>
+                                <controls:SuggestionRow />
+                            </DataTemplate>
+                        </AutoSuggestBox.ItemTemplate>
+                    </AutoSuggestBox>
+
+                    <!-- Recent searches: a small label with Clear beside it, then a row per search (clock, the query, ×). -->
+                    <StackPanel x:Name="RecentSearchesPanel" Visibility="Collapsed" Margin="0,8,0,0">
+                        <Grid Padding="10,4,0,2">
+                            <TextBlock
+                                x:Name="RecentSearchesHeading"
+                                VerticalAlignment="Center"
+                                FontSize="10.5"
+                                FontWeight="SemiBold"
+                                CharacterSpacing="60"
+                                Foreground="{ThemeResource MarqueeNavTextSecondaryBrush}" />
+                            <HyperlinkButton
+                                x:Uid="Shell_RecentSearchesClear"
+                                HorizontalAlignment="Right"
+                                Padding="6,2"
+                                FontSize="11"
+                                Click="OnClearRecentSearchesClick" />
+                        </Grid>
+                        <StackPanel x:Name="RecentSearchesList" Spacing="2" />
+                    </StackPanel>
+                </StackPanel>
             </Border>
         </Grid>
     </Grid>

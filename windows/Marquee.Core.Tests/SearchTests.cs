@@ -1,4 +1,5 @@
 using Marquee.Core.Api;
+using Marquee.Core.Connection;
 using Marquee.Core.Models;
 using Marquee.Core.Tests.Support;
 
@@ -6,8 +7,8 @@ namespace Marquee.Core.Tests;
 
 // Search in sections (0.55+), the Mac's SearchTests: the page's order —
 // Movies, TV Shows, People, Studios & Networks — from a new server and an
-// older one, the theme's place, the type-ahead's groups, and kinds this
-// build doesn't know.
+// older one, the theme's place, the type-ahead's groups, kinds this
+// build doesn't know, and recent searches.
 
 public sealed class SearchTests
 {
@@ -167,4 +168,63 @@ public sealed class SearchTests
         var people = Json.Decode<Paginated<PersonCard>>($$"""{"page":1,"totalPages":1,"totalResults":1,"results":[{{Person}}]}""");
         Assert.Equal(["Forrest Gump", "Cast Away"], people.Results[0].KnownFor!);
     }
+
+    // MARK: Recent searches
+
+    [Fact]
+    public void ARecentSearchGoesToTheFront()
+    {
+        Assert.Equal(["dune"], RecentSearches.Add([], "dune"));
+        Assert.Equal(["alien", "dune"], RecentSearches.Add(["dune"], "  alien "));
+        Assert.Equal(["dune"], RecentSearches.Add(["dune"], "   "));
+        Assert.Equal(["dune"], RecentSearches.Add(["dune"], null));
+    }
+
+    [Fact]
+    public void TheSameSearchTypedDifferentlyMovesUp()
+    {
+        string[] list = ["alien", "Wall-E", "dune"];
+        Assert.Equal(["wall·e", "alien", "dune"], RecentSearches.Add(list, "wall·e"));
+        Assert.Equal(["DUNE", "alien", "Wall-E"], RecentSearches.Add(list, "DUNE"));
+        Assert.Equal(["Amélie"], RecentSearches.Add(["amelie"], "Amélie"));
+        Assert.Equal(["Fast & Furious"], RecentSearches.Add(["fast and furious"], "Fast & Furious"));
+        // Punctuation alone still compares, as typed.
+        Assert.Equal(["!!", "?"], RecentSearches.Add(["!!", "?"], "!!"));
+    }
+
+    [Fact]
+    public void RecentSearchesKeepTheLastEight()
+    {
+        var full = Enumerable.Range(1, 8).Select(n => $"search {n}").ToList();
+        var next = RecentSearches.Add(full, "new");
+        Assert.Equal(RecentSearches.Limit, next.Count);
+        Assert.Equal("new", next[0]);
+        Assert.DoesNotContain("search 8", next);
+    }
+
+    [Fact]
+    public void RecentSearchesRoundTripThroughTheStore()
+    {
+        var store = new InMemorySettingsStore();
+        Assert.Empty(RecentSearches.Read(store));
+        RecentSearches.Remember(store, "dune");
+        Assert.Equal(["Alien", "dune"], RecentSearches.Remember(store, "Alien"));
+        Assert.Equal(["Alien", "dune"], RecentSearches.Read(store));
+        RecentSearches.Write(store, RecentSearches.Remove(["Alien", "dune"], "dune"));
+        Assert.Equal(["Alien"], RecentSearches.Read(store));
+        RecentSearches.Write(store, []);
+        Assert.Null(store.GetString(RecentSearches.Key));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not json")]
+    [InlineData("""{"q":"dune"}""")]
+    public void AnythingElseStoredIsNoRecentSearches(string? stored) =>
+        Assert.Empty(RecentSearches.Parse(stored));
+
+    [Fact]
+    public void StoredRecentSearchesSkipWhatIsntText() =>
+        Assert.Equal(["dune", "alien"], RecentSearches.Parse("""["dune", 3, "  ", null, "alien"]"""));
 }
