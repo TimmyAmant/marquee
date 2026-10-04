@@ -175,7 +175,7 @@ export async function addMovieToRadarrForUser(
       addedNew = true;
     }
   } catch (err) {
-    console.error(`[arr] adding movie ${tmdbId} to ${server.name} failed:`, err);
+    console.error("[arr] adding movie %d to %s failed:", tmdbId, server.name, err);
     // A timed-out add often went through anyway, and a duplicate means it's
     // there already: either way Radarr has it, which is all the add was for.
     const there = adding ? await radarr.getMovieByTmdbId(arrConfig(server), tmdbId).catch(() => null) : null;
@@ -286,7 +286,7 @@ export async function addSeriesToSonarrForUser(
       addedNew = true;
     }
   } catch (err) {
-    console.error(`[arr] adding series ${tmdbId} to ${server.name} failed:`, err);
+    console.error("[arr] adding series %d to %s failed:", tmdbId, server.name, err);
     // See addMovieToRadarrForUser: a timed-out add often went through.
     const there = adding ? await sonarr.getSeriesByTvdbId(arrConfig(server), title.tvdbId).catch(() => null) : null;
     if (!there) {
