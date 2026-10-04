@@ -9,7 +9,6 @@
   "accountAndSettings": "{name}: Konto und Einstellungen",
   "notifications": "Benachrichtigungen",
   "notificationsUnread": "{count, plural, one {Benachrichtigungen, # ungelesen} other {Benachrichtigungen, # ungelesen}}",
-  "markAllRead": "Alle als gelesen markieren",
   "noNotifications": "Noch keine Benachrichtigungen.",
   "mainNav": "Hauptmenü",
   "library": "Mediathek",

@@ -54,6 +54,9 @@ final class TitleDetailModel {
 
     /// Set by the view, so actions can record what changed for other screens.
     @ObservationIgnored var titleState: TitleStateStore?
+    /// Told after this title's own Add or Request goes through (the
+    /// collection offer, `AppModel.offerCollection(after:)`).
+    @ObservationIgnored var onAddedOrRequested: ((API.TitleID) -> Void)?
 
     init(id: API.TitleID) {
         self.id = id
@@ -157,6 +160,7 @@ final class TitleDetailModel {
                 try await api.titles.add(id.mediaType, id: id.tmdbId, overrides: overrides)
                 advancedAdd.reset()
                 await refreshStatus()
+                onAddedOrRequested?(id)
             } catch {
                 addError = error.localizedDescription
             }
@@ -175,6 +179,7 @@ final class TitleDetailModel {
                 try await api.requests.create(id.mediaType, id: id.tmdbId, overrides: overrides)
                 advancedAdd.reset()
                 await refreshStatus()
+                onAddedOrRequested?(id)
             } catch {
                 addError = error.localizedDescription
             }

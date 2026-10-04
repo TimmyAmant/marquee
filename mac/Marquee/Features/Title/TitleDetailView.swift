@@ -73,6 +73,7 @@ struct TitleDetailView: View {
         // ScrollView is never rebuilt and the scroll offset never moves.
         .task(id: model.reloadToken) {
             screen.titleState = model.titleState
+            screen.onAddedOrRequested = { [model] id in model.offerCollection(after: id) }
             await screen.load(model.api)
         }
         // A change that came from the server (a download finished, someone

@@ -104,6 +104,7 @@
     "status": "owned",
     "provider": "plex",
     "configured": true,
+    "downloadProgress": null,
     "file": {
       "path": "/movies/The Matrix (1999)/The Matrix.mkv",
       "sizeBytes": 31229390464,

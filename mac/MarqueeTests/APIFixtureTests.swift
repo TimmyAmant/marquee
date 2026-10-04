@@ -67,6 +67,8 @@ final class APIFixtureTests: XCTestCase {
         "favorite-toggle": decodes(API.FavoriteState.self),
         "request-created": decodes(API.RequestCreated.self),
         "request-all-missing": decodes(API.RequestAllMissingResult.self),
+        "collection-rest": decodes(API.CollectionRest.self),
+        "collection-rest-result": decodes(API.CollectionRestResult.self),
         "requests-mine": decodes(API.ListResponse<API.MyRequest>.self),
         "requests-pending": decodes(API.PendingRequests.self),
         "requests-history": decodes(API.ListResponse<API.ReviewedRequest>.self),
@@ -127,7 +129,7 @@ final class APIFixtureTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(at: Self.fixturesURL, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "json" }
         let names = Set(files.map { $0.deletingPathExtension().lastPathComponent })
-        XCTAssertEqual(names.count, 95, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
+        XCTAssertEqual(names.count, 97, "docs/api-v1.md's examples; re-run Scripts/extract-api-fixtures.py after editing the doc")
         let checks = self.checks
         XCTAssertEqual(names, Set(checks.keys), "Every fixture needs a DTO here, and every DTO here a fixture")
 
@@ -142,6 +144,16 @@ final class APIFixtureTests: XCTestCase {
     }
 
     // MARK: Decoded values
+
+    func testCollectionRest() throws {
+        let rest = try decode(API.CollectionRest.self, "collection-rest")
+        XCTAssertEqual(rest.collection?.name, "The Matrix Collection")
+        XCTAssertEqual(rest.action, .request)
+        XCTAssertEqual(rest.items.map(\.tmdbId), [604, 605])
+        let result = try decode(API.CollectionRestResult.self, "collection-rest-result")
+        XCTAssertEqual(result.done, 2)
+        XCTAssertEqual(result.message, "Requested all 2.")
+    }
 
     func testAdminToolsValues() throws {
         let jobs = try decode(API.ListResponse<API.Job>.self, "jobs").results

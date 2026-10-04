@@ -9,7 +9,6 @@
   "accountAndSettings": "{name} : compte et paramètres",
   "notifications": "Notifications",
   "notificationsUnread": "{count, plural, one {Notifications, # non lue} other {Notifications, # non lues}}",
-  "markAllRead": "Tout marquer comme lu",
   "noNotifications": "Aucune notification pour l’instant.",
   "mainNav": "Principal",
   "library": "Bibliothèque",

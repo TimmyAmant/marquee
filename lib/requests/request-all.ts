@@ -49,6 +49,9 @@ export async function requestAllMissing(
   viewer: Extract<ViewerIdentity, { userId: string }>,
   mediaType: MediaType,
   tmdbId: number,
+  /** Leave the title itself out: "the rest of the collection", offered
+   * once it's been requested (lib/collections/rest.ts). */
+  restOnly = false,
 ): Promise<CoreResult<RequestAllOutcome>> {
   const t = await getT();
   if (viewer.isAdmin) return fail("forbidden", t("notify.requestAllAdmin"));
@@ -70,7 +73,7 @@ export async function requestAllMissing(
     blockedKeys,
     viewer.isAdmin,
     permissionMap((await getAccess(viewer.userId)) ?? { role: "member", permissions: [] }),
-  );
+  ).filter((item) => !restOnly || item.mediaType !== mediaType || item.tmdbId !== tmdbId);
   const byKey = new Map(franchise.franchiseItems.map((item) => [`${item.mediaType}:${item.tmdbId}`, item]));
 
   const requestIds: string[] = [];

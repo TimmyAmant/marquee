@@ -267,5 +267,11 @@
   "removingFromArr": "Removing…",
   "removeAndDelete": "Remove and delete files",
   "removedFromArr": "Removed from {app}",
-  "openIn": "Open in {name}"
+  "openIn": "Open in {name}",
+  "collectionPromptHeading": "Part of {collection}",
+  "collectionPromptBodyAdd": "{count, plural, one {# other movie in this collection isn't in your library yet. Add it too?} other {# other movies in this collection aren't in your library yet. Add them too?}}",
+  "collectionPromptBodyRequest": "{count, plural, one {# other movie in this collection isn't in the library yet. Request it too?} other {# other movies in this collection aren't in the library yet. Request them too?}}",
+  "collectionPromptAdd": "{count, plural, one {Add it} other {Add all #}}",
+  "collectionPromptRequest": "{count, plural, one {Request it} other {Request all #}}",
+  "collectionPromptNotNow": "Not now"
 }

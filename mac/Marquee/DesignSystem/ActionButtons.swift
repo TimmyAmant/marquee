@@ -13,12 +13,36 @@ extension AppModel {
         // themselves deliberately don't refetch on your own action.
         let status = try? await api.titles.status(id.mediaType, id: id.tmdbId)
         titleState.added(id, status: status?.library.status)
+        offerCollection(after: id)
+    }
+
+    /// A movie was just added or requested: offer the rest of its collection.
+    func offerCollection(after id: API.TitleID) {
+        guard id.mediaType == .movie else { return }
+        collectionOffer.movieAdded(id.tmdbId, api: api)
+    }
+
+    /// The collection sheet's "Add all" / "Request all". Each one that went
+    /// through stops offering its own add or request wherever it's shown.
+    func acceptCollectionOffer() async {
+        guard let offer = collectionOffer.offer, let result = await collectionOffer.accept(api: api) else { return }
+        let failed = Set(result.failed.map(\.tmdbId))
+        for item in offer.items where !failed.contains(item.tmdbId) {
+            let id = API.TitleID(.movie, item.tmdbId)
+            if result.action == .add {
+                titleState.added(id, status: nil)
+            } else {
+                titleState.requested(id)
+            }
+        }
+        flash(result.message)
     }
 
     /// Member request.
     func requestTitle(_ id: API.TitleID) async throws {
         try await api.requests.create(id.mediaType, id: id.tmdbId)
         titleState.requested(id)
+        offerCollection(after: id)
     }
 
     /// Sets a star; returns the state the server reports.

@@ -11,6 +11,18 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.72.0",
+    date: "2026-10-04",
+    changes: [
+      "Add or request a movie that's part of a collection you don't fully have, and Marquee now asks if you'd like the rest too — \"Part of The Matrix Collection: 3 other movies aren't in your library yet.\" Add all (the admin) or Request all gets them in one go; Not now won't ask about that collection again for a while. On the website and the Mac, iPhone, iPad and Windows apps.",
+      "Opening the notifications bell now marks them all as read, so the badge goes away straight away — what's new keeps its dot while the list is open. No more Mark all read. On the website and the Mac, iPhone, iPad and Windows apps.",
+      "Fixed: on phones, the season picker and Remove from Radarr/Sonarr dialogs could sit behind the bottom tab bar, hiding their buttons.",
+      "Fixed: Library › Duplicates could list a movie Radarr hadn't downloaded yet next to the copy Plex or Jellyfin has, and a show whose folder name has dots in it (like The.Office.US).",
+      "Fixed: \"Ready to move\" for a show is now sent for each new episode you're waiting to move, not just once a month.",
+      "The download watch no longer asks Sonarr about every partly-downloaded show every minute; those are kept up to date by the hourly sync.",
+    ],
+  },
+  {
     version: "0.71.1",
     date: "2026-10-04",
     changes: [

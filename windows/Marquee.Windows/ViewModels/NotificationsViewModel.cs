@@ -8,7 +8,7 @@ using Marquee.Windows.Services;
 
 namespace Marquee.Windows.ViewModels;
 
-/// <summary>One row of the bell's list; immutable, so "mark all read" rebuilds the list.</summary>
+/// <summary>One row of the bell's list.</summary>
 public sealed class NotificationRow
 {
     /// <param name="open">Runs with this row as its parameter when the row is clicked.</param>
@@ -25,21 +25,6 @@ public sealed class NotificationRow
         HasSender = item.SharedBy != null;
         NoteLine = item.Note.NonBlank() is { } note ? Loc.Format("Notifications_NoteLine", note) : "";
         Open = open;
-    }
-
-    private NotificationRow(NotificationRow source, bool isUnread)
-    {
-        Id = source.Id;
-        TitleId = source.TitleId;
-        Message = source.Message;
-        Emoji = source.Emoji;
-        TimeAgo = source.TimeAgo;
-        IsUnread = isUnread;
-        SenderLabel = source.SenderLabel;
-        SenderAvatarUrl = source.SenderAvatarUrl;
-        HasSender = source.HasSender;
-        NoteLine = source.NoteLine;
-        Open = source.Open;
     }
 
     public ICommand Open { get; }
@@ -74,16 +59,14 @@ public sealed class NotificationRow
 
     /// <summary>What a screen reader says for the row.</summary>
     public string AccessibleName => IsUnread ? Loc.Format("Notifications_UnreadRow", Message) : Message;
-
-    /// <summary>The same row shown as read, for the optimistic "Mark all read".</summary>
-    public NotificationRow AsRead() => IsUnread ? new NotificationRow(this, isUnread: false) : this;
 }
 
 /// <summary>
 /// components/notifications-bell.tsx: the dropdown behind the bell. Loads
 /// when the flyout opens, reloads while it is open if the server's unread
-/// count moved (the badge poller records that), and marks read as the
-/// website does: one on click, all with the button.
+/// count moved (the badge poller records that). Opening it reads them all,
+/// as the website's does: the badge goes, and what was new keeps its dot
+/// while the flyout is open.
 /// </summary>
 public sealed partial class NotificationsViewModel : ObservableObject
 {
@@ -95,7 +78,6 @@ public sealed partial class NotificationsViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsEmpty))]
-    [NotifyPropertyChangedFor(nameof(HasUnread))]
     [NotifyPropertyChangedFor(nameof(HasItems))]
     private IReadOnlyList<NotificationRow>? items;
 
@@ -117,7 +99,6 @@ public sealed partial class NotificationsViewModel : ObservableObject
 
     public bool HasItems => Items is { Count: > 0 };
     public bool IsEmpty => Items is { Count: 0 };
-    public bool HasUnread => Items?.Any(row => row.IsUnread) == true;
     public bool ShowsError => ErrorMessage != null && !HasItems;
 
     // MARK: Lifecycle
@@ -177,6 +158,10 @@ public sealed partial class NotificationsViewModel : ObservableObject
             }
             Items = list.Results.Select(item => new NotificationRow(item, OpenCommand)).ToList();
             ErrorMessage = null;
+            if (list.Results.Any(item => !item.Read))
+            {
+                await MarkAllReadAsync();
+            }
         }
         catch (ApiException error)
         {
@@ -201,15 +186,13 @@ public sealed partial class NotificationsViewModel : ObservableObject
 
     // MARK: Actions
 
-    /// <summary>"Mark all read": the rows flip at once; the badge follows the server's answer.</summary>
-    [RelayCommand]
+    /// <summary>
+    /// The list was seen: everything is read on the server, and the badge
+    /// goes at once rather than at the next poll. The rows keep their dots.
+    /// </summary>
     private async Task MarkAllReadAsync()
     {
-        if (Items is not { } rows || !HasUnread)
-        {
-            return;
-        }
-        Items = rows.Select(row => row.AsRead()).ToList();
+        model.NotificationsRead();
         try
         {
             await model.Api.Notifications.MarkAllReadAsync();
@@ -220,7 +203,7 @@ public sealed partial class NotificationsViewModel : ObservableObject
         }
     }
 
-    /// <summary>Clicking a row opens its title and marks it read (best effort, like the website).</summary>
+    /// <summary>Clicking a row opens its title (opening the list already read it).</summary>
     [RelayCommand]
     private void Open(NotificationRow? row)
     {
@@ -228,25 +211,8 @@ public sealed partial class NotificationsViewModel : ObservableObject
         {
             return;
         }
-        if (row.IsUnread)
-        {
-            var api = model.Api;
-            _ = MarkReadQuietlyAsync(api, row.Id);
-        }
         Dismissed?.Invoke(this, EventArgs.Empty);
         model.OpenTitle(row.TitleId);
-    }
-
-    private static async Task MarkReadQuietlyAsync(MarqueeApi api, Guid id)
-    {
-        try
-        {
-            await api.Notifications.MarkReadAsync(id);
-        }
-        catch (ApiException)
-        {
-            // The next open of the flyout shows it unread again; nothing to say here.
-        }
     }
 
     // MARK: Reload triggers

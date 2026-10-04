@@ -164,7 +164,7 @@ export function SeasonPickerDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
+      className="fixed inset-0 z-[58] flex items-end justify-center p-4 sm:items-center"
     >
       <div aria-hidden onClick={onClose} className="absolute inset-0 bg-black/40" />
       <div

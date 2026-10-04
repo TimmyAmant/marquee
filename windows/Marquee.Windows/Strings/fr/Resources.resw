@@ -3139,9 +3139,6 @@
   <data name="Notifications_EmptyMessage" xml:space="preserve">
     <value>Aucune notification pour le moment.</value>
   </data>
-  <data name="Notifications_MarkAllRead.Content" xml:space="preserve">
-    <value>Tout marquer comme lu</value>
-  </data>
   <data name="Notifications_NoteLine" xml:space="preserve">
     <value>« {0} »</value>
   </data>
@@ -5649,5 +5646,35 @@
   </data>
   <data name="Account_AddChannelTag.Header" xml:space="preserve">
     <value>Identifiant de chaîne (facultatif)</value>
+  </data>
+  <data name="CollectionOffer_Title" xml:space="preserve">
+    <value>Fait partie de {0}</value>
+  </data>
+  <data name="CollectionOffer_BodyAdd_One" xml:space="preserve">
+    <value>{0} autre film de cette collection n'est pas encore dans votre bibliothèque. L'ajouter aussi ?</value>
+  </data>
+  <data name="CollectionOffer_BodyAdd_Other" xml:space="preserve">
+    <value>{0} autres films de cette collection ne sont pas encore dans votre bibliothèque. Les ajouter aussi ?</value>
+  </data>
+  <data name="CollectionOffer_BodyRequest_One" xml:space="preserve">
+    <value>{0} autre film de cette collection n'est pas encore dans la bibliothèque. Le demander aussi ?</value>
+  </data>
+  <data name="CollectionOffer_BodyRequest_Other" xml:space="preserve">
+    <value>{0} autres films de cette collection ne sont pas encore dans la bibliothèque. Les demander aussi ?</value>
+  </data>
+  <data name="CollectionOffer_AddAll_One" xml:space="preserve">
+    <value>L'ajouter</value>
+  </data>
+  <data name="CollectionOffer_AddAll_Other" xml:space="preserve">
+    <value>Ajouter les {0}</value>
+  </data>
+  <data name="CollectionOffer_RequestAll_One" xml:space="preserve">
+    <value>Le demander</value>
+  </data>
+  <data name="CollectionOffer_RequestAll_Other" xml:space="preserve">
+    <value>Demander les {0}</value>
+  </data>
+  <data name="CollectionOffer_NotNow" xml:space="preserve">
+    <value>Pas maintenant</value>
   </data>
 </root>

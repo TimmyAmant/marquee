@@ -13,6 +13,7 @@ import { PILL, PILL_ACCENT, PILL_NOTE } from "@/components/pill-styles";
 import { SeasonRequestPicker, type SeasonPickerRow } from "@/components/season-request-picker";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
+import { offerCollection } from "@/components/collection-prompt";
 
 export function AddToLibraryButton({
   mediaType,
@@ -70,8 +71,14 @@ export function AddToLibraryButton({
   // Not in the library and not on its way (untracked, or in Sonarr/Radarr
   // but not monitored): requests stay open.
   const open = isUnwanted(status);
-  const action =
-    mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
+  const add = mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
+  // A movie in a collection: offer the rest of it — from the action itself,
+  // since the refresh after it can swap this button out.
+  const action: typeof add = async (prev, formData) => {
+    const result = await add(prev, formData);
+    if (result?.success && mediaType === "movie") offerCollection(tmdbId);
+    return result;
+  };
 
   const [state, formAction, isPending] = useActionState(action, undefined);
   const pickSeasons = mediaType === "tv" && Boolean(seasonPicker?.canRequestSeasons);

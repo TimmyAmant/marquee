@@ -49,6 +49,8 @@ describe("findDuplicates", () => {
         { mediaType: "tv", copies: [copy("sonarr", "/tv/Ahsoka (2023)/"), copy("plex", "/data/Tv Shows/Ahsoka (2023)/Season 01")] },
         { mediaType: "tv", copies: [copy("sonarr", "/tv/9-1-1 Nashville (2025)"), copy("plex", "/data/Tv Shows/9-1-1 Nashville (2025)/Season 1")] },
         { mediaType: "tv", copies: [copy("sonarr", "/tv/Andor"), copy("jellyfin", "/media/tv/Andor/Specials/Andor - S00E01.mkv")] },
+        // A show's folder with dots in its name is still a folder.
+        { mediaType: "tv", copies: [copy("sonarr", "/tv/The.Office.US"), copy("plex", "/data/Tv Shows/The.Office.US/Season 01")] },
       ]),
     ).toEqual([]);
   });

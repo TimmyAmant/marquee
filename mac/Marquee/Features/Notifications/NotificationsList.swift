@@ -3,7 +3,8 @@ import SwiftUI
 // MARK: - Notifications (components/notifications-bell.tsx)
 
 /// The notifications list, opened from the bell on the rail (a popover on
-/// the Mac, a sheet on iPhone).
+/// the Mac, a sheet on iPhone). Opening it reads them all, as the website's
+/// does: the badge goes, and what was new keeps its dot while it's open.
 struct NotificationsPopover: View {
     @Environment(AppModel.self) private var model
     let dismiss: () -> Void
@@ -30,11 +31,6 @@ struct NotificationsPopover: View {
                     Text("Notifications")
                         .font(.system(size: Metrics.text(13), weight: .semibold))
                     Spacer()
-                    if items.contains(where: { !$0.read }) {
-                        Button("Mark all read") { markAllRead() }
-                            .buttonStyle(QuietButtonStyle())
-                            .font(.system(size: Metrics.text(11.5)))
-                    }
                 }
                 .padding(12)
                 Divider()
@@ -70,13 +66,6 @@ struct NotificationsPopover: View {
         .frame(width: fillsSpace ? nil : 420)
         #if os(iOS)
         .navigationTitle("Notifications")
-        .toolbar {
-            if fillsSpace, items.contains(where: { !$0.read }) {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Mark all read") { markAllRead() }
-                }
-            }
-        }
         #endif
         .task(id: model.events.remoteRevision(of: .notifications)) {
             await load()
@@ -89,6 +78,7 @@ struct NotificationsPopover: View {
             if Task.isCancelled { return }
             items = list.results
             error = nil
+            if list.results.contains(where: { !$0.read }) { markAllRead() }
         } catch let failure as APIError where failure.isCancellation {
             return
         } catch {
@@ -97,9 +87,11 @@ struct NotificationsPopover: View {
         loaded = true
     }
 
+    /// Everything on the server is read now; the rows keep their dots
+    /// until the list is opened again.
     private func markAllRead() {
         let api = model.api
-        items = items.map { $0.markedRead() }
+        model.live.notificationsRead()
         Task {
             do {
                 try await api.notifications.markAllRead()
@@ -110,10 +102,6 @@ struct NotificationsPopover: View {
     }
 
     private func open(_ item: API.NotificationItem) {
-        let api = model.api
-        if !item.read {
-            Task { try? await api.notifications.markRead(item.id) }
-        }
         dismiss()
         model.openTitle(item.titleID)
     }

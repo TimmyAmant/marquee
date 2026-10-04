@@ -3274,9 +3274,6 @@
   <data name="Notifications_EmptyMessage" xml:space="preserve">
     <value>No notifications yet.</value>
   </data>
-  <data name="Notifications_MarkAllRead.Content" xml:space="preserve">
-    <value>Mark all read</value>
-  </data>
   <data name="Notifications_NoteLine" xml:space="preserve">
     <value>“{0}”</value>
     <comment>The note someone wrote when sharing a title, in quotes.</comment>
@@ -5852,5 +5849,35 @@
   </data>
   <data name="Account_AddChannelTag.Header" xml:space="preserve">
     <value>Channel tag (optional)</value>
+  </data>
+  <data name="CollectionOffer_Title" xml:space="preserve">
+    <value>Part of {0}</value>
+  </data>
+  <data name="CollectionOffer_BodyAdd_One" xml:space="preserve">
+    <value>{0} other movie in this collection isn't in your library yet. Add it too?</value>
+  </data>
+  <data name="CollectionOffer_BodyAdd_Other" xml:space="preserve">
+    <value>{0} other movies in this collection aren't in your library yet. Add them too?</value>
+  </data>
+  <data name="CollectionOffer_BodyRequest_One" xml:space="preserve">
+    <value>{0} other movie in this collection isn't in the library yet. Request it too?</value>
+  </data>
+  <data name="CollectionOffer_BodyRequest_Other" xml:space="preserve">
+    <value>{0} other movies in this collection aren't in the library yet. Request them too?</value>
+  </data>
+  <data name="CollectionOffer_AddAll_One" xml:space="preserve">
+    <value>Add it</value>
+  </data>
+  <data name="CollectionOffer_AddAll_Other" xml:space="preserve">
+    <value>Add all {0}</value>
+  </data>
+  <data name="CollectionOffer_RequestAll_One" xml:space="preserve">
+    <value>Request it</value>
+  </data>
+  <data name="CollectionOffer_RequestAll_Other" xml:space="preserve">
+    <value>Request all {0}</value>
+  </data>
+  <data name="CollectionOffer_NotNow" xml:space="preserve">
+    <value>Not now</value>
   </data>
 </root>

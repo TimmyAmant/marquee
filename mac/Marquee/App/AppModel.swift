@@ -150,6 +150,8 @@ final class AppModel {
     #endif
     /// "What's new" after the server or this app is upgraded.
     let whatsNew = WhatsNewModel()
+    /// "Add the rest of the collection too?" after a movie's add or request.
+    let collectionOffer = CollectionOfferModel()
     /// Profile photos, by `avatarUrl`.
     let avatars = AvatarImageStore()
     /// What this Mac has changed about titles since the lists showing them

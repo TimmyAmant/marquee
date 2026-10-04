@@ -78,6 +78,8 @@ BLOCKS = [
     ("`POST /favorites/{entityType}/{tmdbId}/toggle`", ["favorite-toggle"]),
     ("`POST /titles/{type}/{tmdbId}/request`", ["request-created"]),
     ("`POST /titles/{type}/{tmdbId}/request-all-missing`", ["request-all-missing"]),
+    ("`GET /titles/movie/{tmdbId}/collection-rest`", ["collection-rest"]),
+    ("`POST /titles/movie/{tmdbId}/collection-rest`", ["collection-rest-result"]),
     ("`GET /requests/mine`", ["requests-mine"]),
     ("`GET /requests/pending`", ["requests-pending"]),
     ("`GET /requests/history`", ["requests-history"]),

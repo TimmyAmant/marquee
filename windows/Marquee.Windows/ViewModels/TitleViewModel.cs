@@ -1054,6 +1054,7 @@ public sealed partial class TitleViewModel : ObservableObject
         {
             await model.Api.Titles.RequestAsync(Id.MediaType, Id.TmdbId);
             await RefreshStatusAsync();
+            model.OfferCollection(Id);
         }
         catch (ApiException error)
         {
@@ -1110,6 +1111,7 @@ public sealed partial class TitleViewModel : ObservableObject
                 await model.Api.Titles.AddAsync(Id.MediaType, Id.TmdbId);
             }
             await RefreshStatusAsync();
+            model.OfferCollection(Id);
         }
         catch (ApiException error)
         {

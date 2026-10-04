@@ -83,6 +83,9 @@ export async function getLibraryDuplicates(userId: string): Promise<DuplicateGro
   for (const row of arrRows) {
     // Only what's actually on disk can be a duplicate file.
     if (arrRowStatus(row.status, row.monitored) !== "owned" && !row.filePath) continue;
+    // Radarr keeps the movie's folder as its path until it has a file (no
+    // size yet): that's not a second copy of what Plex/Jellyfin has.
+    if (row.provider === "radarr" && row.sizeBytes == null) continue;
     add(row.title, {
       source: row.provider,
       server: row.serverName ?? (row.provider === "radarr" ? "Radarr" : "Sonarr"),

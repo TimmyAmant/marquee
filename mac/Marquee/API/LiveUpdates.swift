@@ -204,6 +204,21 @@ final class LiveUpdates {
         setDockBadge(nil)
     }
 
+    /// The notifications list was opened, which reads them all: the bell's
+    /// badge and the app icon's count go at once, before the server's
+    /// "read-all" has answered (the next poll confirms it).
+    func notificationsRead() {
+        guard badges.unreadNotifications != 0 else { return }
+        badges = API.Badges(
+            unreadNotifications: 0,
+            pendingRequests: badges.pendingRequests,
+            openIssues: badges.openIssues,
+            notFoundRequests: badges.notFoundRequests,
+            failedRequests: badges.failedRequests
+        )
+        setDockBadge(nil)
+    }
+
     /// Polls now. Coalesced: while a refresh is in flight one more is queued.
     func refresh(_ reason: Reason = .activation) {
         guard isRunning else { return }

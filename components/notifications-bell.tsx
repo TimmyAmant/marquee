@@ -6,7 +6,6 @@ import {
   getUnreadCountAction,
   getRecentNotificationsAction,
   markAllReadAction,
-  markReadAction,
 } from "@/lib/notifications/actions";
 import { UserAvatar } from "@/components/user-avatar";
 import { avatarPath } from "@/lib/users/avatar-path";
@@ -92,9 +91,17 @@ export function NotificationsBell({
     return () => clearInterval(interval);
   }, [refreshCount, visible]);
 
+  // Opening the list reads it: the badge goes at once, and everything is
+  // marked read on the server once the list is in. What was new keeps its
+  // dot while the list stays open, so it's clear what arrived.
   useEffect(() => {
     if (!open) return;
-    getRecentNotificationsAction().then(setItems).catch(() => undefined);
+    getRecentNotificationsAction()
+      .then((rows) => {
+        setItems(rows);
+        if (rows.some((n) => !n.read)) return markAllReadAction();
+      })
+      .catch(() => undefined);
   }, [open]);
 
   useEffect(() => {
@@ -108,18 +115,8 @@ export function NotificationsBell({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  async function handleMarkAllRead() {
-    await markAllReadAction();
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-  }
-
-  async function handleItemClick(item: NotificationRow) {
+  function handleItemClick(item: NotificationRow) {
     setOpen(false);
-    if (!item.read) {
-      await markReadAction(item.id);
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
     router.push(`/title/${item.mediaType}/${item.tmdbId}`);
   }
 
@@ -127,7 +124,10 @@ export function NotificationsBell({
     <div ref={containerRef} className={onRail ? "group relative" : "relative"}>
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          if (!open) setUnreadCount(0);
+          setOpen(!open);
+        }}
         aria-label={unreadCount > 0 ? t("nav.notificationsUnread", { count: unreadCount }) : t("nav.notifications")}
         aria-expanded={open}
         className={
@@ -174,15 +174,6 @@ export function NotificationsBell({
         >
           <div className="flex items-center justify-between px-2 py-1.5">
             <span className="text-xs font-medium text-text-primary">{t("nav.notifications")}</span>
-            {items.some((n) => !n.read) && (
-              <button
-                type="button"
-                onClick={handleMarkAllRead}
-                className="text-[11px] text-text-secondary transition-colors hover:text-accent"
-              >
-                {t("nav.markAllRead")}
-              </button>
-            )}
           </div>
           {/* On the rail the list opens toward the content — beside a side
               rail, from above the middle of the window, or below or above a

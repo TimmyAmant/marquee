@@ -846,6 +846,29 @@ export type RequestAllMissingResult = {
   message: string;
 };
 
+/** `GET /titles/movie/{id}/collection-rest` (0.72+): the other movies of a
+ * movie's collection the viewer can still add (the admin) or request (a
+ * member) — offered once the movie itself has been added or requested. */
+export type CollectionRestResponse = {
+  /** Null when there's nothing to offer. */
+  collection: { id: number; name: string } | null;
+  /** What `POST …/collection-rest` does for this viewer. */
+  action: "add" | "request";
+  items: TitleCard[];
+};
+
+/** `POST /titles/movie/{id}/collection-rest`: adds (the admin) or requests
+ * (a member) the rest of the collection. */
+export type CollectionRestResult = {
+  ok: true;
+  action: "add" | "request";
+  total: number;
+  /** Added or requested. */
+  done: number;
+  failed: { tmdbId: number; title: string; error: string }[];
+  message: string;
+};
+
 // ── People & companies ──────────────────────────────────────────────────────
 
 /** The title a person or studio is best known for — its backdrop sits

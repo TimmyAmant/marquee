@@ -39,8 +39,10 @@ export function normalizePath(path: string): string {
  * media server may list a show by instead of the show's own folder. */
 const SEASON_FOLDER = /^(season\s*\d+|s\d+|specials)$/i;
 
-/** A file name rather than a folder: a dot and a short extension. */
-const FILE_NAME = /\.[a-z0-9]{2,4}$/i;
+/** An episode's file rather than a folder: a video or subtitle extension.
+ * Only these — a show's folder can have dots of its own ("The.Office.US",
+ * "9-1-1.Lone.Star"), and stepping past that would compare its parent. */
+const FILE_NAME = /\.(mkv|mp4|m4v|avi|mov|wmv|ts|m2ts|webm|mpe?g|iso|flv|srt|ass|sub|idx|nfo)$/i;
 
 /**
  * What identifies a file across servers: its last path segment (the file

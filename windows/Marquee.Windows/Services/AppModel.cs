@@ -899,6 +899,18 @@ public sealed partial class AppModel : ObservableObject
 
     // MARK: Badges
 
+    /// <summary>
+    /// The bell's list was opened, which reads them all: its badge goes at
+    /// once, before the server's read-all answers (the next poll confirms it).
+    /// </summary>
+    public void NotificationsRead()
+    {
+        if (Badges.UnreadNotifications != 0)
+        {
+            Badges = Badges with { UnreadNotifications = 0 };
+        }
+    }
+
     private void StartBadgePolling()
     {
         StopBadgePolling();
@@ -1128,6 +1140,7 @@ public sealed partial class AppModel : ObservableObject
             // The add went through; the badge catches up on the next load.
         }
         TitleState.Added(id, status);
+        OfferCollection(id);
     }
 
     /// <summary>A poster's "Request" (member). Throws the request's <see cref="ApiException"/>.</summary>
@@ -1135,6 +1148,78 @@ public sealed partial class AppModel : ObservableObject
     {
         await Api.Titles.RequestAsync(id.MediaType, id.TmdbId);
         TitleState.Requested(id);
+        OfferCollection(id);
+    }
+
+    // MARK: The rest of the collection (components/collection-prompt.tsx)
+
+    /// <summary>
+    /// Set by the main window: shows "Part of The Matrix Collection — add the
+    /// other 3 too?" for <c>movieTmdbId</c>'s collection, and answers true
+    /// once it was answered (Add all / Request all, or Not now), false when it
+    /// couldn't be shown (another dialog was open).
+    /// </summary>
+    internal Func<int, CollectionRest, Task<bool>>? ShowCollectionOffer { get; set; }
+
+    /// <summary>Collections answered "Not now" while the app runs.</summary>
+    private readonly HashSet<int> declinedCollections = [];
+
+    /// <summary>
+    /// A movie was just added or requested: offer the rest of its collection,
+    /// if there is any. Errors (an older server's NotFound included) offer nothing.
+    /// </summary>
+    public void OfferCollection(TitleId id)
+    {
+        if (id.MediaType != MediaType.Movie || ShowCollectionOffer is null)
+        {
+            return;
+        }
+        var api = Api;
+        Dispatcher.TryEnqueue(async () =>
+        {
+            CollectionRest rest;
+            try
+            {
+                rest = await api.Titles.CollectionRestAsync(id.TmdbId);
+            }
+            catch (ApiException)
+            {
+                return;
+            }
+            if (!rest.HasOffer || rest.Collection is not { } collection || declinedCollections.Contains(collection.Id)
+                || ShowCollectionOffer is not { } show)
+            {
+                return;
+            }
+            await show(id.TmdbId, rest);
+        });
+    }
+
+    /// <summary>"Not now" on a collection: not offered again until the app restarts.</summary>
+    internal void DeclineCollection(int collectionId) => declinedCollections.Add(collectionId);
+
+    /// <summary>
+    /// The offer's "Add all" / "Request all". Each one that went through stops
+    /// offering its own add or request wherever it's shown. Throws the call's
+    /// <see cref="ApiException"/>.
+    /// </summary>
+    internal async Task<CollectionRestResult> AcceptCollectionAsync(int movieTmdbId, CollectionRest rest)
+    {
+        var result = await Api.Titles.AddCollectionRestAsync(movieTmdbId);
+        var failed = result.Failed.Select(f => f.TmdbId).ToHashSet();
+        foreach (var item in rest.Items.Where(i => !failed.Contains(i.TmdbId)))
+        {
+            var id = new TitleId(MediaType.Movie, item.TmdbId);
+            if (rest.IsAdd)
+            {
+                TitleState.Added(id, null);
+            }
+            else
+            {
+                TitleState.Requested(id);
+            }
+        }
+        return result;
     }
 
     // MARK: Events from other threads

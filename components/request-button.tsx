@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
 import { showToast } from "@/components/toast";
+import { offerCollection } from "@/components/collection-prompt";
 import { createRequestAction } from "@/lib/requests/actions";
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
@@ -42,14 +43,19 @@ export function RequestButton({
   split?: React.ReactNode;
 }) {
   const t = useT();
-  const action = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
+  const request = createRequestAction.bind(null, mediaType, tmdbId, title, posterPath);
+  // Told from the action itself, not an effect: the page's refresh after a
+  // request can swap this button out before an effect would run.
+  const action: typeof request = async (prev, formData) => {
+    const result = await request(prev, formData);
+    if (result?.success) {
+      showToast(t("title.requestedToast", { title }));
+      // A movie in a collection: offer the rest of it.
+      if (mediaType === "movie") offerCollection(tmdbId);
+    }
+    return result;
+  };
   const [state, formAction, isPending] = useActionState(action, undefined);
-
-  useEffect(() => {
-    if (state?.success) showToast(t("title.requestedToast", { title }));
-    // The toast is about this one success; `t`/`title` don't change it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.success]);
 
   if (state?.success || alreadyRequested) {
     return compact ? (

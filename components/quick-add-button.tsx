@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { addMovieToRadarr, addSeriesToSonarr } from "@/app/title/[type]/[id]/actions";
 import { useT } from "@/lib/i18n/client";
+import { offerCollection } from "@/components/collection-prompt";
 
 export function QuickAddButton({
   mediaType,
@@ -15,8 +16,14 @@ export function QuickAddButton({
 }) {
   const t = useT();
   const router = useRouter();
-  const action =
-    mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
+  const add = mediaType === "movie" ? addMovieToRadarr.bind(null, tmdbId) : addSeriesToSonarr.bind(null, tmdbId);
+  // A movie in a collection: offer the rest of it (from the action: this
+  // button is gone once the add lands).
+  const action: typeof add = async (prev, formData) => {
+    const result = await add(prev, formData);
+    if (result?.success && mediaType === "movie") offerCollection(tmdbId);
+    return result;
+  };
   const [state, formAction, isPending] = useActionState(action, undefined);
 
   useEffect(() => {

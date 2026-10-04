@@ -38,6 +38,25 @@ extension MarqueeAPI {
             )
         }
 
+        /// `GET /titles/movie/{tmdbId}/collection-rest` (0.72+) — the rest of
+        /// a movie's collection the viewer can still add (the admin) or request
+        /// (a member), offered once the movie itself is added or requested.
+        /// `collection` is nil when there's nothing to offer; an older server
+        /// answers `.notFound` (offer nothing).
+        func collectionRest(movie tmdbId: Int) async throws -> API.CollectionRest {
+            try await transport.get(Self.path(.movie, tmdbId) + "/collection-rest", timeout: Timeout.tmdb)
+        }
+
+        /// `POST /titles/movie/{tmdbId}/collection-rest` (0.72+) — "Add them
+        /// too": the admin adds them, a member requests them. A partial result
+        /// still succeeds, with `message`.
+        func addCollectionRest(movie tmdbId: Int) async throws -> API.CollectionRestResult {
+            try await transport.mutate(
+                .post, Self.path(.movie, tmdbId) + "/collection-rest", body: nil, timeout: Timeout.integrations,
+                changes: [.library, .requests]
+            )
+        }
+
         /// `GET /titles/{type}/{tmdbId}/add-options` (admin or trusted, 0.43+)
         /// — the servers "Advanced" can pick, default first, with their lists
         /// and defaults. `is4k` lists the 4K servers instead. `.notFound` from
