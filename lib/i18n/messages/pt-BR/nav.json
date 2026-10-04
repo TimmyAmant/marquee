@@ -84,5 +84,9 @@
   "settingsLogs": "Logs",
   "notificationsGotify": "Gotify",
   "notificationsSlack": "Slack",
-  "notificationsPushbullet": "Pushbullet"
+  "notificationsPushbullet": "Pushbullet",
+  "recentSearches": "Pesquisas recentes",
+  "clearRecentSearches": "Limpar",
+  "removeRecentSearch": "Remover “{query}” das pesquisas recentes",
+  "clearSearch": "Limpar pesquisa"
 }
