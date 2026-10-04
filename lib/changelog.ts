@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.73.0",
+    date: "2026-10-04",
+    changes: [
+      "Recent searches: tap an empty search box to see your last 8 searches and tap one to search it again, no retyping. Remove one with its ×, or Clear them all. On the website and the Mac, iPhone, iPad and Windows apps.",
+      "Pick a title from the search suggestions on a phone and swipe back, and your search is still there with its suggestions open, instead of an empty box.",
+      "The search box has an × to clear what you typed.",
+    ],
+  },
+  {
     version: "0.72.1",
     date: "2026-10-04",
     changes: [
