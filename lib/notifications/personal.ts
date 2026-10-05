@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "crypto";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { userNotificationChannels, userNotificationChannelKindValues, type UserNotificationChannelKind } from "@/lib/db/schema";
 import { decryptSecret, encryptSecret } from "@/lib/crypto/encryption";
@@ -573,14 +573,24 @@ export async function verifyChannel(userId: string, id: string, rawCode: unknown
   if (!row.verifyCodeHash || !row.verifyExpiresAt || row.verifyExpiresAt < new Date()) {
     return fail("expired", t("notify.codeExpired"));
   }
-  if (row.verifyAttempts >= VERIFY_MAX_ATTEMPTS) return fail("rate_limited", t("notify.codeTooManyWrong"));
-  const expected = Buffer.from(row.verifyCodeHash, "hex");
+  // Claim the attempt before comparing, in one statement: read-then-write
+  // would let a burst of parallel guesses all see the same count and each
+  // get past the cap. A right code resets the count below.
+  const [claimed] = await db
+    .update(userNotificationChannels)
+    .set({ verifyAttempts: sql`${userNotificationChannels.verifyAttempts} + 1` })
+    .where(
+      and(
+        eq(userNotificationChannels.id, row.id),
+        lt(userNotificationChannels.verifyAttempts, VERIFY_MAX_ATTEMPTS),
+      ),
+    )
+    .returning({ verifyCodeHash: userNotificationChannels.verifyCodeHash });
+  if (!claimed) return fail("rate_limited", t("notify.codeTooManyWrong"));
+  if (!claimed.verifyCodeHash) return fail("expired", t("notify.codeExpired"));
+  const expected = Buffer.from(claimed.verifyCodeHash, "hex");
   const given = Buffer.from(hashCode(row.id, code), "hex");
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) {
-    await db
-      .update(userNotificationChannels)
-      .set({ verifyAttempts: row.verifyAttempts + 1 })
-      .where(eq(userNotificationChannels.id, row.id));
     return fail("invalid", t("notify.codeWrong"));
   }
   const [updated] = await db

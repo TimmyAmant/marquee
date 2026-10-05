@@ -17,6 +17,7 @@ import {
   effectiveSchedule,
   isJobId,
   nextRunAfter,
+  serverTimeZone,
   type JobId,
   type JobSchedule,
 } from "@/lib/jobs/schedule";
@@ -41,6 +42,8 @@ export type JobDefinition = {
   lastRunAt: string | null;
   /** Running right now (on its schedule or from Run now). */
   running: boolean;
+  /** The IANA zone a daily time runs in — the server's (TZ), e.g. "UTC". */
+  timeZone: string;
 };
 
 // Names and descriptions are message keys, put into words by jobDefinitions
@@ -56,15 +59,15 @@ const JOB_TEXT: Record<JobId, { name: MessageKey; description: MessageKey }> = {
   cleanup: { name: "admin.jobCleanupName", description: "admin.jobCleanupDescription" },
 };
 
-export function scheduleText(t: Translator, schedule: JobSchedule): string {
+export function scheduleText(t: Translator, schedule: JobSchedule, timeZone = serverTimeZone()): string {
   if ("dailyAt" in schedule) {
-    // A wall-clock time with no date or zone to it: formatted as UTC so the
-    // server's own zone can't shift it.
+    // A wall-clock time in the server's zone, which is named alongside it:
+    // formatted as UTC only so nothing shifts the hour and minute themselves.
     const time = new Date(Date.UTC(2000, 0, 1, schedule.dailyAt.hour, schedule.dailyAt.minute)).toLocaleTimeString(
       t.tag,
       { hour: "numeric", minute: "2-digit", timeZone: "UTC" },
     );
-    return t("admin.scheduleDailyAt", { time });
+    return t("admin.scheduleDailyAt", { time, zone: timeZone });
   }
   return t(schedule.every === "minutes" ? "admin.scheduleEveryMinutes" : "admin.scheduleEveryHours", {
     count: schedule.count,
@@ -87,19 +90,21 @@ function jobState() {
  * lib/jobs/schedule-store.ts). */
 export function jobDefinitions(t: Translator, stored: Record<string, unknown> = {}, now = new Date()): JobDefinition[] {
   const state = jobState();
+  const timeZone = serverTimeZone();
   return JOB_IDS.map((id) => {
     const text = JOB_TEXT[id];
     const interval = effectiveSchedule(id, stored);
     return {
       id,
       name: t(text.name),
-      schedule: scheduleText(t, interval),
+      schedule: scheduleText(t, interval, timeZone),
       description: t(text.description),
       interval,
       defaultInterval: DEFAULT_JOB_SCHEDULES[id].schedule,
       nextRunAt: nextRunAfter(interval, DEFAULT_JOB_SCHEDULES[id].offset, now).toISOString(),
       lastRunAt: state.lastRunAt.get(id)?.toISOString() ?? null,
       running: state.running.has(id),
+      timeZone,
     };
   });
 }
@@ -152,9 +157,13 @@ function runnerFor(jobId: string): (() => Promise<void>) | undefined {
 }
 
 /** Runs a job and records it, however it was started. Throws what the job
- * threw. */
-export async function runRecorded(jobId: JobId): Promise<void> {
+ * threw. Answers false, without running anything, when the job is already
+ * running — on its schedule or from Run now — so the two can never overlap.
+ * The check and the claim happen in one synchronous step, so two callers
+ * arriving together can't both get through. */
+export async function runRecorded(jobId: JobId): Promise<boolean> {
   const state = jobState();
+  if (state.running.has(jobId)) return false;
   state.running.add(jobId);
   try {
     await runnerFor(jobId)?.();
@@ -162,17 +171,19 @@ export async function runRecorded(jobId: JobId): Promise<void> {
     state.running.delete(jobId);
     state.lastRunAt.set(jobId, new Date());
   }
+  return true;
 }
 
 /** Runs one of the scheduled jobs immediately, without waiting for its cron
- * time — running it early never skips or alters the schedule. Admin-only at
- * every call site, since these sync every connected user's data. */
+ * time — running it early never skips or alters the schedule. Refused while
+ * the job is already running. Admin-only at every call site, since these
+ * sync every connected user's data. */
 export async function runJob(jobId: JobId): Promise<CoreResult> {
   const t = await getT();
   if (!runnerFor(jobId)) return fail("not_found", t("admin.unknownJob"));
 
   try {
-    await runRecorded(jobId);
+    if (!(await runRecorded(jobId))) return fail("conflict", t("admin.jobAlreadyRunning"));
     return { ok: true };
   } catch (err) {
     console.error("[jobs] manual run of %s failed:", jobId, err);

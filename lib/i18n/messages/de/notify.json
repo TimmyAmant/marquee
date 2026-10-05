@@ -266,6 +266,7 @@
   "arrConnectFirst": "Verbinde zuerst {kind} in den Einstellungen.",
   "arrConnectFirst4k": "Verbinde zuerst das 4K-{kind} in den Einstellungen.",
   "arrPickProfileFolder": "Wähle ein Qualitätsprofil und einen Stammordner für {server}.",
+  "arrUnknownRootFolder": "{server} hat diesen Stammordner nicht.",
   "onlyAdminAdds": "Nur der Admin kann Titel hinzufügen.",
   "addMovieFailed": "Dieser Film konnte nicht zu {server} hinzugefügt werden.",
   "addSeriesFailed": "Diese Serie konnte nicht zu {server} hinzugefügt werden.",

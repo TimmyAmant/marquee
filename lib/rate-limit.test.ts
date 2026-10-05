@@ -54,6 +54,18 @@ describe("reserveSlot / attemptCount", () => {
     expect(reserveSlot(key, 1000)).toBeGreaterThan(1900);
   });
 
+  it("refuses without booking once the wait would exceed the cap", () => {
+    const key = `test:slot-cap:${Math.random()}`;
+    expect(reserveSlot(key, 1000, 1500)).toBe(0);
+    expect(reserveSlot(key, 1000, 1500)).toBeGreaterThan(900);
+    // The next free slot is ~2s out, past the 1.5s cap: refused, not booked…
+    expect(reserveSlot(key, 1000, 1500)).toBeNull();
+    // …so the queue didn't grow, and a looser cap still gets the ~2s slot.
+    const wait = reserveSlot(key, 1000, 5000);
+    expect(wait).toBeGreaterThan(1900);
+    expect(wait).toBeLessThanOrEqual(2000);
+  });
+
   it("doesn't queue anything while the spacing is zero", () => {
     const key = `test:slot-zero:${Math.random()}`;
     expect(reserveSlot(key, 0)).toBe(0);

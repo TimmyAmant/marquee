@@ -266,6 +266,7 @@
   "arrConnectFirst": "Primero conecta {kind} en Ajustes.",
   "arrConnectFirst4k": "Primero conecta el {kind} 4K en Ajustes.",
   "arrPickProfileFolder": "Elige un perfil de calidad y una carpeta raíz para {server}.",
+  "arrUnknownRootFolder": "{server} no tiene esa carpeta raíz.",
   "onlyAdminAdds": "Solo el administrador puede añadir títulos.",
   "addMovieFailed": "No se pudo añadir esta película a {server}.",
   "addSeriesFailed": "No se pudo añadir esta serie a {server}.",

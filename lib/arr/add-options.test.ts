@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasOverrides,
   kindForMediaType,
+  matchRootFolder,
   parseAddOverrides,
   parseAddOverridesForm,
   resolveAdd,
@@ -206,5 +207,20 @@ describe("helpers", () => {
     expect(hasOverrides({})).toBe(false);
     expect(hasOverrides({ tags: [] })).toBe(true);
     expect(hasOverrides({ serverId: "x" })).toBe(true);
+  });
+});
+
+describe("matchRootFolder", () => {
+  const folders = [{ path: "/data/movies/" }, { path: "D:\\Kids\\" }, { path: "/" }];
+  it("answers the server's own spelling, trailing slash or not", () => {
+    expect(matchRootFolder(folders, "/data/movies")).toBe("/data/movies/");
+    expect(matchRootFolder(folders, "/data/movies/")).toBe("/data/movies/");
+    expect(matchRootFolder(folders, "D:\\Kids")).toBe("D:\\Kids\\");
+    expect(matchRootFolder(folders, "/")).toBe("/");
+  });
+  it("is null for anything the server doesn't have", () => {
+    expect(matchRootFolder(folders, "/data")).toBeNull();
+    expect(matchRootFolder(folders, "/data/movies/../../etc")).toBeNull();
+    expect(matchRootFolder(folders, "")).toBeNull();
   });
 });

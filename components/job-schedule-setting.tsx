@@ -88,6 +88,7 @@ export function JobScheduleSetting({ job: initial }: { job: JobDefinition }) {
             className={SELECT}
           />
         )}
+        {daily && <span className="text-text-muted">{t("admin.jobDailyTimeZone", { zone: job.timeZone })}</span>}
         {changed && (
           <button
             type="button"

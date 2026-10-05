@@ -7,7 +7,7 @@ import { findLibraryCopies } from "@/lib/integrations/status";
 import { arrConfig, type ArrServer } from "@/lib/arr/servers";
 import { kindLabel } from "@/lib/arr/instances";
 import { describeArrError } from "@/lib/arr/errors";
-import { hasOverrides, resolveAdd, type AddDefaults, type AddOverrides } from "@/lib/arr/add-options";
+import { hasOverrides, matchRootFolder, resolveAdd, serverDefaults, type AddDefaults, type AddOverrides } from "@/lib/arr/add-options";
 import { pickServer, titleIsAnime } from "@/lib/arr/add-options-server";
 import { statusRank } from "@/lib/arr/fan-out";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
@@ -78,6 +78,18 @@ async function resolveAddTarget(
       "conflict",
       hasOverrides(overrides) ? t("notify.arrPickProfileFolder", { server: server.name }) : connectFirst,
     );
+  }
+  // A folder picked over the server's own (by a reviewer, a requester with
+  // advanced requests, or an override rule) must be one of the server's
+  // root folders: anyone who can get a request auto-approved could
+  // otherwise have Sonarr/Radarr put a title wherever they like.
+  if (resolved.rootFolderPath !== serverDefaults(server, anime).rootFolderPath) {
+    const client = server.kind === "sonarr" ? sonarr : radarr;
+    const folders = await client.getRootFolders(arrConfig(server)).catch(() => null);
+    if (!folders) return fail("upstream", t("notify.arrUnreachable", { server: server.name }));
+    const folder = matchRootFolder(folders, resolved.rootFolderPath);
+    if (!folder) return fail("invalid", t("notify.arrUnknownRootFolder", { server: server.name }));
+    resolved.rootFolderPath = folder;
   }
   return { ok: true, server, resolved };
 }

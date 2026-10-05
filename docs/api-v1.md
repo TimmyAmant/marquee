@@ -4477,8 +4477,8 @@ already here, 0 couldn't be imported." / "Download report (JSON)".
     { "id": "plex-watchlist", "name": "Plex Watchlist Requests", "schedule": "Every 10 minutes", "description": "Requests the new movies and shows on the Plex Watchlist of everyone who turned it on, like pressing Request for each." },
     { "id": "trakt-sync", "name": "Trakt List Requests", "schedule": "Every 3 hours", "description": "Requests the new movies and shows on the Trakt watchlists and public lists members keep in sync, like pressing Request for each." },
     { "id": "not-found-check", "name": "Can't Find Check", "schedule": "Every hour", "description": "Looks for approved requests that Sonarr/Radarr still hasn't found a copy of, and tells the admin and trusted members." },
-    { "id": "disk-space-snapshot", "name": "Disk Space Snapshot", "schedule": "Daily at 3:00 AM", "description": "Records free/used disk space for the storage forecast shown elsewhere in the app." },
-    { "id": "cleanup", "name": "Database Cleanup", "schedule": "Daily at 3:30 AM", "description": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever." }
+    { "id": "disk-space-snapshot", "name": "Disk Space Snapshot", "schedule": "Daily at 3:00 AM (UTC)", "description": "Records free/used disk space for the storage forecast shown elsewhere in the app." },
+    { "id": "cleanup", "name": "Database Cleanup", "schedule": "Daily at 3:30 AM (UTC)", "description": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever." }
   ]
 }
 ```
@@ -4489,7 +4489,10 @@ Since 0.58 each job also has `interval` (how often it runs: `{ "every":
 "minutes" | "hours", "count": n }` or `{ "dailyAt": { "hour": 3, "minute":
 30 } }`, server time), `defaultInterval`, `nextRunAt`, `lastRunAt` (since the
 server started; null before its first run) and `running`. They're missing on
-older servers. `schedule` stays the interval in words.
+older servers. `schedule` stays the interval in words. Since 0.74 each job
+also has `timeZone`, the IANA zone a daily time runs in (the server's `TZ`,
+`"UTC"` when it isn't set), and a daily `schedule` names it: "Daily at 3:00 AM
+(UTC)".
 
 #### `PUT /settings/jobs/{id}` — admin, never an API key (0.58+)
 
@@ -4549,8 +4552,9 @@ as `GET`. `400` otherwise, `403` for anyone but the admin.
 ### `POST /settings/jobs/{id}/run` — admin
 
 "Run now" — waits until the job finishes (use a long timeout); the schedule is
-unaffected. `{ "ok": true }`. Errors: `404` "Unknown job.", `500 internal`
-"Job failed — check the server logs.".
+unaffected. `{ "ok": true }`. Errors: `404` "Unknown job.", `409 conflict`
+"That job is already running." (0.74+; on its schedule or from another Run
+now), `500 internal` "Job failed — check the server logs.".
 
 ---
 

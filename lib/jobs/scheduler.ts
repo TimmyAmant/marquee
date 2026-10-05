@@ -5,7 +5,8 @@ import { runRecorded } from "@/lib/jobs/registry";
 // The cron tasks behind Settings › Jobs: one per job, on the schedule the
 // admin chose (lib/jobs/schedule.ts). Started once from instrumentation.ts;
 // changing a schedule replaces that job's task straight away. A run that's
-// still going when the next one is due is skipped rather than doubled up.
+// still going when the next one is due (or a Run now still going) is skipped
+// rather than doubled up — runRecorded keeps the one "running" set for both.
 
 type Task = { stop: () => void };
 
@@ -19,21 +20,16 @@ function tasks(): Map<JobId, Task> {
   return globalThis.__marqueeCronTasks;
 }
 
-const busy = new Set<JobId>();
-
 async function scheduleJob(jobId: JobId, stored: Record<string, unknown>): Promise<void> {
   const cron = await import("node-cron");
   tasks().get(jobId)?.stop();
   const expression = cronExpression(effectiveSchedule(jobId, stored), DEFAULT_JOB_SCHEDULES[jobId].offset);
   const task = cron.schedule(expression, () => {
-    if (busy.has(jobId)) {
-      console.warn(`[${jobId}] still running from last time; skipping this run`);
-      return;
-    }
-    busy.add(jobId);
     runRecorded(jobId)
-      .catch((err) => console.error(`[${jobId}] scheduled run failed:`, err))
-      .finally(() => busy.delete(jobId));
+      .then((ran) => {
+        if (!ran) console.warn(`[${jobId}] still running from last time; skipping this run`);
+      })
+      .catch((err) => console.error(`[${jobId}] scheduled run failed:`, err));
   });
   tasks().set(jobId, task);
 }
