@@ -130,7 +130,12 @@ fi
 BACKUP_DIR="$PGDATA/marquee-backups"
 BACKUPS_KEPT=3
 LATEST_MIGRATION=$(node -e 'const j=require("/app/lib/db/migrations/meta/_journal.json"); process.stdout.write(String(Math.max(...j.entries.map((e) => e.when))))')
-APPLIED_MIGRATION=$(su postgres -c "psql -d \"$POSTGRES_DB\" -tAc \"SELECT CASE WHEN to_regclass('drizzle.__drizzle_migrations') IS NULL THEN '' ELSE (SELECT COALESCE(MAX(created_at), 0)::text FROM drizzle.__drizzle_migrations) END\"")
+# (Two queries: Postgres resolves the table name before it runs anything,
+# so a single one would fail outright on a database that doesn't have it.)
+APPLIED_MIGRATION=
+if [ -n "$(su postgres -c "psql -d \"$POSTGRES_DB\" -tAc \"SELECT to_regclass('drizzle.__drizzle_migrations')\"")" ]; then
+  APPLIED_MIGRATION=$(su postgres -c "psql -d \"$POSTGRES_DB\" -tAc \"SELECT COALESCE(MAX(created_at), 0) FROM drizzle.__drizzle_migrations\"")
+fi
 if [ -n "$APPLIED_MIGRATION" ] && [ "$APPLIED_MIGRATION" -lt "$LATEST_MIGRATION" ]; then
   mkdir -p "$BACKUP_DIR"
   chown postgres:postgres "$BACKUP_DIR"
