@@ -2,6 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { disablePush } from "@/lib/push/browser";
+import { clearSearchHistory } from "@/lib/search/recent";
 import { useT } from "@/lib/i18n/client";
 
 export function SignOutButton() {
@@ -13,9 +14,10 @@ export function SignOutButton() {
       disabled={pending}
       // Stop this browser's notifications while the session still exists
       // (the server only forgets a subscription for its own account), then
-      // submit the sign-out form.
+      // submit the sign-out form. This browser's search history goes too.
       onClick={async (e) => {
         const form = e.currentTarget.form;
+        clearSearchHistory();
         await disablePush().catch(() => undefined);
         form?.requestSubmit();
       }}

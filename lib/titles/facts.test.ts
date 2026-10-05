@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moneyOrNull, originalTitleOf, releaseDatesFor, streamingProvidersFor } from "./facts";
+import { httpsUrlOrNull, moneyOrNull, originalTitleOf, releaseDatesFor, streamingProvidersFor } from "./facts";
 
 const dates = {
   results: [
@@ -79,5 +79,15 @@ describe("title facts", () => {
       link: "https://www.themoviedb.org/movie/1/watch?locale=DE",
     });
     expect(streamingProvidersFor(providers, "US")).toEqual({ region: "US", providers: [], link: null });
+  });
+
+  it("only links to an https watch page", () => {
+    expect(httpsUrlOrNull("https://www.themoviedb.org/movie/1/watch")).toBe("https://www.themoviedb.org/movie/1/watch");
+    expect(httpsUrlOrNull("javascript:alert(1)")).toBeNull();
+    expect(httpsUrlOrNull("http://example.com")).toBeNull();
+    expect(httpsUrlOrNull("not a url")).toBeNull();
+    expect(httpsUrlOrNull(undefined)).toBeNull();
+    const providers = { results: { US: { link: "javascript:alert(1)", flatrate: [] } } };
+    expect(streamingProvidersFor(providers, "US").link).toBeNull();
   });
 });

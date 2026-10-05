@@ -5,6 +5,7 @@ import { saveJobScheduleAction } from "@/app/settings/jobs/actions";
 import { HOUR_PRESETS, MINUTE_PRESETS, sameSchedule, type JobId, type JobSchedule } from "@/lib/jobs/schedule";
 import type { JobDefinition } from "@/lib/jobs/registry";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import { useT } from "@/lib/i18n/client";
 import { showToast } from "@/components/toast";
 
@@ -25,6 +26,7 @@ function pad(n: number) {
 
 export function JobScheduleSetting({ job: initial }: { job: JobDefinition }) {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
   const [job, setJob] = useState(initial);
   const [draft, setDraft] = useState<JobSchedule>(initial.interval);
   const [busy, setBusy] = useState(false);
@@ -111,8 +113,8 @@ export function JobScheduleSetting({ job: initial }: { job: JobDefinition }) {
         )}
       </span>
       <span className="text-text-muted">
-        {t("admin.jobNextRun", { time: formatDate(t, job.nextRunAt, "dateTime") })}
-        {job.lastRunAt && ` · ${t("admin.jobLastRun", { time: formatDate(t, job.lastRunAt, "dateTime") })}`}
+        {t("admin.jobNextRun", { time: formatDate(t, job.nextRunAt, "dateTime", timeZone) })}
+        {job.lastRunAt && ` · ${t("admin.jobLastRun", { time: formatDate(t, job.lastRunAt, "dateTime", timeZone) })}`}
       </span>
     </span>
   );

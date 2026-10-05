@@ -8,10 +8,12 @@ import { dismissNotFoundAction, searchNotFoundAgainAction } from "@/lib/requests
 import { useT } from "@/lib/i18n/client";
 import { kindLabel } from "@/lib/arr/instances";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import type { Translator } from "@/lib/i18n/translator";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import type { NotFoundRequest } from "@/lib/api/types";
 import { CantGetItButton, DeclineReasonForm, useCantGetIt } from "@/components/decline-reason-chooser";
+import { orError } from "@/lib/async/or-error";
 
 const smallButton =
   "rounded-full border border-border-strong px-3 py-1 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
@@ -27,6 +29,7 @@ function ageText(t: Translator, since: Date, now: Date): string {
 function NotFoundCard({ request }: { request: NotFoundRequest }) {
   const t = useT();
   const router = useRouter();
+  const timeZone = useDisplayTimeZone();
   const [busy, setBusy] = useState<"search" | "dismiss" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -43,7 +46,10 @@ function NotFoundCard({ request }: { request: NotFoundRequest }) {
     setBusy(name);
     setError(null);
     setInfo(null);
-    const result = name === "search" ? await searchNotFoundAgainAction(request.id) : await dismissNotFoundAction(request.id);
+    const result = await orError(
+      name === "search" ? searchNotFoundAgainAction(request.id) : dismissNotFoundAction(request.id),
+      t("common.somethingWentWrong"),
+    );
     setBusy(null);
     if (result.error) setError(result.error);
     else if (name === "search") setInfo(t("requests.searchingAgain", { server: request.server.name ?? kind }));
@@ -71,7 +77,9 @@ function NotFoundCard({ request }: { request: NotFoundRequest }) {
             <span className="text-text-muted">
               {" · "}
               {t("requests.cantFindFor", { age: ageText(t, since, new Date()) })}{" "}
-              <span title={formatDate(t, since, "full")}>{t("requests.cantFindSince", { date: formatDate(t, since) })}</span>
+              <span title={formatDate(t, since, "full", timeZone)}>
+                {t("requests.cantFindSince", { date: formatDate(t, since, "medium", timeZone) })}
+              </span>
               {request.server.name && <> · {request.server.name}</>}
             </span>
           </p>

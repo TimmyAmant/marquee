@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getPendingRequestCountAction } from "@/lib/requests/actions";
 
 const POLL_INTERVAL_MS = 20_000;
@@ -28,14 +28,26 @@ export function RequestsBadge({
     setCount(initialCount);
   }
 
-  const refresh = useCallback(() => {
-    getPendingRequestCountAction().then(setCount).catch(() => undefined);
-  }, []);
-
+  // Not while the tab is in the background (like RequestsAutoRefresh):
+  // it catches up the moment the tab is looked at again.
   useEffect(() => {
+    let cancelled = false;
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      getPendingRequestCountAction()
+        .then((next) => {
+          if (!cancelled) setCount(next);
+        })
+        .catch(() => undefined);
+    };
     const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refresh]);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
 
   if (count === 0) return null;
 

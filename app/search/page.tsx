@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
+import { auth } from "@/auth";
 import { SearchBar } from "@/components/search-bar";
 import { Shelf } from "@/components/shelf";
 import { PosterCard } from "@/components/poster-card";
@@ -57,13 +58,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const t = await getT();
 
   if (!query) {
+    const session = await auth();
     return (
       <div className="mx-auto max-w-3xl px-6 py-20 text-center">
         <h1 className="font-display text-3xl text-text-primary">{t("discover.searchTitle")}</h1>
         <div className="mt-8">
           {/* The menu's Search item lands here, ready to type — or, coming
               back from a title picked here, with that search still open. */}
-          <SearchBar autoFocus restoreOnBack />
+          <SearchBar autoFocus restoreOnBack userId={session?.user?.id ?? null} />
         </div>
       </div>
     );

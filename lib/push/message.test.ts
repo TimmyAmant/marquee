@@ -34,7 +34,21 @@ describe("pushMessageFor", () => {
       url: "/requests",
       tag: "n1",
       requestId: "r1",
+      labels: {
+        approve: "Approve",
+        decline: "Decline",
+        approved: `Approved: ${base.message}`,
+        declined: `Declined: ${base.message}`,
+        signIn: "Open Marquee and sign in, then try again.",
+        unreachable: "Couldn't reach your Marquee server.",
+      },
     });
+  });
+
+  it("words the request's buttons in the recipient's language", () => {
+    const labels = pushMessageFor({ ...base, eventType: "request_created", requestId: "r1" }, translatorFor("de")).labels;
+    expect(labels?.approve).toBe("Genehmigen");
+    expect(labels?.declined).toBe(`Abgelehnt: ${base.message}`);
   });
 
   it("heads it in the recipient's language", () => {

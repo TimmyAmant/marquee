@@ -5,6 +5,7 @@ import type { ChangelogEntry } from "@/lib/changelog";
 import { useT } from "@/lib/i18n/client";
 import { formatDate } from "@/lib/i18n/format";
 import type { Translator } from "@/lib/i18n/translator";
+import { useHydrated } from "@/lib/ui/use-hydrated";
 
 function daysAgo(t: Translator, dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -16,6 +17,9 @@ function daysAgo(t: Translator, dateStr: string): string {
 // chrome around them follows the page's language.
 export function ChangelogList({ entries }: { entries: ChangelogEntry[] }) {
   const t = useT();
+  // "3 days ago" is counted from the viewer's clock, so the server's HTML
+  // (and the hydrating render) shows the release's day instead.
+  const hydrated = useHydrated();
   const [openVersion, setOpenVersion] = useState<string | null>(null);
   const openEntry = entries.find((e) => e.version === openVersion) ?? null;
 
@@ -37,7 +41,9 @@ export function ChangelogList({ entries }: { entries: ChangelogEntry[] }) {
                   </span>
                 )}
               </div>
-              <span className="text-xs text-text-muted">{daysAgo(t, entry.date)}</span>
+              <span className="text-xs text-text-muted">
+                {hydrated ? daysAgo(t, entry.date) : formatDate(t, `${entry.date}T00:00:00Z`, "medium", "UTC") || entry.date}
+              </span>
             </div>
             <button
               type="button"

@@ -117,6 +117,40 @@ function btoaUrl(buffer: ArrayBuffer): string {
   return btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+// Which account this tab last handed the subscription to (sessionStorage),
+// so it's sent once per tab and account rather than on every page load.
+const CLAIMED_KEY = "marquee-push-claimed-by";
+
+/** Hands this browser's existing subscription to whoever is signed in now.
+ * A subscription belongs to the browser, not the account: when a session
+ * ends any way but Settings' Sign out (it expires, the cookie is cleared, a
+ * password change signs everyone out), the server still has it under the
+ * last account, and the next person to sign in here would get that
+ * account's notifications (an admin's Approve/Decline included). Saving it
+ * again moves it over (lib/push/deliver.ts). Quietly does nothing without
+ * a subscription or permission. */
+export async function claimSubscription(userId: string): Promise<void> {
+  if (pushSupport() !== "supported" || Notification.permission !== "granted") return;
+  try {
+    if (sessionStorage.getItem(CLAIMED_KEY) === userId) return;
+  } catch {
+    // Storage blocked: just send it.
+  }
+  const subscription = await currentSubscription();
+  if (!subscription) return;
+  const res = await fetch("/api/push/subscriptions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(subscription.toJSON()),
+  });
+  if (!res.ok) return;
+  try {
+    sessionStorage.setItem(CLAIMED_KEY, userId);
+  } catch {
+    // As above.
+  }
+}
+
 /** Stops notifications on this browser: forgets it on the server first
  * (while the session still exists, which matters when signing out), then
  * unsubscribes locally. */

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { PosterCard } from "@/components/poster-card";
 import { I18nProvider } from "@/lib/i18n/client";
-import { messagesFor } from "@/lib/i18n/catalog";
+import { clientMessagesFor } from "@/lib/i18n/catalog";
 
 // The series poster's "have/total" on the title line: right of the name,
 // muted when every aired episode is on disk, the Downloading tone while
@@ -14,7 +14,7 @@ function render(props: Partial<Parameters<typeof PosterCard>[0]>) {
     createElement(
       I18nProvider,
       // The children come as the third argument.
-      { locale: "en", messages: messagesFor("en") } as Parameters<typeof I18nProvider>[0],
+      { locale: "en", messages: clientMessagesFor("en") } as Parameters<typeof I18nProvider>[0],
       createElement(PosterCard, { href: "/title/tv/1407", posterPath: null, name: "Homeland", ...props }),
     ),
   );

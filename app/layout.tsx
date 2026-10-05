@@ -11,7 +11,7 @@ import { CollectionPromptHost } from "@/components/collection-prompt";
 import { parseRailLabels, parseRailPosition, RAIL_COOKIE, RAIL_LABELS_COOKIE } from "@/lib/rail-position";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n/client";
-import { messagesFor } from "@/lib/i18n/catalog";
+import { clientMessagesFor } from "@/lib/i18n/catalog";
 import { getLocale, getT } from "@/lib/i18n/server";
 import "./globals.css";
 
@@ -83,7 +83,7 @@ export default async function RootLayout({
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />
-        <I18nProvider locale={locale} messages={messagesFor(locale)}>
+        <I18nProvider locale={locale} messages={clientMessagesFor(locale)}>
           <ThemeSync />
           <Sidebar />
           {/* .rail-inset (app/globals.css) makes room for the floating nav

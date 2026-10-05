@@ -11,6 +11,29 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.75.0",
+    date: "2026-10-04",
+    changes: [
+      "Notifications follow whoever is signed in: if someone signs in on a browser where the last person's session ran out (rather than signing out from Settings), that browser's notifications now go to the new account instead of still arriving for the previous one — admin Approve/Decline included.",
+      "Recent searches are now kept for each account and cleared when you sign out, so someone else signing in on the same browser never sees yours.",
+      "Approve and Decline on a new-request notification, and the message after you press one, are now in your own language.",
+      "Search suggestions now say a title's library status in words, like \"Movie · Owned\", not only with a colour.",
+      "The trailer player works from the keyboard: focus moves into it, Tab stays inside, Escape closes it and focus goes back to the Trailer button. Screen readers announce it as a dialog.",
+      "Pages are lighter: the website no longer sends the whole app's translations with every page, only the text the page can show.",
+      "The notifications bell and the Requests badge no longer check for news while the tab is in the background; they catch up as soon as you come back to it.",
+      "Fixed: dates and times in comments, Settings › Jobs, the server logs and the Requests page's Can't find and Couldn't add lists could show in the server's time zone, or make the page redraw itself as it loaded. They now show in your own time zone.",
+      "Fixed: a button could stay greyed out (\"Saving…\") for good when the server couldn't be reached. It now comes back and says something went wrong, and a Discover shelf you moved or hid goes back where it was.",
+      "Fixed: pressing Cancel on \"Sign in with Plex\" and trying again could show the first try's \"expired\" error over the new one. Jellyfin's Quick Connect had the same problem.",
+      "Fixed: clearing the search box quickly could bring the old suggestions back under the empty box, and Escape on the recent searches list closed the whole search panel instead of just the list.",
+      "Fixed: the Library's search box could undo a filter picked while it was waiting, and every pause while typing added a step to the back button.",
+      "Fixed: opening the notifications bell just as it checked for news could bring the badge straight back.",
+      "Fixed: the server logs could show lines for a filter you'd already changed.",
+      "Fixed: the small favourite star on posters now says why when it couldn't save.",
+      "Fixed: connecting Plex in Settings › Media servers gave up if the connection dropped for a moment, and kept checking after you left the page.",
+      "Streaming links on title pages only ever open secure (https) pages.",
+    ],
+  },
+  {
     version: "0.74.0",
     date: "2026-10-04",
     changes: [

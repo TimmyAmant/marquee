@@ -79,29 +79,53 @@ export function NotificationsBell({
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   useViewportClamp(open, panelRef);
+  // Moves on each time the list opens: a count asked for before that (still
+  // unread then) mustn't put the badge back once it has gone. And none is
+  // used while the list is open — it's all being marked read.
+  const countRound = useRef(0);
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   const refreshCount = useCallback(() => {
-    getUnreadCountAction().then(setUnreadCount).catch(() => undefined);
+    // Not from a tab in the background; it catches up when it's looked at.
+    if (document.visibilityState !== "visible") return;
+    const round = countRound.current;
+    getUnreadCountAction()
+      .then((count) => {
+        if (round === countRound.current && !openRef.current) setUnreadCount(count);
+      })
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
     if (!visible) return;
     refreshCount();
     const interval = setInterval(refreshCount, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    document.addEventListener("visibilitychange", refreshCount);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshCount);
+    };
   }, [refreshCount, visible]);
 
   // Opening the list reads it: the badge goes at once, and everything is
   // marked read on the server once the list is in. What was new keeps its
-  // dot while the list stays open, so it's clear what arrived.
+  // dot while the list stays open, so it's clear what arrived. A list
+  // still loading from an earlier opening is dropped rather than shown.
   useEffect(() => {
     if (!open) return;
+    let cancelled = false;
     getRecentNotificationsAction()
       .then((rows) => {
-        setItems(rows);
+        if (!cancelled) setItems(rows);
         if (rows.some((n) => !n.read)) return markAllReadAction();
       })
       .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -125,7 +149,10 @@ export function NotificationsBell({
       <button
         type="button"
         onClick={() => {
-          if (!open) setUnreadCount(0);
+          if (!open) {
+            countRound.current++;
+            setUnreadCount(0);
+          }
           setOpen(!open);
         }}
         aria-label={unreadCount > 0 ? t("nav.notificationsUnread", { count: unreadCount }) : t("nav.notifications")}

@@ -13,6 +13,7 @@ import {
 import type { TraktSync } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
 import { timeAgo } from "@/lib/i18n/format";
+import { orError } from "@/lib/async/or-error";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -115,7 +116,7 @@ export function TraktSyncsCard({ initial, currentUserId }: { initial: TraktSyncs
   async function apply(action: Promise<TraktSyncActionResult>): Promise<void> {
     setBusy(true);
     setError(null);
-    const result = await action;
+    const result = await orError(action, t("common.somethingWentWrong"));
     if (!mounted.current) return;
     setBusy(false);
     if (result.state) setState(result.state);
@@ -126,7 +127,7 @@ export function TraktSyncsCard({ initial, currentUserId }: { initial: TraktSyncs
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const result = await addTraktSyncAction({ url, movies, tv, requestExisting });
+    const result = await orError(addTraktSyncAction({ url, movies, tv, requestExisting }), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.state) setState(result.state);
     if (result.error) {
@@ -139,7 +140,8 @@ export function TraktSyncsCard({ initial, currentUserId }: { initial: TraktSyncs
     if (requestExisting) {
       for (let tries = 0; tries < 6 && mounted.current; tries++) {
         await new Promise((resolve) => setTimeout(resolve, 5000));
-        const next = await refreshTraktSyncsAction();
+        const next = await refreshTraktSyncsAction().catch(() => null);
+        if (!next) continue;
         if (!mounted.current || !next.state) return;
         setState(next.state);
         if (next.state.syncs.every((s) => s.lastSyncedAt || s.lastError)) return;

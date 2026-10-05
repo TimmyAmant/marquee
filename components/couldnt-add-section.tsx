@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { manuallyApproveRequestAction, rejectRequestAction, retryRequestAction } from "@/lib/requests/actions";
 import { useT } from "@/lib/i18n/client";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { RequestTitle } from "@/components/request-title";
 import { AddAdvancedOptions } from "@/components/add-advanced-options";
@@ -16,6 +17,7 @@ import { DeclineReasonForm } from "@/components/decline-reason-chooser";
 
 function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedRequest; isAdmin: boolean; advanced: boolean }) {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
   const router = useRouter();
   const [retryState, retryAction, retrying] = useActionState(retryRequestAction.bind(null, request.id), undefined);
   const [manualState, manualAction, markingManual] = useActionState(
@@ -61,8 +63,8 @@ function CouldntAddRow({ request, isAdmin, advanced }: { request: ReviewedReques
         <p className="mt-0.5 text-xs text-text-muted">
           {t("requests.couldntAddMeta", {
             name: request.requestedBy.label,
-            approved: formatDate(t, request.reviewedAt ?? request.addFailed.since),
-            tried: formatDate(t, request.addFailed.since, "full"),
+            approved: formatDate(t, request.reviewedAt ?? request.addFailed.since, "medium", timeZone),
+            tried: formatDate(t, request.addFailed.since, "full", timeZone),
           })}
         </p>
         <p className="mt-1 text-xs text-red-400">{error}</p>
