@@ -111,10 +111,13 @@ export function attemptCount(key: string): number {
 /** Books the key's next free slot and returns how long the caller has to
  * wait for it (0 when the key is idle); the slot after it opens `spacingMs`
  * later. A queue rather than a refusal: callers are slowed down to one per
- * `spacingMs` however many arrive at once, but nobody is turned away. */
-export function reserveSlot(key: string, spacingMs: number): number {
+ * `spacingMs` however many arrive at once. The queue is bounded, though —
+ * when the wait would exceed `maxWaitMs`, nothing is booked and it answers
+ * null, so a burst of callers can't push the next free slot hours out. */
+export function reserveSlot(key: string, spacingMs: number, maxWaitMs = Infinity): number | null {
   const now = Date.now();
   const start = Math.max(now, slots.get(key) ?? 0);
+  if (start - now > maxWaitMs) return null;
   slots.set(key, start + spacingMs);
   return start - now;
 }

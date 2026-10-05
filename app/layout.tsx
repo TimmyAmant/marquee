@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Manrope } from "next/font/google";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import Script from "next/script";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -52,6 +52,9 @@ export default async function RootLayout({
   // Components get it, with just that language's messages, from the
   // provider below.
   const locale = await getLocale();
+  // This page's Content-Security-Policy nonce (proxy.ts), for the one script
+  // Next.js doesn't put it on by itself.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
     // The theme-init script below sets data-theme on <html> before React
@@ -74,7 +77,12 @@ export default async function RootLayout({
             beforeInteractive strategy is Next's own supported mechanism for
             exactly this, guaranteeing it actually runs pre-hydration on
             every load, not just the first. */}
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <I18nProvider locale={locale} messages={messagesFor(locale)}>
           <ThemeSync />
           <Sidebar />

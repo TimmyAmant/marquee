@@ -11,6 +11,23 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.74.0",
+    date: "2026-10-04",
+    changes: [
+      "Settings › Jobs now says which time zone a \"Daily at\" time is in, for example \"Daily at 3:00 AM (UTC)\". In Docker that's UTC unless you set TZ to your own zone (e.g. TZ=America/New_York); the Unraid template and docker-compose.yml now have a TZ setting for it.",
+      "Before an update changes the database, Marquee now saves a copy of it in the database folder (marquee-backups, the newest 3 kept), so a bad update can be undone. If the update fails, Marquee says where the copy is and shuts its database down cleanly.",
+      "Pressing Run now on a job that's already running now says so, instead of starting a second copy alongside it.",
+      "Fixed: a burst of wrong passwords could keep the real owner from signing in for over an hour. Now the wait never builds up past a few seconds.",
+      "Fixed: guessing a notification channel's confirmation code many times at once could get more than the 5 tries allowed.",
+      "Fixed: a request could be sent to Sonarr or Radarr with a folder that isn't one of its root folders. Approving now checks the folder against the server's own list.",
+      "Fixed: the hourly Sonarr/Radarr sync could briefly put back an older status over a download the download watch had just seen start or finish.",
+      "Fixed: when two \"Can't find\" checks ran at the same time, reviewers could get the same alert twice.",
+      "The website now tells browsers to run only Marquee's own scripts, which blocks most kinds of script injection. Embedding Marquee in Organizr or Homarr still works.",
+      "The hourly Sonarr/Radarr sync is faster on big libraries.",
+      "Saving a TMDb key no longer hangs if TMDb doesn't answer.",
+    ],
+  },
+  {
     version: "0.73.0",
     date: "2026-10-04",
     changes: [

@@ -109,6 +109,29 @@ describe("authenticateWithPassword", () => {
     expect(settledAt.slice(LOGIN_BACKOFF_AFTER)).toEqual(expected);
   });
 
+  it("refuses instead of queueing once a burst would push the wait past the cap, and recovers quickly", async () => {
+    vi.useFakeTimers();
+    const start = Date.now();
+    const results = await (async () => {
+      const attempts = Array.from({ length: 500 }, () => authenticateWithPassword(currentAdmin, "guess", null));
+      await vi.runAllTimersAsync();
+      return Promise.all(attempts);
+    })();
+
+    // Only a handful got queued; the rest were turned away rather than
+    // booking slots stretching an hour out.
+    const queued = results.filter((r) => !r.ok && r.reason === "invalid_credentials").length;
+    expect(queued).toBeLessThan(15);
+    expect(results.filter((r) => !r.ok && r.reason === "rate_limited").length).toBe(500 - queued);
+    // The whole burst drained in well under a minute…
+    expect(Date.now() - start).toBeLessThan(60_000);
+
+    // …so the owner's right password gets in without waiting behind it.
+    const pending = authenticateWithPassword(currentAdmin, "correct horse", null);
+    await vi.runAllTimersAsync();
+    expect(await pending).toMatchObject({ ok: true });
+  });
+
   it("gives a correct password its attempt back", async () => {
     const ip = `192.0.2.${run}`;
     for (let i = 0; i < LOGIN_CLIENT_LIMIT * 2; i++) {

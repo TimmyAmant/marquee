@@ -230,7 +230,10 @@ export async function checkNotFoundRequests(now = new Date()): Promise<void> {
     const arrPath = observation.kind === "missing" ? (observation.arrPath ?? row.arrPath) : row.arrPath;
     if (!decision.changed && arrPath === row.arrPath) return;
 
-    await db
+    // Only if the alert count is still the one this run read: two checks
+    // racing over the same request (a scheduled run and a Run now) both
+    // decide to alert, but only the one whose update lands sends it.
+    const updated = await db
       .update(requests)
       .set({
         notFoundSince: decision.state.since,
@@ -238,7 +241,15 @@ export async function checkNotFoundRequests(now = new Date()): Promise<void> {
         notFoundAlertedAt: decision.state.alertedAt,
         notFoundArrPath: arrPath,
       })
-      .where(and(eq(requests.id, row.id), isNull(requests.notFoundDismissedAt)));
+      .where(
+        and(
+          eq(requests.id, row.id),
+          isNull(requests.notFoundDismissedAt),
+          eq(requests.notFoundAlerts, row.alerts),
+        ),
+      )
+      .returning({ id: requests.id });
+    if (updated.length === 0) return;
 
     if (decision.cleared) await clearNotFoundAlerts(row.id);
     if (decision.alert && observation.kind === "missing") {

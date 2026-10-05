@@ -1,7 +1,7 @@
-import { and, eq, inArray, isNull, notInArray, or } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { runExclusive, singleFlight, whenIdle } from "@/lib/async/single-flight";
-import { arrStatusCache } from "@/lib/db/schema";
+import { arrStatusCache, titles } from "@/lib/db/schema";
 import type { ArrProvider } from "@/lib/db/schema";
 import { IntegrationDisconnectedError } from "@/lib/integrations/credentials";
 import { deriveRadarrStatus, deriveSonarrStatus, statusWithQueue, type QueueSummary } from "@/lib/integrations/arr-status-logic";
@@ -10,7 +10,8 @@ import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
 import { getOrFetchTitle } from "@/lib/tmdb/cache";
 import { lookupTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
-import { applyTmdbIdOverride } from "@/lib/library/title-overrides";
+import { loadTmdbIdOverrides } from "@/lib/library/title-overrides";
+import { isCacheHit } from "@/lib/tmdb/cache-policy";
 import { arrConfig, listLibraryServers, ownersWithLibraryServers, type ArrServer } from "@/lib/arr/servers";
 import { mergeServerCopies, type ServerCopy } from "@/lib/arr/merge";
 import { statusRank } from "@/lib/arr/fan-out";
@@ -23,7 +24,8 @@ import { sonarrEpisodeCounts } from "@/lib/library/episode-counts";
 // default server winning a tie. The 4K servers aren't part of the library
 // (lib/arr/fourk.ts).
 
-/** How many titles to write between checks that the servers are unchanged. */
+/** How many titles to write between checks that the servers are unchanged —
+ * also how many go in each batched write. */
 const CONNECTED_CHECK_EVERY = 100;
 
 type RowFields = {
@@ -117,10 +119,49 @@ async function listEach<T>(
   );
 }
 
+/** The batched upsert's update: each of these columns from the row that
+ * collided — the same columns the row's insert has, so nothing it leaves out
+ * (a Sonarr row has no quality) is touched. */
+function upsertSet(keys: readonly (keyof RowFields | "serverId" | "checkedAt")[]) {
+  return Object.fromEntries(keys.map((key) => [key, sql.raw(`excluded."${arrStatusCache[key].name}"`)]));
+}
+
+/** Makes sure the titles cache has each of these (the Library page joins
+ * against it): one query for the batch, and TMDb asked only about the ones
+ * getOrFetchTitle would have fetched anyway. */
+async function cacheTitles(mediaType: "movie" | "tv", tmdbIds: number[]): Promise<void> {
+  if (tmdbIds.length === 0) return;
+  const cached = await db
+    .select({
+      tmdbId: titles.tmdbId,
+      posterPath: titles.posterPath,
+      backdropPath: titles.backdropPath,
+      overview: titles.overview,
+      refreshedAt: titles.refreshedAt,
+      hasRawTmdb: sql<boolean>`${titles.rawTmdb} is not null`,
+    })
+    .from(titles)
+    .where(and(eq(titles.mediaType, mediaType), inArray(titles.tmdbId, tmdbIds)))
+    .catch(() => []);
+  const hits = new Set(cached.filter((row) => isCacheHit(row, row.hasRawTmdb)).map((row) => row.tmdbId));
+  for (const tmdbId of tmdbIds) {
+    if (!hits.has(tmdbId)) await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+  }
+}
+
 async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ count: number }> {
   const servers = await listLibraryServers(userId, kind);
   if (servers.length === 0) throw new Error(`${kind} is not connected for this user`);
   const serverIds = servers.map((s) => s.id);
+  // When the servers were read. Rows are written as of this moment, and only
+  // over rows older than it: the download watch (lib/arr/download-watch.ts)
+  // or an add (lib/arr/title-actions.ts) that lands while this run is still
+  // going has fresher news than these listings, and keeps it.
+  const snapshotAt = new Date();
+  const mediaType = kind === "radarr" ? "movie" : "tv";
+  // The user's tmdbId corrections, read once for the whole run.
+  const overrides = await loadTmdbIdOverrides(userId, mediaType).catch(() => new Map<number, number>());
+  const override = (tmdbId: number) => overrides.get(tmdbId) ?? tmdbId;
 
   const copies: ServerCopy<RowFields>[] = [];
   let failedLookupCount = 0;
@@ -133,18 +174,12 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
       (s) => radarr.getQueueSummaries(arrConfig(s)),
     );
     listings = movieListings;
-    const overrides = new Map<number, number>();
     for (const listing of movieListings) {
       if (!("items" in listing)) continue;
       for (const movie of listing.items) {
-        let tmdbId = overrides.get(movie.tmdbId);
-        if (tmdbId === undefined) {
-          tmdbId = await applyTmdbIdOverride(userId, "movie", movie.tmdbId).catch(() => movie.tmdbId);
-          overrides.set(movie.tmdbId, tmdbId);
-        }
         copies.push({
           serverId: listing.server.id,
-          tmdbId,
+          tmdbId: override(movie.tmdbId),
           fields: radarrRowFields(movie, listing.queue.get(movie.id)),
         });
       }
@@ -169,9 +204,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           // for never had a row to begin with, so it doesn't block cleanup —
           // otherwise one obscure show would switch cleanup off for good.
           if (!lookup.tmdbId && lookup.failed) failedLookupCount++;
-          tmdbId = lookup.tmdbId
-            ? await applyTmdbIdOverride(userId, "tv", lookup.tmdbId).catch(() => lookup.tmdbId!)
-            : null;
+          tmdbId = lookup.tmdbId ? override(lookup.tmdbId) : null;
           resolved.set(series.tvdbId, tmdbId);
         }
         if (!tmdbId) continue;
@@ -212,30 +245,44 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
   await assertSameServers(userId, kind, serverIds);
 
   let count = 0;
-  const seenTmdbIds: number[] = [];
-  for (const [index, { tmdbId, serverId, fields }] of merged.entries()) {
-    if (index > 0 && index % CONNECTED_CHECK_EVERY === 0) await assertSameServers(userId, kind, serverIds);
-    seenTmdbIds.push(tmdbId);
-    if (keep.has(tmdbId) && statusRank(keep.get(tmdbId)) > statusRank(fields.status)) continue;
-    await getOrFetchTitle(kind === "radarr" ? "movie" : "tv", tmdbId).catch(() => null);
-    const values = { ...fields, serverId, checkedAt: new Date() };
+  const toWrite = merged.filter(
+    ({ tmdbId, fields }) => !(keep.has(tmdbId) && statusRank(keep.get(tmdbId)) > statusRank(fields.status)),
+  );
+  for (let start = 0; start < toWrite.length; start += CONNECTED_CHECK_EVERY) {
+    if (start > 0) await assertSameServers(userId, kind, serverIds);
+    const batch = toWrite.slice(start, start + CONNECTED_CHECK_EVERY);
+    await cacheTitles(mediaType, batch.map((copy) => copy.tmdbId));
     await db
       .insert(arrStatusCache)
-      .values({ userId, provider: kind, externalId: tmdbId, ...values })
+      .values(
+        batch.map(({ tmdbId, serverId, fields }) => ({
+          ...fields,
+          userId,
+          provider: kind,
+          externalId: tmdbId,
+          serverId,
+          checkedAt: snapshotAt,
+        })),
+      )
       .onConflictDoUpdate({
         target: [arrStatusCache.userId, arrStatusCache.provider, arrStatusCache.externalId],
-        set: values,
+        // Every row of a kind has the same fields (radarrRowFields or
+        // sonarrRowFields), so the first one's say what to update.
+        set: upsertSet([...(Object.keys(batch[0].fields) as (keyof RowFields)[]), "serverId", "checkedAt"]),
+        setWhere: lt(arrStatusCache.checkedAt, snapshotAt),
       });
-    count++;
+    count += batch.length;
   }
 
-  // Titles removed from every server (outside Marquee) won't appear above —
-  // drop their cached rows so they don't linger as "still tracked". Every
-  // row goes except one from a server that didn't answer this time: rows
-  // from a server that answered, from one since removed (null), and from
-  // one no longer in the library — moved to 4K, whose copies mustn't count
-  // as the library. A Sonarr series whose TMDb lookup failed this run skips
-  // cleanup entirely, since `seenTmdbIds` would then be an incomplete picture.
+  // Titles removed from every server (outside Marquee) weren't written
+  // above — drop their cached rows so they don't linger as "still tracked".
+  // Every row goes except one from a server that didn't answer this time:
+  // rows from a server that answered, from one since removed (null), and
+  // from one no longer in the library — moved to 4K, whose copies mustn't
+  // count as the library. Anything written since the snapshot (by this run,
+  // the download watch or an add) stays. A Sonarr series whose TMDb lookup
+  // failed this run skips cleanup entirely, since this run's rows would then
+  // be an incomplete picture.
   if (failedLookupCount === 0) {
     await assertSameServers(userId, kind, serverIds);
     const fromAnsweredServer =
@@ -249,7 +296,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           eq(arrStatusCache.userId, userId),
           eq(arrStatusCache.provider, kind),
           fromAnsweredServer,
-          ...(seenTmdbIds.length > 0 ? [notInArray(arrStatusCache.externalId, seenTmdbIds)] : []),
+          lt(arrStatusCache.checkedAt, snapshotAt),
         ),
       );
   }

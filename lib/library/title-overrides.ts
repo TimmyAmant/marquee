@@ -29,3 +29,14 @@ export async function applyTmdbIdOverride(
     .limit(1);
   return row?.correctTmdbId ?? resolvedTmdbId;
 }
+
+/** Every override this user has for one media type, wrong id → correct id:
+ * one query for a whole sync run instead of applyTmdbIdOverride per title.
+ * The same answer applyTmdbIdOverride would give for each. */
+export async function loadTmdbIdOverrides(userId: string, mediaType: MediaType): Promise<Map<number, number>> {
+  const rows = await db
+    .select({ wrongTmdbId: tmdbIdOverrides.wrongTmdbId, correctTmdbId: tmdbIdOverrides.correctTmdbId })
+    .from(tmdbIdOverrides)
+    .where(and(eq(tmdbIdOverrides.userId, userId), eq(tmdbIdOverrides.mediaType, mediaType)));
+  return new Map(rows.map((row) => [row.wrongTmdbId, row.correctTmdbId]));
+}

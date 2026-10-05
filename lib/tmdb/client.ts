@@ -112,6 +112,7 @@ export async function verifyTmdbAccessToken(token: string): Promise<boolean> {
       ...(isV4Token ? { Authorization: `Bearer ${token}` } : {}),
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   return res.ok;
 }
