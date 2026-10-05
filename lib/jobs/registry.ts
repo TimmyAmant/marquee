@@ -1,6 +1,7 @@
 import { syncAllConnectedPlexUsers } from "@/lib/plex/sync";
 import { syncAllConnectedJellyfinUsers } from "@/lib/jellyfin/sync";
 import { syncAllConnectedArrUsers } from "@/lib/arr/sync";
+import { checkArrAgainstMediaServers } from "@/lib/arr/media-server-check";
 import { snapshotDiskSpaceForAllConnectedUsers } from "@/lib/integrations/disk-space";
 import { pruneOldRecords } from "@/lib/jobs/cleanup";
 import { syncAllPlexWatchlists } from "@/lib/plex/watchlist";
@@ -109,11 +110,16 @@ export function jobDefinitions(t: Translator, stored: Record<string, unknown> = 
   });
 }
 
-/** A library sync, then the "ready to watch" check (lib/requests/complete.ts)
- * against what it found. */
+/** A library sync, then a word with Sonarr/Radarr about anything Plex or
+ * Jellyfin has that they haven't noticed yet (lib/arr/media-server-check.ts),
+ * then the "ready to watch" check (lib/requests/complete.ts) against what
+ * they found. */
 function thenCheckComplete(sync: () => Promise<void>): () => Promise<void> {
   return async () => {
     await sync();
+    await checkArrAgainstMediaServers().catch((err) => {
+      console.error("[media-check] check after sync failed:", err);
+    });
     await checkCompletedRequests().catch((err) => {
       console.error("[complete-check] check after sync failed:", err);
     });

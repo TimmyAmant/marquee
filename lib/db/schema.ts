@@ -552,6 +552,12 @@ export const arrStatusCache = pgTable(
     // is "tracked_downloading" (lib/arr/download-watch.ts keeps it current).
     // Null otherwise, and when the queue doesn't say.
     downloadProgress: integer("download_progress"),
+    // Until when the download watch keeps asking Sonarr/Radarr to look in
+    // this title's folder: set while a finished download sits waiting to be
+    // moved into the library by hand, so a file moved in after it left the
+    // queue — or after a restart — is still picked up. Cleared once it's
+    // Owned. Null otherwise.
+    watchUntil: timestamp("watch_until", { withTimezone: true }),
     checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique().on(table.userId, table.provider, table.externalId)],

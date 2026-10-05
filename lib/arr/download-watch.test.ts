@@ -14,12 +14,21 @@ const radarr = vi.hoisted(() => ({
   rescanMovie: vi.fn(async (..._args: unknown[]) => undefined),
 }));
 vi.mock("@/lib/radarr/client", () => radarr);
-vi.mock("@/lib/sonarr/client", () => ({ getQueueSummaries: vi.fn(), getSeries: vi.fn(), rescanSeries: vi.fn() }));
-const servers = vi.hoisted(() => ({ list: [] as { id: string; baseUrl: string; apiKey: string }[], owners: [] as string[] }));
+const sonarr = vi.hoisted(() => ({
+  getQueueSummaries: vi.fn(),
+  getSeries: vi.fn(),
+  rescanSeries: vi.fn(async (..._args: unknown[]) => undefined),
+}));
+vi.mock("@/lib/sonarr/client", () => sonarr);
+const servers = vi.hoisted(() => ({
+  kind: "radarr",
+  list: [] as { id: string; baseUrl: string; apiKey: string }[],
+  owners: [] as string[],
+}));
 vi.mock("@/lib/arr/servers", () => ({
   arrConfig: (s: { baseUrl: string; apiKey: string }) => ({ baseUrl: s.baseUrl, apiKey: s.apiKey }),
-  listLibraryServers: async (_userId: string, kind: string) => (kind === "radarr" ? servers.list : []),
-  ownersWithLibraryServers: async (kind: string) => (kind === "radarr" ? servers.owners : []),
+  listLibraryServers: async (_userId: string, kind: string) => (kind === servers.kind ? servers.list : []),
+  ownersWithLibraryServers: async (kind: string) => (kind === servers.kind ? servers.owners : []),
 }));
 const complete = vi.hoisted(() => ({ scheduleCompletionCheck: vi.fn() }));
 vi.mock("@/lib/requests/complete", () => complete);
@@ -30,7 +39,7 @@ vi.mock("@/lib/push/deliver", () => ({ pushToUser: async () => 0, pushMessageFor
 import { eq } from "drizzle-orm";
 import { resetTestDatabase, testDatabase } from "@/lib/test/pglite";
 import { arrServers, arrStatusCache, notifications, titles, users } from "@/lib/db/schema";
-import { rescanDue, watchDownloads } from "@/lib/arr/download-watch";
+import { WATCH_AFTER_READY_MS, nextWatchUntil, rescanDue, watchDownloads } from "@/lib/arr/download-watch";
 
 let admin: string;
 let tmdbId = 1000;
@@ -55,6 +64,7 @@ beforeEach(async () => {
   await resetTestDatabase();
   vi.clearAllMocks();
   tmdbId++; // the watch remembers titles between runs; each test gets its own
+  servers.kind = "radarr";
   const { db } = await testDatabase();
   const [a] = await db.insert(users).values({ username: "admin", role: "admin", permissions: [] }).returning();
   admin = a.id;
@@ -147,6 +157,56 @@ describe("the download watch", () => {
     expect(await row()).toMatchObject({ status: "tracked_downloading" });
   });
 
+  it("keeps rescanning a show whose finished download was moved in by hand, across a restart", async () => {
+    // The overnight case: a season finishes in qBittorrent's own folder,
+    // which Sonarr won't import ("ready to move"). The files are moved into
+    // the series folder by hand and the queue item goes away — but Sonarr
+    // only sees them once it rescans the folder, which it may not have done
+    // by the watch's next look. Then Marquee restarts (an update).
+    const { db } = await testDatabase();
+    servers.kind = "sonarr";
+    await db
+      .update(arrStatusCache)
+      .set({ provider: "sonarr", status: "tracked_downloading" })
+      .where(eq(arrStatusCache.externalId, tmdbId));
+    const series = (have: number) => ({
+      id: tmdbId,
+      tvdbId: 1,
+      title: "Slow Horses",
+      monitored: true,
+      status: "continuing",
+      statistics: { episodeCount: 6, episodeFileCount: have, totalEpisodeCount: 6, sizeOnDisk: have * 1000 },
+      seasons: [{ seasonNumber: 1, monitored: true, statistics: { episodeFileCount: have, episodeCount: 6, totalEpisodeCount: 6 } }],
+    });
+    sonarr.getQueueSummaries.mockResolvedValue(new Map([[tmdbId, { active: false, progress: null, finished: true }]]));
+    sonarr.getSeries.mockResolvedValue(series(2));
+    await watchDownloads();
+    expect(await row()).toMatchObject({ status: "ready_to_move" });
+
+    // Moved in by hand: out of the queue, and Sonarr hasn't looked yet.
+    sonarr.getQueueSummaries.mockResolvedValue(new Map());
+    await watchDownloads();
+    expect(await row()).toMatchObject({ status: "tracked_downloading" });
+    expect((await row()).watchUntil).not.toBeNull();
+    const rescans = sonarr.rescanSeries.mock.calls.length;
+    await watchDownloads(); // a moment later: still watched, but not rescanned every minute
+    expect(sonarr.rescanSeries).toHaveBeenCalledTimes(rescans);
+
+    // The restart: everything the watch kept in memory is gone.
+    const memory = globalThis.__marqueeDownloadWatch!;
+    memory.rescannedAt.clear();
+    memory.readySince.clear();
+    memory.told.clear();
+    (memory as { queued?: Set<string> }).queued?.clear();
+    sonarr.rescanSeries.mockClear();
+
+    sonarr.getSeries.mockResolvedValue(series(6));
+    await watchDownloads();
+    expect(sonarr.rescanSeries).toHaveBeenCalledWith({ baseUrl: "http://radarr", apiKey: "k" }, tmdbId);
+    expect(await row()).toMatchObject({ status: "owned", watchUntil: null });
+    expect(complete.scheduleCompletionCheck).toHaveBeenCalledWith({ mediaType: "tv", tmdbId, is4k: false });
+  });
+
   it("leaves a title alone when Radarr doesn't answer", async () => {
     radarr.getQueueSummaries.mockRejectedValue(new Error("down"));
     await watchDownloads();
@@ -162,5 +222,23 @@ describe("rescanDue", () => {
     expect(rescanDue(2 * minute, 0, 0)).toBe(true);
     expect(rescanDue(62 * minute, 0, 60 * minute)).toBe(false);
     expect(rescanDue(75 * minute, 0, 60 * minute)).toBe(true);
+  });
+});
+
+describe("nextWatchUntil", () => {
+  const hour = 60 * 60_000;
+  const finished = { active: false, progress: null, finished: true };
+  it("watches a finished download for 12 hours after it was last seen waiting, and stops once it's owned", () => {
+    expect(nextWatchUntil(0, null, "ready_to_move", undefined)).toEqual(new Date(WATCH_AFTER_READY_MS));
+    expect(nextWatchUntil(0, null, "tracked_downloading", finished)).toEqual(new Date(WATCH_AFTER_READY_MS));
+    // Not rewritten every minute while it waits…
+    const until = new Date(WATCH_AFTER_READY_MS);
+    expect(nextWatchUntil(10 * 60_000, until, "ready_to_move", undefined)).toBe(until);
+    // …but pushed back once an hour has gone by.
+    expect(nextWatchUntil(hour, until, "ready_to_move", undefined)).toEqual(new Date(hour + WATCH_AFTER_READY_MS));
+    // Moved in: the window it had stands.
+    expect(nextWatchUntil(2 * hour, until, "tracked_downloading", undefined)).toBe(until);
+    expect(nextWatchUntil(2 * hour, until, "owned", undefined)).toBeNull();
+    expect(nextWatchUntil(0, null, "tracked_downloading", undefined)).toBeNull();
   });
 });
