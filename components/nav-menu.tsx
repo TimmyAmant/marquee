@@ -46,6 +46,7 @@ function isCurrent(pathname: string, href: string): boolean {
  */
 export function NavMenu({
   isSignedIn,
+  userId,
   showRequestsBadge,
   pendingRequestCount,
   userLabel,
@@ -54,6 +55,8 @@ export function NavMenu({
   serverVersion,
 }: {
   isSignedIn: boolean;
+  /** The signed-in account, whose recent searches the search panel shows. */
+  userId: string | null;
   /** Whoever reviews requests or handles problem reports. */
   showRequestsBadge: boolean;
   pendingRequestCount: number;
@@ -168,6 +171,7 @@ export function NavMenu({
 
       {searchOpen && (
         <SearchDialog
+          userId={userId}
           onNavigate={() => setSearchOpen(false)}
           onDismiss={() => {
             setSearchOpen(false);
@@ -197,14 +201,23 @@ export function NavMenu({
  * hands focus back to the rail's Search. Tab stays inside it. Navigating
  * closes it too (NavMenu resets it on every route change).
  */
-function SearchDialog({ onNavigate, onDismiss }: { onNavigate: () => void; onDismiss: () => void }) {
+function SearchDialog({
+  userId,
+  onNavigate,
+  onDismiss,
+}: {
+  userId: string | null;
+  onNavigate: () => void;
+  onDismiss: () => void;
+}) {
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        onDismiss();
+        // The search box's suggestions or recent searches closing first.
+        if (!e.defaultPrevented) onDismiss();
         return;
       }
       if (e.key !== "Tab" || !panelRef.current) return;
@@ -234,7 +247,7 @@ function SearchDialog({ onNavigate, onDismiss }: { onNavigate: () => void; onDis
         ref={panelRef}
         className="nav-glass relative mx-auto mt-[90px] w-[560px] max-w-[calc(100vw-120px)] rounded-[20px] p-2.5 shadow-[0_24px_60px_rgb(0_0_0/0.35)]"
       >
-        <SearchBar autoFocus onNavigate={onNavigate} />
+        <SearchBar autoFocus onNavigate={onNavigate} userId={userId} />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getLogsAction } from "@/app/settings/logs/actions";
 import type { LogEntry, LogLevel } from "@/lib/logs/buffer";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
 import { showToast } from "@/components/toast";
@@ -37,6 +38,7 @@ function asText(entries: LogEntry[]): string {
 
 export function LogViewer() {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
   const [level, setLevel] = useState<LogLevel>("info");
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<LogEntry[]>([]);
@@ -46,10 +48,16 @@ export function LogViewer() {
   const lastId = useRef<number | undefined>(undefined);
   const listRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
+  // Only the newest request's answer is used: one for an old filter (or a
+  // refresh that started before it) can come back after it, and would put
+  // the wrong lines up or add the same ones twice.
+  const latestRequest = useRef(0);
 
   const load = useCallback(
     async (fresh: boolean) => {
+      const request = ++latestRequest.current;
       const result = await getLogsAction({ level, query, after: fresh ? undefined : lastId.current }).catch(() => null);
+      if (request !== latestRequest.current) return;
       if (!result || !result.ok) {
         setError(result && !result.ok ? result.error : t("common.somethingWentWrong"));
         return;
@@ -159,7 +167,7 @@ export function LogViewer() {
             <li key={entry.id} className="flex flex-col gap-1 px-4 py-2 sm:flex-row sm:gap-3">
               <span className="flex shrink-0 items-center gap-2 sm:w-[260px]">
                 <time dateTime={entry.time} className="text-text-muted">
-                  {formatDate(t, entry.time, "dateTime")}
+                  {formatDate(t, entry.time, "dateTime", timeZone)}
                 </time>
                 <span className={`rounded-full border px-1.5 text-[10px] uppercase ${LEVEL_STYLES[entry.level]}`}>
                   {t(LEVEL_LABELS[entry.level])}

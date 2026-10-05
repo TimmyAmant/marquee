@@ -46,7 +46,7 @@ export async function SiteHeader() {
         </Link>
 
         <div className="header-search ml-auto w-[min(380px,40vw)]">
-          <SearchBar variant="compact" />
+          <SearchBar variant="compact" userId={session?.user?.id ?? null} />
         </div>
 
         <div className="ml-auto flex items-center gap-3 md:hidden">

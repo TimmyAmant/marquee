@@ -71,22 +71,32 @@ const NEUTRAL_PILL_CLASS = "border-border text-text-muted";
 
 /** The Movie/TV pill wears the title's library status in the same tone as a
  * poster's badge and strip (lib/library/status-tone.ts): green in the
- * library, blue downloading, orange missing, purple coming soon. Not in the
- * library stays the plain grey pill. */
+ * library, blue downloading, orange missing, purple coming soon — and says
+ * it in words too ("Movie · Owned", the poster badge's short label), so it
+ * never rests on colour alone. Not in the library stays the plain grey
+ * pill. */
 function TypePill({ suggestion }: { suggestion: SearchSuggestion }) {
   const t = useT();
   const typeLabel = t(TYPE_LABELS[suggestion.mediaType]);
   // A status this build doesn't know (a newer server) reads as neutral.
   const known = isLibraryStatus(suggestion.status) ? suggestion.status : undefined;
   const tone = statusTone(known);
-  const statusLabel = known ? statusText(t, known).name : undefined;
+  const text = known ? statusText(t, known) : undefined;
+  const statusLabel = text?.name;
   return (
     <span
       title={statusLabel ? t("nav.typeWithStatus", { type: typeLabel, status: statusLabel }) : undefined}
-      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] ${tone === "neutral" ? NEUTRAL_PILL_CLASS : TONE_CLASS[tone].pill}`}
+      className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] ${tone === "neutral" ? NEUTRAL_PILL_CLASS : TONE_CLASS[tone].pill}`}
     >
       {typeLabel}
-      {statusLabel && <span className="sr-only"> · {statusLabel}</span>}
+      {text && tone !== "neutral" ? (
+        <>
+          <span aria-hidden> · {text.compactLabel}</span>
+          <span className="sr-only"> · {text.name}</span>
+        </>
+      ) : (
+        statusLabel && <span className="sr-only"> · {statusLabel}</span>
+      )}
     </span>
   );
 }
@@ -110,6 +120,7 @@ export function SearchBar({
   onNavigate,
   autoFocus = false,
   restoreOnBack = false,
+  userId = null,
 }: {
   variant?: "default" | "compact";
   initialValue?: string;
@@ -119,6 +130,9 @@ export function SearchBar({
    * last search — what was typed and its suggestions, open — instead of an
    * empty box. The search page's own box. */
   restoreOnBack?: boolean;
+  /** Whose recent searches to show and keep (lib/search/recent.ts): none
+   * while signed out. */
+  userId?: string | null;
 }) {
   const t = useT();
   const router = useRouter();
@@ -126,7 +140,9 @@ export function SearchBar({
   // Only ever on a client-side back/forward, never while hydrating a page
   // load, so the server's empty box always matches.
   const [restored] = useState(() =>
-    restoreOnBack && typeof window !== "undefined" && cameBackJustNow() ? readLastSearch<SearchSuggestion>() : null,
+    restoreOnBack && userId && typeof window !== "undefined" && cameBackJustNow()
+      ? readLastSearch<SearchSuggestion>(userId)
+      : null,
   );
   const [value, setValue] = useState(restored?.query ?? initialValue);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>(restored?.suggestions ?? []);
@@ -177,6 +193,9 @@ export function SearchBar({
 
     const trimmed = next.trim();
     if (trimmed.length < 2) {
+      // A fetch still in flight for the longer query must not reopen its
+      // suggestions under a box that's now (nearly) empty.
+      latestRequestId.current++;
       setSuggestions([]);
       setIsOpen(false);
       return;
@@ -204,10 +223,10 @@ export function SearchBar({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     latestRequestId.current++;
     const typed = value.trim();
-    if (typed) {
-      rememberSearch(typed);
+    if (typed && userId) {
+      rememberSearch(userId, typed);
       // So swiping back from the title finds this list still open.
-      saveLastSearch({ query: typed, suggestions });
+      saveLastSearch(userId, { query: typed, suggestions });
     }
     setIsOpen(false);
     onNavigate?.();
@@ -229,14 +248,14 @@ export function SearchBar({
     if (!trimmed) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     latestRequestId.current++;
-    rememberSearch(trimmed);
+    if (userId) rememberSearch(userId, trimmed);
     setIsOpen(false);
     onNavigate?.();
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
 
   function showRecentSearches() {
-    setRecents(readRecentSearches());
+    setRecents(userId ? readRecentSearches(userId) : []);
     setShowRecents(true);
   }
 
@@ -248,12 +267,12 @@ export function SearchBar({
 
   function forgetRecent(query: string) {
     const next = removeRecentSearch(recents, query);
-    saveRecentSearches(next);
+    if (userId) saveRecentSearches(userId, next);
     setRecents(next);
   }
 
   function clearRecents() {
-    saveRecentSearches([]);
+    if (userId) saveRecentSearches(userId, []);
     setRecents([]);
   }
 
@@ -264,7 +283,13 @@ export function SearchBar({
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape" && showRecents) setShowRecents(false);
+    if (e.key === "Escape" && recentsShown) {
+      // Like the suggestions below: only the list closes, not a search
+      // dialog around this box.
+      e.preventDefault();
+      e.stopPropagation();
+      setShowRecents(false);
+    }
     if (!isOpen || suggestions.length === 0) return;
 
     // ↑↓ walk the flat list, straight across the groups; past either end
@@ -278,6 +303,10 @@ export function SearchBar({
       next = highlightedIndex <= 0 ? suggestions.length - 1 : highlightedIndex - 1;
     } else if (e.key === "Escape") {
       // Only the suggestions close; a search dialog around this box stays.
+      // React listens on the document itself, where stopPropagation can't
+      // keep the dialog's own listener from running: it skips an Escape
+      // that's been handled (preventDefault) instead.
+      e.preventDefault();
       e.stopPropagation();
       setIsOpen(false);
     }

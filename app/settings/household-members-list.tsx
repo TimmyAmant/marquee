@@ -9,6 +9,7 @@ import { updateHouseholdMemberAction, deleteUserAction, type HouseholdMember } f
 import { lastActiveLabel } from "@/lib/users/last-active-label";
 import { PERMISSION_PRESET_LABELS, presetFor } from "@/lib/users/permissions";
 import { useT } from "@/lib/i18n/client";
+import { useHydrated } from "@/lib/ui/use-hydrated";
 import { rich } from "@/lib/i18n/rich";
 import { PermissionsEditor } from "./permissions-editor";
 import { useResultToast } from "@/components/settings/use-result-toast";
@@ -303,6 +304,7 @@ export function HouseholdMembersList({
   jellyfinName?: string;
 }) {
   const t = useT();
+  const hydrated = useHydrated();
   const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
@@ -335,9 +337,9 @@ export function HouseholdMembersList({
                 )}
                 {member.displayName && <p className="mt-0.5 truncate text-text-muted">{member.username}</p>}
                 {/* The admin's view of who still uses Marquee; relative to
-                    the viewer's clock, so the server's render may differ. */}
-                {isAdmin && member.id !== currentUserId && (
-                  <p className="mt-0.5 truncate text-xs text-text-muted" suppressHydrationWarning>
+                    the viewer's clock, so only once hydrated. */}
+                {isAdmin && member.id !== currentUserId && hydrated && (
+                  <p className="mt-0.5 truncate text-xs text-text-muted">
                     {lastActiveLabel(t, member.lastActiveAt, new Date())}
                   </p>
                 )}

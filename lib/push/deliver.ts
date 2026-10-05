@@ -114,10 +114,29 @@ const EVENT_TITLES: Record<NotificationRow["eventType"], MessageKey> = {
   download_ready: "notify.pushReadyToMove",
 };
 
+/** The words the service worker needs for a new request's Approve /
+ * Decline buttons and what it shows after one is pressed, in the
+ * recipient's language (public/sw.js has English to fall back on). */
+export type PushReviewLabels = {
+  approve: string;
+  decline: string;
+  approved: string;
+  declined: string;
+  signIn: string;
+  unreachable: string;
+};
+
 /** What the service worker (public/sw.js) shows. `requestId`: a new
  * request, which the notification offers to approve or decline on the spot
- * (where the browser supports notification buttons). */
-export type PushMessage = { title: string; body: string; url: string; tag: string; requestId?: string };
+ * (where the browser supports notification buttons), with `labels`. */
+export type PushMessage = {
+  title: string;
+  body: string;
+  url: string;
+  tag: string;
+  requestId?: string;
+  labels?: PushReviewLabels;
+};
 
 export function pushMessageFor(
   row: Pick<NotificationRow, "id" | "eventType" | "message" | "mediaType" | "tmdbId" | "requestId">,
@@ -132,7 +151,19 @@ export function pushMessageFor(
     body: row.message,
     url: isNewRequest || isComment ? "/requests" : `/title/${row.mediaType}/${row.tmdbId}`,
     tag: row.id,
-    ...(isNewRequest ? { requestId: row.requestId! } : {}),
+    ...(isNewRequest
+      ? {
+          requestId: row.requestId!,
+          labels: {
+            approve: t("common.approve"),
+            decline: t("common.decline"),
+            approved: t("notify.pushApprovedBody", { request: row.message }),
+            declined: t("notify.pushDeclinedBody", { request: row.message }),
+            signIn: t("notify.pushSignInAgain"),
+            unreachable: t("notify.pushUnreachable"),
+          },
+        }
+      : {}),
   };
 }
 

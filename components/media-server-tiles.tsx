@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { startPlexAuth, checkPlexAuthStatus } from "@/app/settings/integrations/plex-actions";
+import { startPlexAuth, checkPlexAuthStatus, type StartPlexAuthResult } from "@/app/settings/integrations/plex-actions";
 import { testAndSaveJellyfinConnection } from "@/app/settings/integrations/jellyfin-actions";
 import { DisconnectButton } from "@/components/disconnect-button";
 import { ConnectionForm } from "@/components/settings/connection-form";
@@ -40,14 +40,20 @@ export function MediaServerTiles({
   const [plexWaiting, setPlexWaiting] = useState(false);
   const [plexError, setPlexError] = useState<string | null>(null);
   const [editingJellyfin, setEditingJellyfin] = useState(false);
-  const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Which Connect press is current; leaving the page moves it on, so a
+  // check still in flight then does nothing when it comes back.
+  const attempt = useRef(0);
 
   const jellyfinConnected = Boolean(jellyfin.existing?.hasApiKey);
 
   function stopPolling() {
-    if (pollTimer.current) clearInterval(pollTimer.current);
+    attempt.current++;
+    if (pollTimer.current) clearTimeout(pollTimer.current);
     pollTimer.current = null;
   }
+
+  useEffect(() => stopPolling, []);
 
   function plexFailed(text: string) {
     setPlexError(text);
@@ -55,11 +61,15 @@ export function MediaServerTiles({
     showToast(text, "error");
   }
 
-  // The website polls every 2.5s and gives up after 2 minutes.
+  // The website polls every 2.5s and gives up after 2 minutes: one check
+  // at a time, the next only once the last has answered.
   async function connectPlex() {
+    stopPolling();
+    const current = attempt.current;
     setPlexError(null);
     setPlexWaiting(true);
-    const result = await startPlexAuth();
+    const result = await startPlexAuth().catch((): StartPlexAuthResult => ({ error: t("integrations.plexStartFailed") }));
+    if (current !== attempt.current) return;
     if (result.error || !result.authUrl || !result.pinId) {
       plexFailed(result.error ?? t("integrations.plexStartFailed"));
       return;
@@ -67,22 +77,31 @@ export function MediaServerTiles({
     window.open(result.authUrl, "_blank", "noopener,noreferrer");
     const deadline = Date.now() + 2 * 60 * 1000;
     const pinId = result.pinId;
-    pollTimer.current = setInterval(async () => {
+    const tick = async () => {
+      pollTimer.current = null;
+      if (current !== attempt.current) return;
       if (Date.now() > deadline) {
-        stopPolling();
         plexFailed(t("integrations.plexTimedOut"));
         return;
       }
-      const status = await checkPlexAuthStatus(pinId);
-      if (status.connected) {
-        stopPolling();
-        setPlexConnected(true);
-        setPlexCounts({ movies: status.movieCount ?? 0, shows: status.tvCount ?? 0 });
-        setPlexWaiting(false);
-        showToast(t("integrations.connectedSuccessfully"));
-        router.refresh();
+      try {
+        const status = await checkPlexAuthStatus(pinId);
+        if (current !== attempt.current) return;
+        if (status.connected) {
+          setPlexConnected(true);
+          setPlexCounts({ movies: status.movieCount ?? 0, shows: status.tvCount ?? 0 });
+          setPlexWaiting(false);
+          showToast(t("integrations.connectedSuccessfully"));
+          router.refresh();
+          return;
+        }
+      } catch {
+        // A dropped connection: just ask again on the next tick.
+        if (current !== attempt.current) return;
       }
-    }, 2500);
+      pollTimer.current = setTimeout(tick, 2500);
+    };
+    pollTimer.current = setTimeout(tick, 2500);
   }
 
   const serverNames = (servers: ServerSummary[]) =>

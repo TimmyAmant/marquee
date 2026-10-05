@@ -14,6 +14,7 @@ import {
 import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
 import { useT } from "@/lib/i18n/client";
 import { timeAgo } from "@/lib/i18n/format";
+import { orError } from "@/lib/async/or-error";
 
 const smallButtonClass =
   "rounded-full border border-border-strong px-3.5 py-1.5 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
@@ -47,7 +48,7 @@ export function PlexWatchlistCard({ initial }: { initial: WatchlistState }) {
   async function apply(action: Promise<WatchlistActionResult>) {
     setBusy(true);
     setError(null);
-    const result = await action;
+    const result = await orError(action, t("common.somethingWentWrong"));
     setBusy(false);
     if (result.state) setState(result.state);
     if (result.error) setError(result.error);

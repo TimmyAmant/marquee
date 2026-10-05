@@ -3,6 +3,29 @@
 // when one is clicked — or, on a new request, approve or decline it from the
 // notification's buttons. It doesn't cache pages or intercept requests, so
 // the site behaves exactly as it does without it.
+//
+// The words on a new request's buttons, and what it says once one is
+// pressed, come with the push in the recipient's language (`labels`,
+// lib/push/deliver.ts); the English below is only for a push from an older
+// server without them.
+
+const ENGLISH = {
+  approve: "Approve",
+  decline: "Decline",
+  approved: null,
+  declined: null,
+  signIn: "Open Marquee and sign in, then try again.",
+  unreachable: "Couldn't reach your Marquee server.",
+};
+
+function labelsOf(data) {
+  const given = data && typeof data.labels === "object" && data.labels ? data.labels : {};
+  const labels = {};
+  for (const key of Object.keys(ENGLISH)) {
+    labels[key] = typeof given[key] === "string" && given[key] ? given[key] : ENGLISH[key];
+  }
+  return labels;
+}
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -19,18 +42,19 @@ self.addEventListener("push", (event) => {
   } catch {
     data = { body: event.data ? event.data.text() : "" };
   }
+  const labels = labelsOf(data);
   event.waitUntil(
     self.registration.showNotification(data.title || "Marquee", {
       body: data.body || "",
       tag: data.tag,
       icon: "/marquee-icon.png",
       badge: "/marquee-icon.png",
-      data: { url: data.url || "/", requestId: data.requestId || null },
+      data: { url: data.url || "/", requestId: data.requestId || null, labels },
       // Where the browser supports buttons (Android, desktop Chrome/Edge).
       actions: data.requestId
         ? [
-            { action: "approve", title: "Approve" },
-            { action: "decline", title: "Decline" },
+            { action: "approve", title: labels.approve },
+            { action: "decline", title: labels.decline },
           ]
         : [],
     }),
@@ -39,6 +63,7 @@ self.addEventListener("push", (event) => {
 
 async function reviewFromNotification(notification, action) {
   const requestId = notification.data && notification.data.requestId;
+  const labels = labelsOf(notification.data);
   let body = "";
   try {
     const res = await fetch(`/api/push/requests/${encodeURIComponent(requestId)}/${action}`, {
@@ -48,12 +73,14 @@ async function reviewFromNotification(notification, action) {
       redirect: "manual",
     });
     const answer = await res.json().catch(() => ({}));
-    body =
-      res.ok && answer.ok
-        ? `${action === "approve" ? "Approved" : "Declined"}: ${notification.body}`
-        : answer.error || "Open Marquee and sign in, then try again.";
+    if (res.ok && answer.ok) {
+      const done = action === "approve" ? labels.approved : labels.declined;
+      body = done || `${action === "approve" ? "Approved" : "Declined"}: ${notification.body}`;
+    } else {
+      body = answer.error || labels.signIn;
+    }
   } catch {
-    body = "Couldn't reach your Marquee server.";
+    body = labels.unreachable;
   }
   await self.registration.showNotification("Marquee", {
     body,

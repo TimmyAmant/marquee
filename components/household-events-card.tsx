@@ -6,6 +6,7 @@ import type { HouseholdNotificationEvents } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
 import { showToast } from "@/components/toast";
 import { SaveBar, SettingRow, SettingsGroup, SettingsGroupHeader } from "@/components/settings/settings-ui";
+import { orError } from "@/lib/async/or-error";
 
 /** Settings › Notifications › Household events: which events Discord,
  * ntfy, Telegram, Pushover, email and the webhook post — a row per event,
@@ -30,7 +31,7 @@ export function HouseholdEventsCard({ initial }: { initial: HouseholdNotificatio
     if (!dirty) return;
     setSaving(true);
     setError(null);
-    const result = await saveHouseholdEventsAction(changes);
+    const result = await orError(saveHouseholdEventsAction(changes), t("common.somethingWentWrong"));
     setSaving(false);
     if (result.error) {
       setError(result.error);

@@ -19,6 +19,7 @@ import {
   SettingsGroup,
   SettingsGroupHeader,
 } from "@/components/settings/settings-ui";
+import { orError } from "@/lib/async/or-error";
 
 /** Common ratings, offered as suggestions (any rating can be typed). */
 const RATING_SUGGESTIONS = ["G", "PG", "PG-13", "R", "NC-17", "TV-Y", "TV-G", "TV-PG", "TV-14", "TV-MA", "12", "16", "18"];
@@ -36,7 +37,7 @@ function RemoveButton({ id }: { id: string }) {
         onClick={async () => {
           setBusy(true);
           setError(null);
-          const result = await removeBlocklistEntryAction(id);
+          const result = await orError(removeBlocklistEntryAction(id), t("common.somethingWentWrong"));
           setBusy(false);
           if (result.error) setError(result.error);
           else router.refresh();
@@ -128,7 +129,7 @@ export function AutoBlockForm({ defaultRegion, adultBlocked }: { defaultRegion: 
 
   function runPreview() {
     startPreview(async () => {
-      const result = await previewBlockRuleAction(body);
+      const result = await orError(previewBlockRuleAction(body), t("common.somethingWentWrong"));
       if (result.error || !result.preview) showToast(result.error ?? t("common.somethingWentWrong"), "error");
       else setPreview(result.preview);
     });
@@ -136,7 +137,7 @@ export function AutoBlockForm({ defaultRegion, adultBlocked }: { defaultRegion: 
 
   function save() {
     startSaving(async () => {
-      const result = await blockRuleAction(body);
+      const result = await orError(blockRuleAction(body), t("common.somethingWentWrong"));
       if (result.error) {
         showToast(result.error, "error");
         return;

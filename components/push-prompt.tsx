@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { currentSubscription, enablePush, pushSupport, PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
+import { claimSubscription, currentSubscription, enablePush, pushSupport, PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
 import { useT } from "@/lib/i18n/client";
 
 type Mode = "hidden" | "ask" | "ios-home-screen";
@@ -30,12 +30,20 @@ function dismiss() {
  * already gets them, when notifications are blocked, on plain http (no
  * browser allows push there), and after "Not now" until the next sign-in.
  * On an iPhone in a Safari tab it explains the Home Screen step instead.
+ * When the device already gets them, it first makes sure they come to the
+ * account signed in now rather than whoever used this browser before
+ * (claimSubscription); keyed by account where it's rendered, so it runs
+ * again when someone else signs in.
  */
-export function PushPrompt() {
+export function PushPrompt({ userId }: { userId: string }) {
   const t = useT();
   const [mode, setMode] = useState<Mode>("hidden");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    claimSubscription(userId).catch(() => undefined);
+  }, [userId]);
 
   useEffect(() => {
     if (dismissed()) return;

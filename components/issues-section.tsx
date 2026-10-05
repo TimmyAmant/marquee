@@ -10,12 +10,15 @@ import type { Issue } from "@/lib/api/types";
 import { CommentSection } from "@/components/comment-thread";
 import { useT } from "@/lib/i18n/client";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
+import { orError } from "@/lib/async/or-error";
 
 const smallButton =
   "rounded-full border border-border-strong px-3 py-1 text-xs text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
 
 function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +31,7 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
     setBusy(name);
     setError(null);
     setInfo(null);
-    const result = await action();
+    const result = await orError(action(), t("common.somethingWentWrong"));
     setBusy(null);
     if (result.error) setError(result.error);
     else if (after) setInfo(after);
@@ -51,7 +54,7 @@ function IssueCard({ issue, isAdmin }: { issue: Issue; isAdmin: boolean }) {
         <p className="mt-0.5 text-text-secondary">
           {issue.kindLabel}
           {isAdmin && <span className="text-text-muted"> · {who}</span>}
-          <span className="text-text-muted"> · {formatDate(t, issue.createdAt)}</span>
+          <span className="text-text-muted"> · {formatDate(t, issue.createdAt, "medium", timeZone)}</span>
         </p>
         {issue.message && (
           <p className="mt-1 whitespace-pre-line text-text-secondary">{t("title.quoted", { text: issue.message })}</p>

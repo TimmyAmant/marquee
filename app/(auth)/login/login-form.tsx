@@ -1,9 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { useT } from "@/lib/i18n/client";
 import type { Translator } from "@/lib/i18n/translator";
 import { PUSH_PROMPT_DISMISSED_KEY } from "@/lib/push/browser";
+import { clearSearchHistory } from "@/lib/search/recent";
 import {
   jellyfinLoginAction,
   loginAction,
@@ -11,6 +13,7 @@ import {
   pollQuickConnectAction,
   startPlexSignInAction,
   startQuickConnectAction,
+  type PlexSignInStart,
 } from "./actions";
 
 const inputClass =
@@ -24,13 +27,15 @@ const PLEX_POLL_MS = 2000;
 const PLEX_TIMEOUT_MS = 10 * 60 * 1000;
 
 // A fresh sign-in asks about notifications again, even if "Not now" was
-// picked last time (components/push-prompt.tsx).
-function resetPushPrompt() {
+// picked last time (components/push-prompt.tsx), and starts with no recent
+// searches (whoever used this browser before may not have signed out).
+function prepareSignIn() {
   try {
     localStorage.removeItem(PUSH_PROMPT_DISMISSED_KEY);
   } catch {
     // Private mode: nothing was stored.
   }
+  clearSearchHistory();
 }
 
 function RememberCheckbox({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
@@ -53,7 +58,7 @@ function PasswordForm({ remember, setRemember }: { remember: boolean; setRemembe
   const t = useT();
   const [state, formAction, isPending] = useActionState(loginAction, undefined);
   return (
-    <form action={formAction} onSubmit={resetPushPrompt} className="mt-6 flex flex-col gap-4">
+    <form action={formAction} onSubmit={prepareSignIn} className="mt-6 flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
         {t("auth.username")}
         <input type="text" name="username" required autoComplete="username" className={inputClass} />
@@ -90,7 +95,6 @@ function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel
   }, [t]);
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
   // Read at sign-in time, so ticking the box doesn't start over.
   const rememberRef = useRef(remember);
   useEffect(() => {
@@ -98,35 +102,43 @@ function QuickConnectPanel({ remember, onCancel }: { remember: boolean; onCancel
   }, [remember]);
 
   useEffect(() => {
-    cancelled.current = false;
+    // Per run of this effect, not a shared ref: under StrictMode (and on any
+    // remount) the first run's loop must stop for good rather than carry on
+    // beside the second's once the flag is reset.
+    let cancelled = false;
     (async () => {
       const started = await startQuickConnectAction();
-      if (cancelled.current) return;
+      if (cancelled) return;
       if (!started.handle || !started.code) {
         setError(started.error ?? tRef.current("auth.quickConnectStartFailed"));
         return;
       }
       setCode(started.code);
-      resetPushPrompt();
+      prepareSignIn();
       const deadline = Date.now() + PLEX_TIMEOUT_MS;
-      while (!cancelled.current && Date.now() < deadline) {
+      while (!cancelled && Date.now() < deadline) {
         await new Promise((resolve) => setTimeout(resolve, PLEX_POLL_MS));
-        if (cancelled.current) return;
+        if (cancelled) return;
         // On approval the action signs in and redirects.
         const poll = await pollQuickConnectAction(started.handle, rememberRef.current);
+        if (cancelled) return;
         if (poll.status === "error") {
           setError(poll.error);
           setCode(null);
           return;
         }
       }
-      if (!cancelled.current) {
+      if (!cancelled) {
         setError(tRef.current("auth.quickConnectTimedOut"));
         setCode(null);
       }
-    })();
+    })().catch((err) => {
+      // Approval ends in redirect(), which the router has to get.
+      unstable_rethrow(err);
+      if (!cancelled) setError(tRef.current("auth.quickConnectStartFailed"));
+    });
     return () => {
-      cancelled.current = true;
+      cancelled = true;
     };
   }, []);
 
@@ -179,7 +191,7 @@ function JellyfinForm({
     );
   }
   return (
-    <form action={formAction} onSubmit={resetPushPrompt} className="mt-6 flex flex-col gap-4">
+    <form action={formAction} onSubmit={prepareSignIn} className="mt-6 flex flex-col gap-4">
       <p className="text-sm text-text-secondary">{t("auth.mediaServerHint", { name })}</p>
       <label className="flex flex-col gap-1.5 text-sm text-text-secondary">
         {t("auth.mediaServerUsername", { name })}
@@ -220,24 +232,33 @@ function PlexButton({ remember }: { remember: boolean }) {
   const t = useT();
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cancelled = useRef(false);
+  // Which sign-in attempt is current: each click takes the next number, and
+  // Cancel or leaving the page moves it on, so an older attempt's loop
+  // (still waiting on a poll) sees it's stale after every await and stops
+  // instead of running beside the new one or putting its error over it.
+  const attemptRef = useRef(0);
 
-  useEffect(() => {
-    return () => {
-      cancelled.current = true;
-    };
-  }, []);
+  function cancelAttempt() {
+    attemptRef.current++;
+  }
+
+  useEffect(() => cancelAttempt, []);
 
   async function handleClick() {
     setError(null);
     setWaiting(true);
-    cancelled.current = false;
+    const attempt = ++attemptRef.current;
+    const stale = () => attempt !== attemptRef.current;
     // Opened before the first await: a tab opened later than the click is
     // blocked as a pop-up. It's pointed at plex.tv once the server answers.
     const tab = window.open("", "_blank");
     if (tab) tab.opener = null;
 
-    const started = await startPlexSignInAction();
+    const started = await startPlexSignInAction().catch((): PlexSignInStart => ({}));
+    if (stale()) {
+      tab?.close();
+      return;
+    }
     if (!started.handle || !started.authUrl) {
       tab?.close();
       setError(started.error ?? t("auth.plexStartFailed"));
@@ -247,21 +268,28 @@ function PlexButton({ remember }: { remember: boolean }) {
     if (tab) tab.location.href = started.authUrl;
     else window.open(started.authUrl, "_blank", "noopener,noreferrer");
 
-    resetPushPrompt();
+    prepareSignIn();
     const deadline = Date.now() + PLEX_TIMEOUT_MS;
-    while (!cancelled.current && Date.now() < deadline) {
+    while (!stale() && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, PLEX_POLL_MS));
-      if (cancelled.current) return;
+      if (stale()) return;
       // On success the action signs in and redirects, so this only ever
       // comes back pending or with an error.
-      const poll = await pollPlexSignInAction(started.handle, remember);
+      const poll = await pollPlexSignInAction(started.handle, remember).catch((err) => {
+        // Success ends in redirect(), which the router has to get.
+        unstable_rethrow(err);
+        return null;
+      });
+      if (stale()) return;
+      // A dropped connection: try again on the next tick.
+      if (!poll) continue;
       if (poll.status === "error") {
         setError(poll.error);
         setWaiting(false);
         return;
       }
     }
-    if (!cancelled.current) {
+    if (!stale()) {
       setError(t("auth.plexTimedOut"));
       setWaiting(false);
     }
@@ -275,7 +303,7 @@ function PlexButton({ remember }: { remember: boolean }) {
           <button
             type="button"
             onClick={() => {
-              cancelled.current = true;
+              cancelAttempt();
               setWaiting(false);
             }}
             className="text-text-secondary hover:text-accent"
@@ -324,7 +352,7 @@ function SsoButton({ name, remember }: { name: string; remember: boolean }) {
   return (
     <a
       href={`/api/auth/sso/start${remember ? "?remember=1" : ""}`}
-      onClick={resetPushPrompt}
+      onClick={prepareSignIn}
       className={`${secondaryButtonClass} text-center`}
     >
       {t("auth.signInWith", { name })}

@@ -7,6 +7,7 @@ import { resolutionTierOf } from "@/lib/quality";
 import type { FileInfo } from "@/lib/integrations/status";
 import { useT } from "@/lib/i18n/client";
 import { formatDate, formatNumber } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 /** Media servers report a whole-file bitrate in the tens of thousands of
@@ -51,6 +52,7 @@ export function FileDetailsSection({
   runtimeLabel: string | null;
 }) {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
   const [copied, setCopied] = useState(false);
 
   if (!file) return null;
@@ -75,7 +77,7 @@ export function FileDetailsSection({
   const cells: { label: MessageKey; value: string }[] = [
     { label: "title.fileSize", value: file.sizeBytes ? formatBytes(t, file.sizeBytes) : "" },
     { label: "title.fileRuntime", value: runtimeLabel ?? "" },
-    { label: "title.fileAdded", value: file.dateAdded ? formatDate(t, file.dateAdded) : "" },
+    { label: "title.fileAdded", value: file.dateAdded ? formatDate(t, file.dateAdded, "medium", timeZone) : "" },
     { label: "title.fileResolution", value: tier ?? file.resolution ?? "" },
     { label: "title.qualityProfile", value: file.quality ?? "" },
     { label: "title.fileVideo", value: file.videoCodec ?? "" },
