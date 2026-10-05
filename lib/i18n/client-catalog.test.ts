@@ -24,8 +24,21 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+/** "use client" / "use server" at the top of a file, after any comments. */
 function directive(text: string): string | null {
-  const match = /^\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*["'](use client|use server)["']/.exec(text);
+  let rest = text.trimStart();
+  for (;;) {
+    if (rest.startsWith("//")) {
+      const end = rest.indexOf("\n");
+      rest = end < 0 ? "" : rest.slice(end + 1).trimStart();
+    } else if (rest.startsWith("/*")) {
+      const end = rest.indexOf("*/");
+      rest = end < 0 ? "" : rest.slice(end + 2).trimStart();
+    } else {
+      break;
+    }
+  }
+  const match = /^["'](use client|use server)["']/.exec(rest);
   return match ? match[1] : null;
 }
 
@@ -94,7 +107,11 @@ describe("the browser's share of the catalog", () => {
 
   it("has every key a Client Component (or what it imports) uses", () => {
     const missing: string[] = [];
-    for (const [file, text] of clientModuleGraph()) {
+    const graph = clientModuleGraph();
+    // The walk found the Client Components (and what they import).
+    expect(graph.has(path.join(ROOT, "components/search-bar.tsx"))).toBe(true);
+    expect(graph.has(path.join(ROOT, "lib/push/browser.ts"))).toBe(true);
+    for (const [file, text] of graph) {
       if (directive(text) === "use server") continue;
       for (const match of text.matchAll(keyPattern)) {
         const [, namespace, key, end] = match;
