@@ -221,6 +221,13 @@ where the real server needed something the core contract didn't spell out.
     through, and offer them in one go ("Part of The Matrix Collection — 3
     other movies aren't in your library yet. Add them too?"). A server
     older than this answers `404` — offer nothing.
+27. **Network pages (0.76+, additive).** New `GET /networks/{tmdbId}`
+    answers a `CompanyDetail` for a TV network — its series newest first,
+    its best-known series behind the header, its website; `description`
+    is null and `favorited` always false (no favorite button). Network
+    logos on Discover and network search results open it instead of
+    `/series?network=`. A server older than this answers `404` — open the
+    Series page filtered to the network, as before.
 
 ---
 
@@ -360,7 +367,7 @@ request turns monitoring back on — and admins get "Start monitoring"
 On the search page (0.55+) a person may also carry `knownFor` — up to three
 titles, best known first — and a studio or network is a `SearchCompanyCard`:
 a `CompanyCard` plus `kind`, `"studio"` (opens `GET /companies/{id}`) or
-`"network"` (opens `GET /series?network={id}`; `favorited` is always null).
+`"network"` (opens `GET /networks/{id}`, 0.76+; `favorited` is always null).
 
 #### `RequestPerson`
 
@@ -812,7 +819,7 @@ the viewer's quick action (`canQuickAdd` / `canRequest` / `requested`; newer ser
 but no `favorited` (the website shows no favorite star on these shelves). Empty shelves
 are empty arrays — the website hides them. Genre tiles link to
 `/movies?genre=` / `/series?genre=`; studio logos to `/companies/{id}`;
-network logos to `/series?network=`.
+network logos to `/networks/{id}` (0.76+; `/series?network=` before).
 
 ```json
 {

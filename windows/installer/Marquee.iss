@@ -52,6 +52,15 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdi
 ; version shipped and this one doesn't can't linger.
 Type: filesandordirs; Name: "{app}\*"
 
+[Registry]
+; marquee:// links (marquee://title/movie/603), per user like the install:
+; a click on one starts Marquee with the link as its argument, or hands it to
+; the copy already running. Links only ever open a screen. Removed with the app.
+Root: HKA; Subkey: "Software\Classes\marquee"; ValueType: string; ValueName: ""; ValueData: "URL:Marquee"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\marquee"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\marquee\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\Marquee.Windows.exe,0"
+Root: HKA; Subkey: "Software\Classes\marquee\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Marquee.Windows.exe"" ""%1"""
+
 [Icons]
 Name: "{autoprograms}\Marquee"; Filename: "{app}\Marquee.Windows.exe"
 Name: "{autodesktop}\Marquee"; Filename: "{app}\Marquee.Windows.exe"; Tasks: desktopicon

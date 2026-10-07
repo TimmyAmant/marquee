@@ -1,4 +1,4 @@
-import { getOrFetchPersonWithCredits, getOrFetchCompanyWithCatalog } from "@/lib/tmdb/cache";
+import { getOrFetchPersonWithCredits, getOrFetchCompanyWithCatalog, getNetworkWithCatalog } from "@/lib/tmdb/cache";
 import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
 import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
 import type { EpisodeCounts } from "@/lib/library/episode-counts";
@@ -15,8 +15,9 @@ import { contentLanguageFor, getLocalizedPerson } from "@/lib/tmdb/client";
 import { getSavedTranslations, saveLightTranslations } from "@/lib/tmdb/translations";
 import { overlayCard, pick, type TitleTranslation } from "@/lib/tmdb/language";
 
-// Person (/person/[id]) and studio (/company/[id]) page data — shared with
-// GET /api/v1/people/[id] and GET /api/v1/companies/[id].
+// Person (/person/[id]), studio (/company/[id]) and network (/network/[id])
+// page data — shared with GET /api/v1/people/[id], /companies/[id] and
+// /networks/[id].
 
 type TitleRow = typeof titles.$inferSelect;
 
@@ -302,6 +303,66 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
     links: linksFromRaw(rawTmdb).filter((link) => link.kind === "homepage"),
     entries,
     favorited: favorited as boolean,
+    favoritedKeys,
+    arrConfigured: {
+      movie: isArrFullyConfigured(radarrCredential),
+      tv: isArrFullyConfigured(sonarrCredential),
+    },
+  };
+}
+
+/** Returns null when TMDb has no such network (the page's notFound()). The
+ * same header and list as a studio's, without a favorite. */
+export async function loadNetworkPage(viewer: ViewerIdentity, tmdbId: number) {
+  const loaded = await getNetworkWithCatalog(tmdbId).catch(() => null);
+  if (!loaded) return null;
+  const { network, catalog } = loaded;
+
+  const translations = await getSavedTranslations(
+    catalog.map((title) => title.id),
+    await getLocale(),
+  ).catch(() => new Map<string, TitleTranslation>());
+
+  const [statusMap, radarrCredential, sonarrCredential] = viewer.libraryOwnerId
+    ? await Promise.all([
+        getLibraryStatusMap(
+          viewer.libraryOwnerId,
+          catalog.map((title) => ({ mediaType: title.mediaType, tmdbId: title.tmdbId })),
+        ),
+        getArrCredential(viewer.userId, "radarr"),
+        getArrCredential(viewer.userId, "sonarr"),
+      ])
+    : [new Map<string, LibraryStatus>(), null, null];
+
+  const entries: EntityMediaEntry[] = catalog.map((title) =>
+    overlayCard(
+      {
+        titleId: title.id,
+        mediaType: title.mediaType,
+        tmdbId: title.tmdbId,
+        name: title.name,
+        posterPath: title.posterPath,
+        year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
+        status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
+      },
+      translations.get(title.id),
+    ),
+  );
+
+  const favoritedKeys = await enrichEntries(viewer, entries);
+  const catalogKnownFor = pickCatalogKnownFor(catalog);
+  const shownKnownFor = knownForTitle(catalogKnownFor);
+
+  return {
+    network: { name: network.name, logoPath: network.logo_path, count: catalog.length },
+    knownFor:
+      shownKnownFor && catalogKnownFor
+        ? { ...shownKnownFor, name: pick(translations.get(catalogKnownFor.id)?.name, shownKnownFor.name) }
+        : shownKnownFor,
+    links: buildEntityLinks({ homepage: network.homepage || null, externalIds: null }).filter(
+      (link) => link.kind === "homepage",
+    ),
+    entries,
     favoritedKeys,
     arrConfigured: {
       movie: isArrFullyConfigured(radarrCredential),

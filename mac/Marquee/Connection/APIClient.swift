@@ -25,7 +25,9 @@ struct APIClient: Sendable {
     private static let logger = Logger(subsystem: "com.timmyamant.Marquee", category: "api")
 
     /// Cookie-less and uncached: the bearer token is the only credential, and
-    /// every screen wants fresh data.
+    /// every screen wants fresh data. Redirects are never followed (a token or
+    /// password must never be re-sent wherever a proxy points); a 3xx answer
+    /// is `.notMarquee`, as on Windows.
     static let defaultSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = requestTimeout
@@ -38,7 +40,7 @@ struct APIClient: Sendable {
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.httpAdditionalHeaders = ["User-Agent": AppInfo.userAgent]
-        return URLSession(configuration: configuration)
+        return URLSession(configuration: configuration, delegate: RedirectRefuser.shared, delegateQueue: nil)
     }()
 
     /// The longest a live stream may go without a byte: the server sends a
@@ -57,7 +59,7 @@ struct APIClient: Sendable {
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.httpAdditionalHeaders = ["User-Agent": AppInfo.userAgent]
-        return URLSession(configuration: configuration)
+        return URLSession(configuration: configuration, delegate: RedirectRefuser.shared, delegateQueue: nil)
     }()
 
     init(
@@ -190,6 +192,8 @@ struct APIClient: Sendable {
             throw await unreachable(APIError.wrapping(error))
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.notMarquee }
+        // A legacy server (or a login proxy) redirecting to an HTML page.
+        if (300..<400).contains(http.statusCode) { throw APIError.notMarquee }
 
         let hasAPIHeader = http.value(forHTTPHeaderField: Self.apiHeader) != nil
         let isJSON = http.mimeType?.lowercased().contains("json") == true
@@ -246,6 +250,7 @@ struct APIClient: Sendable {
             throw APIError.wrapping(error)
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.notMarquee }
+        if (300..<400).contains(http.statusCode) { throw APIError.notMarquee }
         guard (200..<300).contains(http.statusCode) else {
             throw await failure(statusCode: http.statusCode, body: data)
         }
@@ -274,6 +279,7 @@ struct APIClient: Sendable {
             throw APIError.wrapping(error)
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.notMarquee }
+        if (300..<400).contains(http.statusCode) { throw APIError.notMarquee }
         guard (200..<300).contains(http.statusCode) else {
             var body = Data()
             do {
@@ -390,5 +396,21 @@ struct APIClient: Sendable {
         } catch {
             throw APIError.invalid(String(localized: "Couldn't encode the request: \(error.localizedDescription)"))
         }
+    }
+}
+
+/// Answers every redirect with "don't follow": the 3xx itself comes back as
+/// the response, and `APIClient` reports it as `.notMarquee`.
+final class RedirectRefuser: NSObject, URLSessionTaskDelegate, Sendable {
+    static let shared = RedirectRefuser()
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping @Sendable (URLRequest?) -> Void
+    ) {
+        completionHandler(nil)
     }
 }

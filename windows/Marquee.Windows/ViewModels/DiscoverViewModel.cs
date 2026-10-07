@@ -214,7 +214,7 @@ public sealed partial class DiscoverViewModel : ObservableObject
                 case DiscoverRow.Networks networks:
                     list.Add(ShelfViewModel.OfChips(
                         row.Title,
-                        networks.Logos.Select(network => new ChipItem(network.Tile(), new RelayCommand(() => model.Browse(MediaType.Tv, networkId: network.TmdbId)))).ToList(),
+                        networks.Logos.Select(network => new ChipItem(network.Tile(), new RelayCommand(() => model.OpenNetwork(network.TmdbId)))).ToList(),
                         seeAll));
                     break;
             }

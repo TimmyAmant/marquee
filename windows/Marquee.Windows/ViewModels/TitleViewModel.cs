@@ -286,6 +286,7 @@ public sealed partial class TitleViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SearchLabel))]
+    [NotifyPropertyChangedFor(nameof(SearchMissingLabel))]
     private bool isSearching;
 
     [ObservableProperty]
@@ -407,6 +408,23 @@ public sealed partial class TitleViewModel : ObservableObject
     public string Keywords => detail == null ? "" : string.Join(" · ", detail.Keywords);
     public bool HasKeywords => Keywords.Length > 0;
     public IReadOnlyList<LinkItem> Links => links;
+
+    /// <summary>
+    /// Shows the trailer player (set by the page, which owns the dialog's
+    /// XamlRoot): the YouTube key and the title's name. Without it, the
+    /// trailer opens in the browser.
+    /// </summary>
+    internal Func<string, string, Task>? TrailerPrompt { get; set; }
+
+    private async Task PlayTrailerAsync(string key, Uri watchUrl)
+    {
+        if (TrailerPrompt != null)
+        {
+            await TrailerPrompt(key, Name);
+            return;
+        }
+        await ExternalLinks.OpenAsync(watchUrl);
+    }
     public bool HasLinks => links.Count > 0;
     public IReadOnlyList<FactRow> Facts => facts;
     public bool HasFacts => facts.Count > 0;
@@ -546,6 +564,15 @@ public sealed partial class TitleViewModel : ObservableObject
         }
     }
     public string SearchLabel => IsSearching ? Loc.Get("Title_Searching") : Loc.Get("Title_SearchNow");
+
+    /// <summary>components/search-missing-button.tsx (0.76+): Sonarr's / Radarr's "Search Monitored", as a pill.</summary>
+    public string SearchMissingLabel => IsSearching
+        ? Loc.Get("Title_Searching")
+        : Id.MediaType == MediaType.Tv ? Loc.Get("Title_SearchMissingTv") : Loc.Get("Title_SearchMissingMovie");
+
+    public string SearchMissingHint => Id.MediaType == MediaType.Tv
+        ? Loc.Get("Title_SearchMissingHintTv")
+        : Loc.Get("Title_SearchMissingHintMovie");
 
     public string MonitorLabel => IsTogglingMonitor
         ? Loc.Get("Title_Updating")
@@ -931,9 +958,11 @@ public sealed partial class TitleViewModel : ObservableObject
         credits = fresh.Credits.Select(credit => new FactRow(credit.Role, credit.Name)).ToList();
 
         var linkItems = new List<LinkItem>();
-        if (LinkItem.Https(Loc.Get("Title_Trailer"), fresh.Links.TrailerUrl) is { } trailer)
+        // The trailer plays in the app, as on the website, the Mac and the
+        // iPhone; only a key shaped like YouTube's makes a button.
+        if (fresh.Links.TrailerUrl is { } trailerUrl && fresh.Links.TrailerYoutubeKey is { } trailerKey)
         {
-            linkItems.Add(trailer);
+            linkItems.Add(new LinkItem(Loc.Get("Title_Trailer"), trailerUrl, () => PlayTrailerAsync(trailerKey, trailerUrl)));
         }
         foreach (var external in fresh.Links.External)
         {

@@ -3268,6 +3268,9 @@
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Jobs</value>
   </data>
+  <data name="Network_EmptyTitles" xml:space="preserve">
+    <value>No series found for this network yet.</value>
+  </data>
   <data name="Notifications_Empty.Text" xml:space="preserve">
     <value>No notifications yet.</value>
   </data>
@@ -4737,6 +4740,18 @@
   <data name="Title_Retry.Content" xml:space="preserve">
     <value>Try again</value>
   </data>
+  <data name="Title_SearchMissingHintMovie" xml:space="preserve">
+    <value>Have Radarr look for this movie and download it.</value>
+  </data>
+  <data name="Title_SearchMissingHintTv" xml:space="preserve">
+    <value>Have Sonarr look for every monitored episode you don't have yet and download what it finds.</value>
+  </data>
+  <data name="Title_SearchMissingMovie" xml:space="preserve">
+    <value>Search for movie</value>
+  </data>
+  <data name="Title_SearchMissingTv" xml:space="preserve">
+    <value>Search for missing</value>
+  </data>
   <data name="Title_Searching" xml:space="preserve">
     <value>Searching…</value>
   </data>
@@ -5889,5 +5904,20 @@
   </data>
   <data name="CollectionOffer_NotNow" xml:space="preserve">
     <value>Not now</value>
+  </data>
+  <data name="Connect_NotEncryptedTitle" xml:space="preserve">
+    <value>Not encrypted</value>
+  </data>
+  <data name="Connect_NotEncryptedDetail" xml:space="preserve">
+    <value>This server is reached over plain http, so your password and everything else can be read on the way. Use its https:// address if it has one.</value>
+  </data>
+  <data name="Trailer_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Trailer_Dialog.SecondaryButtonText" xml:space="preserve">
+    <value>Open on YouTube</value>
+  </data>
+  <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Trailer</value>
   </data>
 </root>

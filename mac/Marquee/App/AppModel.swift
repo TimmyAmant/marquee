@@ -76,6 +76,8 @@ enum Route: Hashable {
     case title(API.TitleID)
     case person(Int)
     case company(Int)
+    /// A TV network's page (0.76+), laid out as a studio's.
+    case network(Int)
     case search(String)
     /// One search section's See all (0.55+).
     case searchSection(String, API.SearchSectionName)
@@ -94,6 +96,7 @@ extension Route {
         case let .title(id): return "title/\(id.mediaType.rawValue)/\(id.tmdbId)" // i18n-ignore
         case let .person(id): return "person/\(id)"
         case let .company(id): return "company/\(id)"
+        case let .network(id): return "network/\(id)"
         case let .discoverList(list): return "discover/\(list.rawValue)"
         case .search, .searchSection, .errorReference, .changelog: return nil
         }
@@ -166,7 +169,10 @@ final class AppModel {
 
     var phase: Phase = .launching {
         didSet {
-            if phase == .ready, oldValue != .ready { replayPendingURL() }
+            if phase == .ready, oldValue != .ready {
+                replayPendingURL()
+                replayPendingNotification()
+            }
             if phase != .waiting, phase != .unreachable { endOutage() }
             if phase == .unreachable, oldValue != .unreachable { startQuietRetries() }
             if phase != .unreachable { stopQuietRetries() }
@@ -229,6 +235,10 @@ final class AppModel {
     /// A marquee:// link (a notification click, `open marquee://…`) that
     /// arrived before the session was ready — opened once it is.
     @ObservationIgnored private(set) var pendingURL: URL?
+    /// Where recent searches are kept; tests use their own.
+    @ObservationIgnored var recentSearchesDefaults: UserDefaults = .standard
+    /// A banner clicked before sign-in finished (`openNotification(_:)`).
+    @ObservationIgnored private(set) var pendingNotification: NotificationClick?
     /// Retries the can't-reach card when the network comes back or the Mac
     /// wakes; see `startReconnectTriggers()`.
     @ObservationIgnored private var pathMonitor: NWPathMonitor?
@@ -524,6 +534,10 @@ final class AppModel {
     func changeServer() {
         connectGeneration &+= 1
         let previous = session.server?.displayName
+        // Whose recent searches to wipe is known only while the server is.
+        if let account = currentAccountIdentity {
+            RecentSearches.clear(account: account, defaults: recentSearchesDefaults)
+        }
         session.forgetServer()
         clearSignedInState()
         connectionProblem = nil
@@ -557,7 +571,7 @@ final class AppModel {
         movieFilters = API.BrowseQuery()
         seriesFilters = API.BrowseQuery()
         phase = .ready
-        let identity = "\(session.server?.baseURLString ?? "")|\(user.id.uuidString.lowercased())"
+        let identity = Self.accountIdentity(server: session.server, user: user)
         live.start(identity: identity) { [weak self] in
             guard let self, self.phase == .ready else { return nil }
             return self.api
@@ -605,7 +619,12 @@ final class AppModel {
         if !AppInfo.isRunningTests {
             UNUserNotificationCenter.current().removeAllDeliveredNotifications()
         }
+        // And its recent searches, as on the website.
+        if let account = currentAccountIdentity {
+            RecentSearches.clear(account: account, defaults: recentSearchesDefaults)
+        }
         pendingURL = nil
+        pendingNotification = nil
         live.stop()
         notificationConsent.end()
         whatsNew.end()
@@ -724,7 +743,14 @@ final class AppModel {
         path.append(route)
     }
 
-    /// Genre tiles and network logos on Discover jump into a filtered browse.
+    /// A network's logo or search result: its own page, laid out as a
+    /// studio's.
+    func openNetwork(_ tmdbId: Int) {
+        open(.network(tmdbId))
+    }
+
+    /// Genre tiles on Discover jump into a filtered browse (network logos
+    /// too, on a server older than 0.76).
     func browse(_ mediaType: API.MediaType, genreId: Int? = nil, networkId: Int? = nil) {
         var filters = API.BrowseQuery()
         filters.genreId = genreId
@@ -768,6 +794,8 @@ final class AppModel {
             if parts.count >= 2, let id = Int(parts[1]) { open(.person(id)) }
         case "company":
             if parts.count >= 2, let id = Int(parts[1]) { open(.company(id)) }
+        case "network":
+            if parts.count >= 2, let id = Int(parts[1]) { open(.network(id)) }
         case "discover":
             if parts.count >= 2 {
                 let list = API.DiscoverList(rawValue: parts[1])
@@ -784,6 +812,46 @@ final class AppModel {
         default:
             break
         }
+    }
+
+    /// "server|user id": whose notifications, banners and consent these are.
+    static func accountIdentity(server: ServerAddress?, user: API.User) -> String {
+        "\(server?.baseURLString ?? "")|\(user.id.uuidString.lowercased())"
+    }
+
+    /// The account signed in now, or nil before sign-in has finished.
+    var currentAccountIdentity: String? {
+        guard phase == .ready, let viewer else { return nil }
+        return Self.accountIdentity(server: session.server, user: viewer)
+    }
+
+    /// A system banner was clicked: its title opens, marked read like a click
+    /// in the bell, while the account it was for is signed in. One for
+    /// another account opens nothing (the app only comes forward); one from
+    /// before banners said whose they were only navigates. A click that
+    /// launched the app waits for sign-in. Like every link, it never does
+    /// anything but navigate and mark that one notification read.
+    func openNotification(_ click: NotificationClick) {
+        guard phase == .ready, let current = currentAccountIdentity else {
+            pendingNotification = click
+            return
+        }
+        if let account = click.account {
+            guard account == current else { return }
+            if let id = click.notificationID {
+                let api = self.api
+                Task {
+                    try? await api.notifications.markRead(id)
+                }
+            }
+        }
+        handle(url: click.route)
+    }
+
+    private func replayPendingNotification() {
+        guard let click = pendingNotification else { return }
+        pendingNotification = nil
+        openNotification(click)
     }
 
     private func replayPendingURL() {

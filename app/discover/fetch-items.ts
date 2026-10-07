@@ -83,6 +83,9 @@ export async function fetchDiscoverItems(
   const rawItems = responses
     .flatMap((r) => r.results)
     .filter((item) => {
+      // A title with no poster is almost always an unfinished TMDb stub (a
+      // network's long tail is full of them) and shows as a blank card.
+      if (!item.poster_path) return false;
       if (seenIds.has(item.id)) return false;
       seenIds.add(item.id);
       return true;

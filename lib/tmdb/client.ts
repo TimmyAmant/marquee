@@ -735,6 +735,7 @@ export interface TmdbNetworkDetails {
   id: number;
   name: string;
   logo_path: string | null;
+  homepage?: string | null;
 }
 
 export function getNetworkDetails(id: number) {
@@ -823,6 +824,19 @@ export interface TmdbEpisode {
  * asks for both and fills gaps in one from the other). */
 export function getTvSeasonDetails(tvId: number, seasonNumber: number, language?: string) {
   return tmdbFetch<{ episodes: TmdbEpisode[] }>(`/tv/${tvId}/season/${seasonNumber}`, { language });
+}
+
+/** A network's series (app/network/[id]): one page in `sort` order. */
+export function discoverTvByNetwork(
+  networkId: number,
+  sort: "first_air_date.desc" | "popularity.desc" | "vote_count.desc",
+  page = 1,
+) {
+  return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
+    with_networks: networkId,
+    sort_by: sort,
+    page,
+  });
 }
 
 /** A studio's most-voted titles (one page), which its newest pages miss

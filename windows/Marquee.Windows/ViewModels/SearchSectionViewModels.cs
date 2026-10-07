@@ -233,7 +233,7 @@ public sealed class SearchStudioSectionViewModel : SearchSectionViewModel<ChipIt
         {
             if (company.IsNetwork)
             {
-                model.Browse(MediaType.Tv, networkId: company.TmdbId);
+                model.OpenNetwork(company.TmdbId);
             }
             else
             {

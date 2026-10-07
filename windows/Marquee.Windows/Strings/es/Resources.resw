@@ -3133,6 +3133,9 @@
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Tareas</value>
   </data>
+  <data name="Network_EmptyTitles" xml:space="preserve">
+    <value>Todavía no se encontraron series de esta cadena.</value>
+  </data>
   <data name="Notifications_Empty.Text" xml:space="preserve">
     <value>Aún no hay notificaciones.</value>
   </data>
@@ -4546,6 +4549,18 @@
   <data name="Title_Retry.Content" xml:space="preserve">
     <value>Reintentar</value>
   </data>
+  <data name="Title_SearchMissingHintMovie" xml:space="preserve">
+    <value>Radarr busca esta película y la descarga.</value>
+  </data>
+  <data name="Title_SearchMissingHintTv" xml:space="preserve">
+    <value>Sonarr busca cada episodio monitorizado que te falta y descarga lo que encuentre.</value>
+  </data>
+  <data name="Title_SearchMissingMovie" xml:space="preserve">
+    <value>Buscar película</value>
+  </data>
+  <data name="Title_SearchMissingTv" xml:space="preserve">
+    <value>Buscar faltantes</value>
+  </data>
   <data name="Title_Searching" xml:space="preserve">
     <value>Buscando…</value>
   </data>
@@ -5685,5 +5700,20 @@
   </data>
   <data name="CollectionOffer_NotNow" xml:space="preserve">
     <value>Ahora no</value>
+  </data>
+  <data name="Connect_NotEncryptedTitle" xml:space="preserve">
+    <value>Sin cifrar</value>
+  </data>
+  <data name="Connect_NotEncryptedDetail" xml:space="preserve">
+    <value>A este servidor se llega por http sin cifrar, así que tu contraseña y todo lo demás pueden leerse por el camino. Usa su dirección https:// si tiene una.</value>
+  </data>
+  <data name="Trailer_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Listo</value>
+  </data>
+  <data name="Trailer_Dialog.SecondaryButtonText" xml:space="preserve">
+    <value>Abrir en YouTube</value>
+  </data>
+  <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Tráiler</value>
   </data>
 </root>

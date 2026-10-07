@@ -145,7 +145,7 @@ export default async function DiscoverPage() {
             id: network.id,
             name: network.name,
             logoPath: network.logo_path,
-            href: `/series?network=${network.id}`,
+            href: `/network/${network.id}`,
           })),
         };
     }

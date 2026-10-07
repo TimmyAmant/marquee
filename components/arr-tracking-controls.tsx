@@ -6,20 +6,23 @@ import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
 import { MENU_ITEM, PILL_OUTLINE } from "@/components/pill-styles";
 
-/** "Search now" and "Stop / Start monitoring": pills, or two rows of the
- * title page's "…" menu (`variant="menu"`). */
+/** "Search now" and "Stop / Start monitoring": pills, or rows of the title
+ * page's "…" menu (`variant="menu"`, where the page's own "Search for
+ * missing" pill stands in for Search now: `showSearch={false}`). */
 export function ArrTrackingControls({
   mediaType,
   tmdbId,
   tvdbId,
   monitored,
   variant = "pill",
+  showSearch = true,
 }: {
   mediaType: MediaType;
   tmdbId: number;
   tvdbId: number | null;
   monitored: boolean;
   variant?: "pill" | "menu";
+  showSearch?: boolean;
 }) {
   const t = useT();
   const searchAction = searchTitleAction.bind(null, mediaType, tmdbId, tvdbId);
@@ -35,11 +38,13 @@ export function ArrTrackingControls({
   return (
     <div className={menu ? "flex flex-col gap-0.5" : "flex flex-col gap-1.5"}>
       <div className={menu ? "flex flex-col gap-0.5" : "flex flex-wrap items-center gap-2"}>
-        <form action={searchFormAction}>
-          <button type="submit" disabled={isSearching} className={button}>
-            {isSearching ? t("title.searching") : t("title.searchNow")}
-          </button>
-        </form>
+        {showSearch && (
+          <form action={searchFormAction}>
+            <button type="submit" disabled={isSearching} className={button}>
+              {isSearching ? t("title.searching") : t("title.searchNow")}
+            </button>
+          </form>
+        )}
         <form action={toggleFormAction}>
           <button type="submit" disabled={isToggling} className={button}>
             {isToggling ? t("title.updating") : monitored ? t("title.stopMonitoring") : t("title.startMonitoring")}

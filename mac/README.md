@@ -109,7 +109,7 @@ Scripts/local-server.sh down
 
 ### Running the app against a throwaway server
 
-For manual or automated UI checks, pin the launch to one host so a stray click can't reach the server this Mac normally uses. A pinned launch ignores the saved server, keeps its token in memory instead of the sessions file, refuses to switch servers, and shows a **TEST RUN · host** badge:
+For manual or automated UI checks, pin a Debug build's launch to one host (Release builds ignore this) so a stray click can't reach the server this Mac normally uses. A pinned launch ignores the saved server, keeps its token in memory instead of the sessions file, refuses to switch servers, and shows a **TEST RUN · host** badge:
 
 ```bash
 MARQUEE_PINNED_SERVER=http://127.0.0.1:3100 \

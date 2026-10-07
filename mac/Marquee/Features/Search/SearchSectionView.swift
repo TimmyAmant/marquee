@@ -123,7 +123,7 @@ struct SearchSectionView: View {
                 ForEach(items.companies) { company in
                     SearchCompanyTile(company: company, width: nil) {
                         if company.isNetwork {
-                            model.browse(.tv, networkId: company.tmdbId)
+                            model.openNetwork(company.tmdbId)
                         } else {
                             model.open(.company(company.tmdbId))
                         }

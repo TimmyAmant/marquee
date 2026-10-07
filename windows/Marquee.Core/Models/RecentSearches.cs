@@ -8,15 +8,24 @@ namespace Marquee.Core.Models;
 /// <summary>
 /// lib/search/recent.ts, the Mac's RecentSearches: the last few things
 /// searched for on this PC, newest first, shown under the search panel's
-/// empty box to search again with a click. A per-device list: kept in the
-/// app's local settings, not on the server.
+/// empty box to search again with a click. Kept in the app's local
+/// settings per server and account (like the website, which keys them by
+/// user id), so someone else signing in here never sees them, and wiped on
+/// signing out.
 /// </summary>
 public static class RecentSearches
 {
     public const int Limit = 8;
 
-    /// <summary>The key in <see cref="ISettingsStore"/>.</summary>
+    /// <summary>
+    /// The prefix in <see cref="ISettingsStore"/>; each account's list is
+    /// <c>"recentSearches:&lt;server&gt;|&lt;user id&gt;"</c>. Before 0.76 one
+    /// list under the bare prefix served the whole PC.
+    /// </summary>
     public const string Key = "recentSearches";
+
+    /// <param name="account">"server|user id", as <c>AppModel.AccountIdentity</c>.</param>
+    public static string KeyFor(string account) => $"{Key}:{account}";
 
     /// <summary>
     /// The query added to the front; the same query typed differently
@@ -101,17 +110,38 @@ public static class RecentSearches
         }
     }
 
-    public static IReadOnlyList<string> Read(ISettingsStore store) => Parse(store.GetString(Key));
-
-    /// <summary>None removes the key.</summary>
-    public static void Write(ISettingsStore store, IReadOnlyList<string> list) =>
-        store.SetString(Key, list.Count == 0 ? null : JsonSerializer.Serialize(list));
-
-    /// <summary>Adds a search to this PC's recent searches; the list as it now is.</summary>
-    public static IReadOnlyList<string> Remember(ISettingsStore store, string? query)
+    /// <summary>The account's list; none before anyone has signed in.</summary>
+    public static IReadOnlyList<string> Read(ISettingsStore store, string? account)
     {
-        var next = Add(Read(store), query);
-        Write(store, next);
+        // The old per-PC list isn't anyone's to show.
+        if (store.GetString(Key) != null)
+        {
+            store.SetString(Key, null);
+        }
+        return account == null ? [] : Parse(store.GetString(KeyFor(account)));
+    }
+
+    /// <summary>None removes the key; nothing is kept without an account.</summary>
+    public static void Write(ISettingsStore store, string? account, IReadOnlyList<string> list)
+    {
+        if (account != null)
+        {
+            store.SetString(KeyFor(account), list.Count == 0 ? null : JsonSerializer.Serialize(list));
+        }
+    }
+
+    /// <summary>Adds a search to the account's recent searches; the list as it now is.</summary>
+    public static IReadOnlyList<string> Remember(ISettingsStore store, string? account, string? query)
+    {
+        var next = Add(Read(store, account), query);
+        Write(store, account, next);
         return next;
+    }
+
+    /// <summary>Signing out: the account's searches leave with it.</summary>
+    public static void Clear(ISettingsStore store, string account)
+    {
+        store.SetString(KeyFor(account), null);
+        store.SetString(Key, null);
     }
 }

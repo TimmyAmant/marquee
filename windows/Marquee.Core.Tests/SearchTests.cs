@@ -202,17 +202,42 @@ public sealed class SearchTests
         Assert.DoesNotContain("search 8", next);
     }
 
+    private const string Timmy = "http://192.168.1.20:3000|6f1c2a4e-8b1d-4c3e-9f0a-2b7d5e8c1a90";
+    private const string Kid = "http://192.168.1.20:3000|0a1b2c3d-0000-4000-8000-000000000001";
+
     [Fact]
-    public void RecentSearchesRoundTripThroughTheStore()
+    public void RecentSearchesRoundTripThroughTheStorePerAccount()
     {
         var store = new InMemorySettingsStore();
-        Assert.Empty(RecentSearches.Read(store));
-        RecentSearches.Remember(store, "dune");
-        Assert.Equal(["Alien", "dune"], RecentSearches.Remember(store, "Alien"));
-        Assert.Equal(["Alien", "dune"], RecentSearches.Read(store));
-        RecentSearches.Write(store, RecentSearches.Remove(["Alien", "dune"], "dune"));
-        Assert.Equal(["Alien"], RecentSearches.Read(store));
-        RecentSearches.Write(store, []);
+        Assert.Empty(RecentSearches.Read(store, Timmy));
+        RecentSearches.Remember(store, Timmy, "dune");
+        Assert.Equal(["Alien", "dune"], RecentSearches.Remember(store, Timmy, "Alien"));
+        Assert.Equal(["Alien", "dune"], RecentSearches.Read(store, Timmy));
+        Assert.Empty(RecentSearches.Read(store, Kid));
+        Assert.Empty(RecentSearches.Read(store, null));
+        RecentSearches.Write(store, Timmy, RecentSearches.Remove(["Alien", "dune"], "dune"));
+        Assert.Equal(["Alien"], RecentSearches.Read(store, Timmy));
+        RecentSearches.Write(store, Timmy, []);
+        Assert.Null(store.GetString(RecentSearches.KeyFor(Timmy)));
+    }
+
+    [Fact]
+    public void SigningOutClearsTheAccountsRecentSearches()
+    {
+        var store = new InMemorySettingsStore();
+        RecentSearches.Remember(store, Timmy, "dune");
+        RecentSearches.Remember(store, Kid, "bluey");
+        RecentSearches.Clear(store, Timmy);
+        Assert.Empty(RecentSearches.Read(store, Timmy));
+        Assert.Equal(["bluey"], RecentSearches.Read(store, Kid));
+    }
+
+    [Fact]
+    public void TheOldPerPcListIsDropped()
+    {
+        var store = new InMemorySettingsStore();
+        store.SetString(RecentSearches.Key, """["someone else's"]""");
+        Assert.Empty(RecentSearches.Read(store, Timmy));
         Assert.Null(store.GetString(RecentSearches.Key));
     }
 

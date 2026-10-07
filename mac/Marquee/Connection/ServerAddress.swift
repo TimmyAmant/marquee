@@ -69,6 +69,51 @@ struct ServerAddress: Hashable, Sendable {
         isIPv6Literal || IPv4.parse(host) != nil
     }
 
+    /// On this network rather than across the internet: loopback, a private
+    /// (RFC 1918) or link-local address, an IPv6 unique-local or link-local
+    /// one, a `.local` / `.lan` / `.home.arpa` name, or a single-label name
+    /// like `tower`. Plain http is the norm there; anywhere else it's worth
+    /// a "Not encrypted" note, and a bare host name tries https first.
+    var isLocalNetwork: Bool {
+        if isLoopback { return true }
+        if isIPv6Literal {
+            let lower = host.lowercased()
+            // fe80::/10 link-local, fc00::/7 unique-local.
+            return lower.hasPrefix("fe8") || lower.hasPrefix("fe9") || lower.hasPrefix("fea") || lower.hasPrefix("feb")
+                || lower.hasPrefix("fc") || lower.hasPrefix("fd")
+        }
+        if let ip = IPv4.parse(host) {
+            let first = ip >> 24, second = ip >> 16 & 0xFF
+            return first == 10
+                || (first == 172 && (16...31).contains(second))
+                || (first == 192 && second == 168)
+                || (first == 169 && second == 254)
+                || first == 127
+        }
+        let name = host.hasSuffix(".") ? String(host.dropLast()) : host
+        if !name.contains(".") { return true }
+        return Self.localSuffixes.contains { name.hasSuffix($0) }
+    }
+
+    private static let localSuffixes = [".local", ".lan", ".home.arpa", ".internal", ".localhost"]
+
+    /// Plain http to a server that isn't on the local network: what's sent,
+    /// the password included, can be read along the way.
+    var isUnencryptedRemote: Bool { scheme == .http && !isLocalNetwork }
+
+    /// The addresses to try, in order, for what was typed. A host that isn't
+    /// on the local network, typed without a scheme, tries https first (on
+    /// the typed port, else 443) and then plain http as before; anything else
+    /// is just `parse(input)`.
+    static func candidates(for input: String) throws(ParseError) -> [ServerAddress] {
+        let address = try parse(input)
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.contains("://"), !address.isLocalNetwork else { return [address] }
+        let typedPort = explicitPort(in: "http://" + trimmed) != nil
+        let secure = ServerAddress(scheme: .https, host: address.host, port: typedPort ? address.port : nil)
+        return [secure, address]
+    }
+
     enum ParseError: LocalizedError, Equatable {
         case empty
         case invalid

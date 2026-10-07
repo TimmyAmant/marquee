@@ -49,7 +49,7 @@ struct SearchPanel: View {
         }
         .onAppear {
             fieldFocused = true
-            recents = RecentSearches.load()
+            recents = RecentSearches.load(account: model.currentAccountIdentity)
         }
         .onKeyPress(.escape) {
             close()
@@ -142,7 +142,7 @@ struct SearchPanel: View {
                 Spacer()
                 Button("Clear") {
                     recents = []
-                    RecentSearches.save([])
+                    RecentSearches.save([], account: model.currentAccountIdentity)
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: Metrics.text(11)))
@@ -179,7 +179,7 @@ struct SearchPanel: View {
             .buttonStyle(.plain)
             Button {
                 recents = RecentSearches.removing(recent, from: recents)
-                RecentSearches.save(recents)
+                RecentSearches.save(recents, account: model.currentAccountIdentity)
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: Metrics.text(11), weight: .medium))
@@ -246,14 +246,14 @@ struct SearchPanel: View {
         }
         let text = query.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
-        RecentSearches.remember(text)
+        RecentSearches.remember(text, account: model.currentAccountIdentity)
         close()
         model.search(text)
     }
 
     private func open(_ suggestion: API.SearchSuggestion) {
         // What was typed, not the name picked: the search to come back to.
-        RecentSearches.remember(query)
+        RecentSearches.remember(query, account: model.currentAccountIdentity)
         close()
         if let titleID = suggestion.titleID {
             model.openTitle(titleID)
@@ -262,7 +262,7 @@ struct SearchPanel: View {
         switch suggestion.mediaType {
         case .person: model.open(.person(suggestion.id))
         case .company: model.open(.company(suggestion.id))
-        case .network: model.browse(.tv, networkId: suggestion.id)
+        case .network: model.openNetwork(suggestion.id)
         case .movie, .tv, .unknown: break
         }
     }
