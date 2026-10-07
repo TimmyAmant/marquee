@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { companies, companyTitles, credits, people, titles } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
@@ -8,14 +8,71 @@ import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 import { isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
 import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
 
-const CATALOG_MAX_PAGES = 5;
+/** TMDb's Discover stops at page 500 (10,000 titles); no studio or network
+ * comes close (Warner Bros. Pictures is ~160 pages, Netflix ~150). */
+const CATALOG_MAX_PAGES = 500;
+/** Pages fetched at once while walking a whole catalog: quick, and well
+ * inside TMDb's rate limit. */
+const CATALOG_CONCURRENCY = 8;
+/** Pages of newest titles re-read daily between full refreshes, so a
+ * studio's or network's new releases show up within a day. */
+const TOP_UP_PAGES = 2;
+const TOP_UP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
-/** Set on a company's cached details once its catalog includes the
- * most-voted page (below), so catalogs saved before that refresh once. */
-const TOP_VOTED_MARKER = "marquee_top_voted";
+/** Set on a company's cached details once its catalog is the whole of it
+ * (every page TMDb has), so catalogs saved when only the newest hundred
+ * were kept refresh once. */
+const FULL_CATALOG_MARKER = "marquee_full_catalog";
+/** When the newest pages were last re-read (epoch ms), in the same place. */
+const TOPPED_UP_AT = "marquee_topped_up_at";
 
-function includesTopVoted(rawTmdb: unknown): boolean {
-  return Boolean(rawTmdb && typeof rawTmdb === "object" && TOP_VOTED_MARKER in rawTmdb);
+function rawField(rawTmdb: unknown, key: string): unknown {
+  return rawTmdb && typeof rawTmdb === "object" ? (rawTmdb as Record<string, unknown>)[key] : undefined;
+}
+
+/**
+ * Every page of a Discover query: page 1 says how many there are, then the
+ * rest a few at a time. A page that fails is skipped rather than failing
+ * the whole catalog.
+ */
+async function fetchAllPages(
+  fetchPage: (page: number) => Promise<tmdb.TmdbDiscoverResponse>,
+  maxPages = CATALOG_MAX_PAGES,
+): Promise<tmdb.TmdbDiscoverResult[]> {
+  const first = await fetchPage(1);
+  const last = Math.min(first.total_pages, maxPages);
+  const results = [...first.results];
+  for (let start = 2; start <= last; start += CATALOG_CONCURRENCY) {
+    const batch = await Promise.all(
+      Array.from({ length: Math.min(CATALOG_CONCURRENCY, last - start + 1) }, (_, i) =>
+        fetchPage(start + i).catch(() => null),
+      ),
+    );
+    for (const response of batch) results.push(...(response?.results ?? []));
+  }
+  return results;
+}
+
+/** A catalog's Discover results worth a card: one per title, and only
+ * titles with a poster — the rest are mostly stubs nobody has filled in,
+ * which show as blank cards. */
+function withArtwork(results: tmdb.TmdbDiscoverResult[]): tmdb.TmdbDiscoverResult[] {
+  const seen = new Set<number>();
+  return results.filter((item) => item.poster_path && !seen.has(item.id) && seen.add(item.id));
+}
+
+function lightInput(mediaType: MediaType, item: tmdb.TmdbDiscoverResult): LightTitleInput {
+  return {
+    mediaType,
+    tmdbId: item.id,
+    name: item.title || item.name || "Untitled",
+    overview: item.overview,
+    posterPath: item.poster_path,
+    backdropPath: item.backdrop_path,
+    releaseDate: item.release_date,
+    firstAirDate: item.first_air_date,
+    voteCount: item.vote_count,
+  };
 }
 
 export type LightTitleInput = {
@@ -67,6 +124,52 @@ export async function upsertTitleLight(input: LightTitleInput) {
     })
     .returning();
   return row;
+}
+
+/**
+ * upsertTitleLight for a whole list at once — a studio's catalog runs to
+ * thousands of titles — in statements of a few hundred rows, with the same
+ * fill-the-gaps-only rules. Returns the rows in no particular order.
+ */
+export async function upsertTitlesLight(inputs: LightTitleInput[]) {
+  const unique = new Map<string, LightTitleInput>();
+  for (const input of inputs) unique.set(`${input.mediaType}:${input.tmdbId}`, input);
+  const all = [...unique.values()];
+  const rows: (typeof titles.$inferSelect)[] = [];
+  for (let i = 0; i < all.length; i += 500) {
+    const now = new Date();
+    const values = all.slice(i, i + 500).map((input) => ({
+      mediaType: input.mediaType,
+      tmdbId: input.tmdbId,
+      name: input.name,
+      overview: input.overview ?? null,
+      posterPath: input.posterPath ?? null,
+      backdropPath: input.backdropPath ?? null,
+      releaseDate: input.releaseDate || null,
+      firstAirDate: input.firstAirDate || null,
+      voteCount: input.voteCount ?? null,
+      refreshedAt: now,
+    }));
+    rows.push(
+      ...(await db
+        .insert(titles)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [titles.mediaType, titles.tmdbId],
+          set: {
+            name: sql`excluded.name`,
+            overview: sql`coalesce(${titles.overview}, excluded.overview)`,
+            posterPath: sql`coalesce(excluded.poster_path, ${titles.posterPath})`,
+            backdropPath: sql`coalesce(excluded.backdrop_path, ${titles.backdropPath})`,
+            releaseDate: sql`coalesce(excluded.release_date, ${titles.releaseDate})`,
+            firstAirDate: sql`coalesce(excluded.first_air_date, ${titles.firstAirDate})`,
+            voteCount: sql`coalesce(excluded.vote_count, ${titles.voteCount})`,
+          },
+        })
+        .returning()),
+    );
+  }
+  return rows;
 }
 
 async function upsertTitleFull(input: {
@@ -346,6 +449,12 @@ async function getPersonWithCreditsFromDb(personId: string) {
   return { person, filmography: unique, knownFor: knownFor ?? null };
 }
 
+/**
+ * A studio and its whole catalog — every movie and series TMDb credits it
+ * with that has a poster — kept in the database. Re-read in full when the
+ * details go stale (cache-policy's TTL); between those, the newest couple
+ * of pages are re-read once a day so new releases show up.
+ */
 export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
   const [cachedCompany] = await db
     .select()
@@ -353,17 +462,23 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
     .where(eq(companies.tmdbId, tmdbId))
     .limit(1);
 
-  if (cachedCompany && !isStale(cachedCompany.refreshedAt)) {
-    const cached = await getCompanyWithCatalogFromDb(cachedCompany.id);
-    // A catalog saved before titles kept their vote counts, or before it
-    // included the most-voted page, is refreshed once, so the page can pick
-    // its best-known title (lib/tmdb/known-for.ts).
-    const hasVotes = cached.catalog.length === 0 || cached.catalog.some((title) => title.voteCount !== null);
-    if (hasVotes && includesTopVoted(cachedCompany.rawTmdb)) return cached;
+  if (cachedCompany && !isStale(cachedCompany.refreshedAt) && rawField(cachedCompany.rawTmdb, FULL_CATALOG_MARKER)) {
+    const toppedUpAt = Number(rawField(cachedCompany.rawTmdb, TOPPED_UP_AT) ?? 0);
+    if (Date.now() - toppedUpAt > TOP_UP_INTERVAL_MS) {
+      await topUpCompany(cachedCompany.id, tmdbId, cachedCompany.rawTmdb).catch((err) =>
+        console.error("[tmdb] couldn't re-read company %d's newest titles:", tmdbId, err),
+      );
+    }
+    return getCompanyWithCatalogFromDb(cachedCompany.id);
   }
 
   const details = await tmdb.getCompanyDetails(tmdbId);
+  const [movies, series] = await Promise.all([
+    fetchAllPages((page) => tmdb.discoverMoviesByCompany(tmdbId, page)),
+    fetchAllPages((page) => tmdb.discoverTvByCompany(tmdbId, page)),
+  ]);
 
+  const rawTmdb = { ...details, [FULL_CATALOG_MARKER]: true, [TOPPED_UP_AT]: Date.now() };
   const [companyRow] = await db
     .insert(companies)
     .values({
@@ -373,7 +488,7 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
       logoPath: details.logo_path,
       originCountry: details.origin_country,
       parentCompanyTmdbId: details.parent_company?.id ?? null,
-      rawTmdb: { ...details, [TOP_VOTED_MARKER]: true },
+      rawTmdb,
       refreshedAt: new Date(),
     })
     .onConflictDoUpdate({
@@ -384,52 +499,45 @@ export async function getOrFetchCompanyWithCatalog(tmdbId: number) {
         logoPath: details.logo_path,
         originCountry: details.origin_country,
         parentCompanyTmdbId: details.parent_company?.id ?? null,
-        rawTmdb: { ...details, [TOP_VOTED_MARKER]: true },
+        rawTmdb,
         refreshedAt: new Date(),
       },
     })
     .returning();
 
-  async function save(mediaType: MediaType, results: tmdb.TmdbDiscoverResponse["results"]) {
-    for (const item of results) {
-      const titleRow = await upsertTitleLight({
-        mediaType,
-        tmdbId: item.id,
-        name: item.title || item.name || "Untitled",
-        overview: item.overview,
-        posterPath: item.poster_path,
-        backdropPath: item.backdrop_path,
-        releaseDate: item.release_date,
-        firstAirDate: item.first_air_date,
-        voteCount: item.vote_count,
-      });
-
-      await db
-        .insert(companyTitles)
-        .values({ companyId: companyRow.id, titleId: titleRow.id })
-        .onConflictDoNothing();
-    }
-  }
-
-  for (const fetchPage of [tmdb.discoverMoviesByCompany, tmdb.discoverTvByCompany]) {
-    const mediaType: MediaType = fetchPage === tmdb.discoverMoviesByCompany ? "movie" : "tv";
-    let totalPages = 0;
-    for (let page = 1; page <= CATALOG_MAX_PAGES; page++) {
-      const response = await fetchPage(tmdbId, page);
-      totalPages = response.total_pages;
-      await save(mediaType, response.results);
-      if (page >= response.total_pages) break;
-    }
-    // The newest pages miss a long-running studio's classics (A24's are
-    // older than its latest hundred titles), so the most-voted page is kept
-    // too: the best-known pick sees them, and the list shows them. Only
-    // when the newest pages didn't already cover everything.
-    if (totalPages > CATALOG_MAX_PAGES) {
-      await save(mediaType, (await tmdb.discoverTopVotedByCompany(mediaType, tmdbId)).results);
-    }
-  }
+  await linkCompanyTitles(companyRow.id, [
+    ...withArtwork(movies).map((item) => lightInput("movie", item)),
+    ...withArtwork(series).map((item) => lightInput("tv", item)),
+  ]);
 
   return getCompanyWithCatalogFromDb(companyRow.id);
+}
+
+/** Re-reads a studio's newest pages and adds what's new. */
+async function topUpCompany(companyId: string, tmdbId: number, rawTmdb: unknown) {
+  const pages = Array.from({ length: TOP_UP_PAGES }, (_, i) => i + 1);
+  const [movies, series] = await Promise.all([
+    Promise.all(pages.map((page) => tmdb.discoverMoviesByCompany(tmdbId, page))),
+    Promise.all(pages.map((page) => tmdb.discoverTvByCompany(tmdbId, page))),
+  ]);
+  await linkCompanyTitles(companyId, [
+    ...withArtwork(movies.flatMap((r) => r.results)).map((item) => lightInput("movie", item)),
+    ...withArtwork(series.flatMap((r) => r.results)).map((item) => lightInput("tv", item)),
+  ]);
+  await db
+    .update(companies)
+    .set({ rawTmdb: { ...(rawTmdb as object), [TOPPED_UP_AT]: Date.now() } })
+    .where(eq(companies.id, companyId));
+}
+
+async function linkCompanyTitles(companyId: string, inputs: LightTitleInput[]) {
+  const rows = await upsertTitlesLight(inputs);
+  for (let i = 0; i < rows.length; i += 1000) {
+    await db
+      .insert(companyTitles)
+      .values(rows.slice(i, i + 1000).map((row) => ({ companyId, titleId: row.id })))
+      .onConflictDoNothing();
+  }
 }
 
 async function getCompanyWithCatalogFromDb(companyId: string) {
@@ -438,8 +546,10 @@ async function getCompanyWithCatalogFromDb(companyId: string) {
     .select({ title: titles })
     .from(companyTitles)
     .innerJoin(titles, eq(companyTitles.titleId, titles.id))
-    .where(eq(companyTitles.companyId, companyId))
-    .orderBy(desc(sql`coalesce(${titles.releaseDate}, ${titles.firstAirDate})`));
+    // Titles saved before posterless ones were left out stay linked; they
+    // aren't shown.
+    .where(and(eq(companyTitles.companyId, companyId), isNotNull(titles.posterPath)))
+    .orderBy(sql`coalesce(${titles.releaseDate}, ${titles.firstAirDate}) desc nulls last`);
 
   return { company, catalog: catalog.map((row) => row.title) };
 }
@@ -451,58 +561,18 @@ const networkCatalogs = new Map<number, { at: number; network: tmdb.TmdbNetworkD
 type TitleRow = typeof titles.$inferSelect;
 
 /**
- * A network's page (app/network/[id]): its details and its series — the
- * newest pages, plus the most popular and most-voted ones a long-running
- * network's newest pages miss — saved as light titles. Unlike a studio's,
+ * A network's page (app/network/[id]): its details and every series TMDb
+ * lists for it that has a poster, saved as light titles. Unlike a studio's,
  * kept in memory only (a network is browsed, not favorited), for a few
- * hours. Undefined `network` when TMDb has no such network.
+ * hours. Throws when TMDb has no such network.
  */
 export async function getNetworkWithCatalog(tmdbId: number) {
   const cached = networkCatalogs.get(tmdbId);
   if (cached && Date.now() - cached.at < NETWORK_CATALOG_TTL_MS) return cached;
 
   const network = await tmdb.getNetworkDetails(tmdbId);
-  const pages = await Promise.all([
-    ...Array.from({ length: CATALOG_MAX_PAGES }, (_, i) =>
-      tmdb.discoverTvByNetwork(tmdbId, "first_air_date.desc", i + 1).catch(() => null),
-    ),
-    tmdb.discoverTvByNetwork(tmdbId, "popularity.desc", 1).catch(() => null),
-    tmdb.discoverTvByNetwork(tmdbId, "popularity.desc", 2).catch(() => null),
-    tmdb.discoverTvByNetwork(tmdbId, "vote_count.desc", 1).catch(() => null),
-  ]);
-
-  const seen = new Set<number>();
-  const items: tmdb.TmdbDiscoverResult[] = [];
-  for (const response of pages) {
-    for (const item of response?.results ?? []) {
-      // No poster is mostly a stub nobody's filled in (or a show not yet
-      // announced properly): a blank card, so it's left out.
-      if (seen.has(item.id) || !item.poster_path) continue;
-      seen.add(item.id);
-      items.push(item);
-    }
-  }
-  // Saved a batch at a time rather than one by one: a first visit saves a
-  // couple of hundred titles.
-  const catalog: TitleRow[] = [];
-  for (let i = 0; i < items.length; i += 20) {
-    catalog.push(
-      ...(await Promise.all(
-        items.slice(i, i + 20).map((item) =>
-          upsertTitleLight({
-            mediaType: "tv",
-            tmdbId: item.id,
-            name: item.name || item.title || "Untitled",
-            overview: item.overview,
-            posterPath: item.poster_path,
-            backdropPath: item.backdrop_path,
-            firstAirDate: item.first_air_date,
-            voteCount: item.vote_count,
-          }),
-        ),
-      )),
-    );
-  }
+  const series = await fetchAllPages((page) => tmdb.discoverTvByNetwork(tmdbId, "first_air_date.desc", page));
+  const catalog = await upsertTitlesLight(withArtwork(series).map((item) => lightInput("tv", item)));
   // Newest first, as a studio's: titles with no date yet go last.
   catalog.sort((a, b) => (b.firstAirDate ?? "").localeCompare(a.firstAirDate ?? ""));
 
