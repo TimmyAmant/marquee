@@ -113,10 +113,11 @@ public sealed partial class TrailerDialog : ContentDialog
     private string PageHtml()
     {
         var embed = YouTubeTrailer.EmbedUrl(key)?.AbsoluteUri ?? "about:blank";
-        return $$"""
+        // $$$: the script below ends in "}}", which $$ would read as a hole.
+        return $$$"""
             <!doctype html><html><head><meta charset="utf-8"><meta name="referrer" content="strict-origin-when-cross-origin">
             <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}iframe{border:0;width:100%;height:100%}</style></head>
-            <body><iframe src="{{embed}}" title="YouTube"
+            <body><iframe src="{{{embed}}}" title="YouTube"
             referrerpolicy="strict-origin-when-cross-origin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             <script>document.addEventListener("keydown",function(e){if(e.key==="Escape"){window.chrome.webview.postMessage("close");}});</script>
