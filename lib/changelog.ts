@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.76.1",
+    date: "2026-10-07",
+    changes: [
+      "Smoother scrolling on the website: posters no longer keep a hidden loading animation running after their artwork appears, and the little badges on each poster are cheaper to draw.",
+      "Mac and iPhone: smoother scrolling through posters. Artwork is now prepared in the background instead of the moment it scrolls into view, and the Mac only draws a poster's shadow while you hover it.",
+      "A network's page opens faster the first time.",
+    ],
+  },
+  {
     version: "0.76.0",
     date: "2026-10-07",
     changes: [

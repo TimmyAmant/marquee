@@ -98,7 +98,7 @@ export function PosterCard({
         ) : (
           typeof rating === "number" &&
           rating > 0 && (
-            <div className="pointer-events-none absolute left-[7px] top-[7px] z-10 flex h-[17px] items-center gap-1 rounded-[9px] bg-bg-0/80 px-[6px] text-[10px] font-semibold text-accent backdrop-blur-sm">
+            <div className="pointer-events-none absolute left-[7px] top-[7px] z-10 flex h-[17px] items-center gap-1 rounded-[9px] bg-bg-0/90 px-[6px] text-[10px] font-semibold text-accent">
               <span>★</span>
               {rating.toFixed(1)}
             </div>
