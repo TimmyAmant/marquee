@@ -1,4 +1,5 @@
 import SwiftUI
+import ImageIO
 #if os(macOS)
 import AppKit
 #else
@@ -38,16 +39,36 @@ actor ImagePipeline {
         if let task = inFlight[url] { return await task.value }
 
         let session = self.session
-        let task = Task<PlatformImage?, Never> {
+        let task = Task<PlatformImage?, Never>.detached(priority: .userInitiated) {
             guard let result = try? await session.data(from: url),
                   let http = result.1 as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
-            return PlatformImage(data: result.0)
+            return Self.decoded(result.0)
         }
         inFlight[url] = task
         let image = await task.value
         inFlight[url] = nil
         if let image { memory.setObject(image, forKey: url as NSURL, cost: Self.decodedByteCost(of: image)) }
         return image
+    }
+
+    /// The image fully decoded here, off the main thread. `NSImage(data:)` /
+    /// `UIImage(data:)` defer decoding the JPEG until the first draw, which
+    /// lands on the main thread mid-scroll — a hitch for every poster that
+    /// scrolls into view.
+    nonisolated static func decoded(_ data: Data) -> PlatformImage? {
+        let options = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, options) else {
+            return PlatformImage(data: data)
+        }
+        let decode = [kCGImageSourceShouldCacheImmediately: true] as CFDictionary
+        guard let cgImage = CGImageSourceCreateImageAtIndex(source, 0, decode) else {
+            return PlatformImage(data: data)
+        }
+        #if os(macOS)
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        #else
+        return UIImage(cgImage: cgImage)
+        #endif
     }
 
     /// Roughly what the image costs once drawn: its largest bitmap at 4 bytes

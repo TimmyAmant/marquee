@@ -25,14 +25,21 @@ export function MediaImage({
   shimmer?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
+  // The skeleton leaves once it has faded out. Kept around at opacity 0 its
+  // sheen (a background-position animation, painted on the main thread)
+  // went on repainting under every poster on the page, all through scrolling.
+  const [skeletonGone, setSkeletonGone] = useState(false);
 
   return (
     <>
-      {shimmer && (
+      {shimmer && !skeletonGone && (
         <span
           aria-hidden
+          onTransitionEnd={() => {
+            if (loaded) setSkeletonGone(true);
+          }}
           className={`pointer-events-none absolute inset-0 z-0 bg-shimmer transition-opacity duration-500 ${
-            loaded ? "opacity-0" : "opacity-100"
+            loaded ? "opacity-0 [animation:none]" : "opacity-100"
           }`}
         />
       )}

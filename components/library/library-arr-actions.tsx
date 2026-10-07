@@ -40,7 +40,7 @@ export function LibraryArrActions({
   );
 
   const button = compact
-    ? "w-full rounded-full border border-border-strong bg-bg-0/90 px-2 py-1 text-[10px] font-medium text-text-primary backdrop-blur-sm transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
+    ? "w-full rounded-full border border-border-strong bg-bg-0/95 px-2 py-1 text-[10px] font-medium text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
     : "flex h-7 items-center rounded-full border border-border-strong px-3 text-[12px] text-text-primary transition-colors hover:border-accent hover:text-accent disabled:opacity-60";
 
   return (

@@ -472,26 +472,36 @@ export async function getNetworkWithCatalog(tmdbId: number) {
   ]);
 
   const seen = new Set<number>();
-  const catalog: TitleRow[] = [];
+  const items: tmdb.TmdbDiscoverResult[] = [];
   for (const response of pages) {
     for (const item of response?.results ?? []) {
       // No poster is mostly a stub nobody's filled in (or a show not yet
       // announced properly): a blank card, so it's left out.
       if (seen.has(item.id) || !item.poster_path) continue;
       seen.add(item.id);
-      catalog.push(
-        await upsertTitleLight({
-          mediaType: "tv",
-          tmdbId: item.id,
-          name: item.name || item.title || "Untitled",
-          overview: item.overview,
-          posterPath: item.poster_path,
-          backdropPath: item.backdrop_path,
-          firstAirDate: item.first_air_date,
-          voteCount: item.vote_count,
-        }),
-      );
+      items.push(item);
     }
+  }
+  // Saved a batch at a time rather than one by one: a first visit saves a
+  // couple of hundred titles.
+  const catalog: TitleRow[] = [];
+  for (let i = 0; i < items.length; i += 20) {
+    catalog.push(
+      ...(await Promise.all(
+        items.slice(i, i + 20).map((item) =>
+          upsertTitleLight({
+            mediaType: "tv",
+            tmdbId: item.id,
+            name: item.name || item.title || "Untitled",
+            overview: item.overview,
+            posterPath: item.poster_path,
+            backdropPath: item.backdrop_path,
+            firstAirDate: item.first_air_date,
+            voteCount: item.vote_count,
+          }),
+        ),
+      )),
+    );
   }
   // Newest first, as a studio's: titles with no date yet go last.
   catalog.sort((a, b) => (b.firstAirDate ?? "").localeCompare(a.firstAirDate ?? ""));
