@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { isUnwanted } from "@/lib/library/status-tone";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { PosterCard } from "@/components/poster-card";
@@ -50,6 +50,9 @@ export type MediaEntry = {
 type SortOrder = "newest" | "oldest" | "az" | "recent";
 type TypeFilter = "all" | "movie" | "tv";
 type StatusFilter = "all" | LibraryStatus;
+
+/** Cards drawn at a time (see the list's comment on chunking). */
+const RENDER_CHUNK = 120;
 
 const SORT_LABELS: Record<SortOrder, MessageKey> = {
   newest: "discover.sortNewestFirst",
@@ -242,6 +245,29 @@ export function MediaList({
     [filteredEntries, effectiveSortOrder],
   );
 
+  // A studio's catalog runs to thousands of titles: the list draws a chunk
+  // at a time, the next as the reader nears the end, instead of every card
+  // up front. A new filter, search or order starts over from the first.
+  const [shown, setShown] = useState({ sorted: sortedEntries, count: RENDER_CHUNK });
+  const shownCount = shown.sorted === sortedEntries ? shown.count : RENDER_CHUNK;
+  const visibleEntries = sortedEntries.slice(0, shownCount);
+  const hasMoreToShow = shownCount < sortedEntries.length;
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!hasMoreToShow || !sentinel) return;
+    const observer = new IntersectionObserver(
+      (records) => {
+        if (records.some((record) => record.isIntersecting)) {
+          setShown({ sorted: sortedEntries, count: shownCount + RENDER_CHUNK });
+        }
+      },
+      { rootMargin: "1200px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMoreToShow, sortedEntries, shownCount]);
+
   if (entries.length === 0) {
     return <p className="text-sm text-text-muted">{emptyMessage ?? t("discover.nothingFound")}</p>;
   }
@@ -389,7 +415,7 @@ export function MediaList({
         <p className="text-sm text-text-muted">{t("discover.noFilterMatches")}</p>
       ) : view === "grid" ? (
         <PosterGrid>
-          {sortedEntries.map((entry) => {
+          {visibleEntries.map((entry) => {
             const canQuickAdd = isUnwanted(entry.status) && arrConfigured?.[entry.mediaType];
 
             return (
@@ -448,7 +474,7 @@ export function MediaList({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {sortedEntries.map((entry) => (
+              {visibleEntries.map((entry) => (
                 <tr key={entry.titleId} className="hover:bg-bg-1/60">
                   <td className="px-4 py-3">
                     <a
@@ -505,6 +531,7 @@ export function MediaList({
           </table>
         </div>
       )}
+      {hasMoreToShow && <div ref={sentinelRef} aria-hidden className="h-px" />}
     </div>
   );
 }

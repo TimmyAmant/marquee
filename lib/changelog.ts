@@ -11,6 +11,15 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.76.2",
+    date: "2026-10-07",
+    changes: [
+      "Studio and network pages now list everything they've made, not just their newest hundred or so titles: Warner Bros. Pictures goes from 129 titles to almost 2,900 (back to 1918), Prime Video to over 1,400 series and HBO to over 340. Titles TMDb has no artwork for are left out.",
+      "Studio pages pick up new releases within a day, instead of every two weeks.",
+      "Long lists (a big studio's page, a large library) load faster on the website: the posters appear as you scroll down instead of all at once.",
+    ],
+  },
+  {
     version: "0.76.1",
     date: "2026-10-07",
     changes: [

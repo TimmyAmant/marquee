@@ -839,13 +839,3 @@ export function discoverTvByNetwork(
   });
 }
 
-/** A studio's most-voted titles (one page), which its newest pages miss
- * when it has been around a while: what lib/tmdb/cache.ts adds to a
- * company's catalog so its best-known pick sees the classics. */
-export function discoverTopVotedByCompany(mediaType: "movie" | "tv", companyId: number) {
-  return tmdbFetch<TmdbDiscoverResponse>(`/discover/${mediaType}`, {
-    with_companies: companyId,
-    sort_by: "vote_count.desc",
-    page: 1,
-  });
-}
