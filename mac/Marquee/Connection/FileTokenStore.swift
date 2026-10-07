@@ -31,20 +31,9 @@ struct FileTokenStore: TokenStore {
     private static let logger = Logger(subsystem: "com.timmyamant.Marquee", category: "session")
 
     let directory: URL
-    /// Runs only while no sessions file exists yet (the first launch of a
-    /// build with this store): a token an earlier Marquee kept in the login
-    /// Keychain, or nil. `persist` saves it here; the source may be removed
-    /// once it returns true.
-    private let migrate: (_ server: String, _ persist: (String) -> Bool) -> String?
 
-    init(
-        directory: URL = FileTokenStore.defaultDirectory,
-        migrate: @escaping (_ server: String, _ persist: (String) -> Bool) -> String? = { server, persist in
-            KeychainSessionMigration.take(server: server, persist: persist)
-        }
-    ) {
+    init(directory: URL = FileTokenStore.defaultDirectory) {
         self.directory = directory
-        self.migrate = migrate
     }
 
     var fileURL: URL { directory.appendingPathComponent(Self.fileName, isDirectory: false) }
@@ -90,9 +79,7 @@ struct FileTokenStore: TokenStore {
         case .unreadable:
             return .unavailable
         case .noFile:
-            guard let token = migrate(server, { save($0, for: server) }), !token.isEmpty else { return .missing }
-            Self.logger.notice("Moved the saved sign-in for \(server, privacy: .public) out of the login Keychain")
-            return .found(token)
+            return .missing
         }
     }
 
@@ -114,10 +101,29 @@ struct FileTokenStore: TokenStore {
         return write(contents)
     }
 
+    /// Signing out must never leave the token on disk: when the file can't
+    /// be read or rewritten, it's removed outright, at the cost of other
+    /// servers' sign-ins (they sign in again), and a file left with no
+    /// tokens (or a damaged one) goes too.
     func delete(for server: String) {
-        guard case var .found(contents) = read(), contents.tokens[server] != nil else { return }
-        contents.tokens[server] = nil
-        write(contents)
+        switch read() {
+        case .noFile:
+            return
+        case .unreadable:
+            removeFile()
+        case var .found(contents):
+            contents.tokens[server] = nil
+            if contents.tokens.isEmpty || !write(contents) {
+                removeFile()
+            }
+        }
+    }
+
+    private func removeFile() {
+        guard unlink(fileURL.path) == 0 || errno == ENOENT else {
+            Self.logger.error("Couldn't remove the saved sessions: \(String(cString: strerror(errno)), privacy: .public)")
+            return
+        }
     }
 
     // MARK: Writing
@@ -183,51 +189,5 @@ struct FileTokenStore: TokenStore {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         try? url.setResourceValues(values)
-    }
-}
-
-/// Moves a session token out of the login Keychain, where earlier versions
-/// of Marquee kept it, without ever bringing up a password prompt.
-///
-/// macOS lets only the build that wrote a login-keychain item read it
-/// silently, and each item was marked (`comment`) with the code identity of
-/// that build. So the only item read here is this build's own — which exists
-/// only when builds share an identity (a Developer ID signature would do
-/// that). Another build's item is never read, updated or deleted: each of
-/// those can prompt. Such leftovers are harmless, and can be removed by hand
-/// in Keychain Access (search for "Marquee server session").
-enum KeychainSessionMigration {
-    static let service = "com.timmyamant.Marquee.api"
-
-    /// "<server>", or "<server> #<tag>" for an item a later build added.
-    static func belongs(_ account: String, to server: String) -> Bool {
-        account == server || account.hasPrefix(server + " #")
-    }
-
-    /// The account of the one item this build may read for `server`: its own
-    /// (`comment == identity`). Nil when there's none, or when this build's
-    /// identity is unknown (any read could then prompt).
-    static func account(in items: [Keychain.Item], server: String, identity: String?) -> String? {
-        guard let identity else { return nil }
-        return items.first { belongs($0.account, to: server) && $0.comment == identity }?.account
-    }
-
-    /// Reads this build's own item for `server`, hands its token to `persist`
-    /// and, once that has saved it, deletes the item.
-    static func take(
-        server: String,
-        identity: String? = CodeIdentity.current,
-        persist: (String) -> Bool
-    ) -> String? {
-        // Listing attributes never prompts, whichever build wrote the items.
-        guard identity != nil, case let .found(items) = Keychain.items(service: service),
-              let account = account(in: items, server: server, identity: identity),
-              case let .found(data) = Keychain.read(service: service, account: account),
-              let token = String(data: data, encoding: .utf8), !token.isEmpty
-        else { return nil }
-        if persist(token) {
-            Keychain.delete(service: service, account: account)
-        }
-        return token
     }
 }

@@ -11,6 +11,26 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.76.0",
+    date: "2026-10-07",
+    changes: [
+      "Networks like Prime Video, HBO and Netflix now get their own page, laid out like a studio's: the logo, how many series, artwork from its best-known show and a searchable list of its series. Network logos on Discover and network search results open it.",
+      "Title pages: a \"Search for missing\" button (\"Search for movie\" on movies) tells Sonarr or Radarr to go look for everything that's missing and download it, like Search Monitored in Sonarr and Radarr. It replaces Search now in the \"…\" menu.",
+      "Calendar: bigger and easier to read. It uses more of the window, shows larger posters and titles with the episode under each one, and several episodes of a show on the same day are one row (\"S01E03–E06\"). \"+N more\" now shows the rest of the day.",
+      "Movies, Series and network pages no longer fill up with blank cards for titles TMDb has no artwork for.",
+      "Windows: trailers now play inside the app, like on the website, Mac and iPhone, with Open on YouTube and Done (Escape closes it).",
+      "Windows: marquee:// links (for example marquee://title/movie/603) now open in the app. They only ever open a page; they never do anything on your behalf.",
+      "Mac, iPhone and Windows: typing a server's name without http:// or https:// now tries a secure https connection first when the server isn't on your home network, and falls back to http only if that doesn't work.",
+      "Mac, iPhone and Windows: a server reached over plain http across the internet now shows \"Not encrypted\" on the sign-in screen and in Settings, so you know your password isn't protected on the way.",
+      "Mac, iPhone and Windows: recent searches are now kept for each account and cleared when you sign out, as on the website, so someone else signing in on the same device never sees yours.",
+      "Mac and iPhone: clicking a notification banner now marks that notification read, like clicking it in the bell. A banner for an account that isn't the one signed in no longer opens anything.",
+      "Mac and iPhone: the apps no longer follow a server's redirects, so your sign-in is never sent anywhere other than the address you entered. A server that redirects now says it didn't answer like a Marquee server, as on Windows.",
+      "Mac and iPhone: links the server hands the apps (Open in Radarr/Sonarr, Play on Plex, the Telegram bot, sign-in pages) only open web pages or the media server's own app, and trailers only play real YouTube videos.",
+      "Mac: Sign Out now always removes this Mac's saved sign-in from disk, even if the file holding it can't be read.",
+      "Mac: downloading an update is faster.",
+    ],
+  },
+  {
     version: "0.75.0",
     date: "2026-10-04",
     changes: [

@@ -329,6 +329,7 @@ struct PhoneRouteView: View {
             case let .title(id): TitleDetailView(id: id)
             case let .person(id): PersonDetailView(tmdbId: id)
             case let .company(id): CompanyDetailView(tmdbId: id)
+            case let .network(id): CompanyDetailView(tmdbId: id, isNetwork: true)
             case let .search(query): SearchResultsView(query: query)
             case let .searchSection(query, section): SearchSectionView(query: query, section: section)
             case let .discoverList(list): DiscoverListView(list: list)

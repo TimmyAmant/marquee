@@ -13,7 +13,7 @@ struct PhoneSearchView: View {
     @State private var submitted: String?
     @State private var suggestions: [API.SearchSuggestion] = []
     /// This iPhone's recent searches (`RecentSearches`), newest first.
-    @State private var recents = RecentSearches.load()
+    @State private var recents: [String] = []
 
     var body: some View {
         Group {
@@ -47,8 +47,9 @@ struct PhoneSearchView: View {
             guard !text.isEmpty else { return }
             query = text
             submitted = text
-            recents = RecentSearches.remember(text)
+            recents = RecentSearches.remember(text, account: model.currentAccountIdentity)
         }
+        .onAppear { recents = RecentSearches.load(account: model.currentAccountIdentity) }
         .task(id: query) { await suggest(query) }
     }
 
@@ -96,7 +97,7 @@ struct PhoneSearchView: View {
                         }
                         Button {
                             recents = RecentSearches.removing(recent, from: recents)
-                            RecentSearches.save(recents)
+                            RecentSearches.save(recents, account: model.currentAccountIdentity)
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.footnote.weight(.medium))
@@ -116,7 +117,7 @@ struct PhoneSearchView: View {
                     Spacer()
                     Button("Clear") {
                         recents = []
-                        RecentSearches.save([])
+                        RecentSearches.save([], account: model.currentAccountIdentity)
                     }
                     .font(.footnote)
                     .foregroundStyle(Theme.textMuted)
@@ -131,7 +132,7 @@ struct PhoneSearchView: View {
 
     private func open(_ suggestion: API.SearchSuggestion) {
         // What was typed, not the name picked: the search to come back to.
-        recents = RecentSearches.remember(query)
+        recents = RecentSearches.remember(query, account: model.currentAccountIdentity)
         if let titleID = suggestion.titleID {
             model.openTitle(titleID)
             return
@@ -139,7 +140,7 @@ struct PhoneSearchView: View {
         switch suggestion.mediaType {
         case .person: model.open(.person(suggestion.id))
         case .company: model.open(.company(suggestion.id))
-        case .network: model.browse(.tv, networkId: suggestion.id)
+        case .network: model.openNetwork(suggestion.id)
         case .movie, .tv, .unknown: break
         }
     }

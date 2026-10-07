@@ -443,3 +443,60 @@ async function getCompanyWithCatalogFromDb(companyId: string) {
 
   return { company, catalog: catalog.map((row) => row.title) };
 }
+
+/** How long a network's catalog is reused before TMDb is asked again. */
+const NETWORK_CATALOG_TTL_MS = 6 * 60 * 60 * 1000;
+const networkCatalogs = new Map<number, { at: number; network: tmdb.TmdbNetworkDetails; catalog: TitleRow[] }>();
+
+type TitleRow = typeof titles.$inferSelect;
+
+/**
+ * A network's page (app/network/[id]): its details and its series — the
+ * newest pages, plus the most popular and most-voted ones a long-running
+ * network's newest pages miss — saved as light titles. Unlike a studio's,
+ * kept in memory only (a network is browsed, not favorited), for a few
+ * hours. Undefined `network` when TMDb has no such network.
+ */
+export async function getNetworkWithCatalog(tmdbId: number) {
+  const cached = networkCatalogs.get(tmdbId);
+  if (cached && Date.now() - cached.at < NETWORK_CATALOG_TTL_MS) return cached;
+
+  const network = await tmdb.getNetworkDetails(tmdbId);
+  const pages = await Promise.all([
+    ...Array.from({ length: CATALOG_MAX_PAGES }, (_, i) =>
+      tmdb.discoverTvByNetwork(tmdbId, "first_air_date.desc", i + 1).catch(() => null),
+    ),
+    tmdb.discoverTvByNetwork(tmdbId, "popularity.desc", 1).catch(() => null),
+    tmdb.discoverTvByNetwork(tmdbId, "popularity.desc", 2).catch(() => null),
+    tmdb.discoverTvByNetwork(tmdbId, "vote_count.desc", 1).catch(() => null),
+  ]);
+
+  const seen = new Set<number>();
+  const catalog: TitleRow[] = [];
+  for (const response of pages) {
+    for (const item of response?.results ?? []) {
+      // No poster is mostly a stub nobody's filled in (or a show not yet
+      // announced properly): a blank card, so it's left out.
+      if (seen.has(item.id) || !item.poster_path) continue;
+      seen.add(item.id);
+      catalog.push(
+        await upsertTitleLight({
+          mediaType: "tv",
+          tmdbId: item.id,
+          name: item.name || item.title || "Untitled",
+          overview: item.overview,
+          posterPath: item.poster_path,
+          backdropPath: item.backdrop_path,
+          firstAirDate: item.first_air_date,
+          voteCount: item.vote_count,
+        }),
+      );
+    }
+  }
+  // Newest first, as a studio's: titles with no date yet go last.
+  catalog.sort((a, b) => (b.firstAirDate ?? "").localeCompare(a.firstAirDate ?? ""));
+
+  const entry = { at: Date.now(), network, catalog };
+  networkCatalogs.set(tmdbId, entry);
+  return entry;
+}

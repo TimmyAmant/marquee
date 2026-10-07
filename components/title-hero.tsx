@@ -18,6 +18,7 @@ import { ExternalLinks, type ExternalLinksData } from "@/components/external-lin
 import { FavoriteButton } from "@/components/favorite-button";
 import { RelinkTitleForm } from "@/components/relink-title-form";
 import { ArrTrackingControls } from "@/components/arr-tracking-controls";
+import { SearchMissingButton } from "@/components/search-missing-button";
 import { FourKControls } from "@/components/fourk-controls";
 import { ReportProblemButton } from "@/components/report-problem-button";
 import { ShareButton } from "@/components/share-button";
@@ -361,6 +362,8 @@ export async function TitleHero({
                 </Link>
               )}
 
+              {menuTracking && <SearchMissingButton mediaType={mediaType} tmdbId={tmdbId} tvdbId={tvdbId ?? null} />}
+
               {fourK && <FourKControls mediaType={mediaType} tmdbId={tmdbId} fourK={fourK} advanced={may?.advanced ?? false} />}
 
               <OpenInArrLinks links={arrLinks} variant="pills" />
@@ -398,6 +401,7 @@ export async function TitleHero({
                       tvdbId={tvdbId ?? null}
                       monitored={arrTracking.monitored}
                       variant="menu"
+                      showSearch={false}
                     />
                   )}
                   {menuBlock && (

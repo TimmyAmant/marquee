@@ -270,7 +270,9 @@ enum ServerProbe {
     static let infoPath = "/api/v1/server-info"
 
     /// Ephemeral and cookie-less, so a web session cookie never changes what
-    /// the server answers, and nothing is cached between probes.
+    /// the server answers, and nothing is cached between probes. Like the API
+    /// client it doesn't follow redirects, except a legacy server's own one
+    /// to its `/login` page (`LegacyLoginRedirects`), as on Windows.
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 6
@@ -281,7 +283,7 @@ enum ServerProbe {
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.httpAdditionalHeaders = ["User-Agent": AppInfo.userAgent]
-        return URLSession(configuration: configuration)
+        return URLSession(configuration: configuration, delegate: LegacyLoginRedirects.shared, delegateQueue: nil)
     }()
 
     /// Full check for a single address (manual entry, saved server): a TCP
@@ -383,5 +385,29 @@ enum ServerProbe {
         default:
             return .failed(urlError.localizedDescription)
         }
+    }
+}
+
+/// Follows a redirect only to `/login` on the same scheme, host and port:
+/// how a Marquee server older than 0.22.0 answers `/api/v1/server-info`.
+/// Anything else comes back as the 3xx itself, which isn't Marquee.
+final class LegacyLoginRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+    static let shared = LegacyLoginRedirects()
+
+    static func allows(from original: URL?, to target: URL?) -> Bool {
+        guard let original, let target, target.path == "/login" else { return false }
+        return original.scheme?.lowercased() == target.scheme?.lowercased()
+            && original.host?.lowercased() == target.host?.lowercased()
+            && original.port == target.port
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping @Sendable (URLRequest?) -> Void
+    ) {
+        completionHandler(Self.allows(from: task.originalRequest?.url, to: request.url) ? request : nil)
     }
 }

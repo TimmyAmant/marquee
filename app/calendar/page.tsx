@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getArrCredential } from "@/lib/integrations/credentials";
 import { getUpcomingReleases, type CalendarEntry } from "@/lib/calendar/query";
 import { computeCalendarGrid, toDateKey } from "@/lib/calendar/grid";
+import { groupDayEntries, type DayTitle } from "@/lib/calendar/group";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { getViewerContext } from "@/lib/integrations/library-owner";
 import { getT } from "@/lib/i18n/server";
@@ -60,7 +61,7 @@ export default async function CalendarPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="mx-auto max-w-[1680px] px-6 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-text-primary">{t("discover.calendarTitle")}</h1>
@@ -92,66 +93,53 @@ export default async function CalendarPage({
           horizontally on narrow phones instead of squeezing every cell down
           to the point the day's entries become unreadable. */}
       <div className="mt-8 overflow-x-auto rounded-2xl border border-border">
-        <div className="grid min-w-[560px] grid-cols-7 gap-px bg-border">
+        <div className="grid min-w-[760px] grid-cols-7 gap-px bg-border">
           {/* The grid's first week runs Sunday to Saturday: its days name the
               columns, in the reader's language. */}
           {days.slice(0, 7).map((day) => (
-            <div key={day.getDay()} className="bg-bg-1 px-2 py-2 text-center text-xs font-medium text-text-secondary">
+            <div key={day.getDay()} className="bg-bg-1 px-2 py-2.5 text-center text-sm font-semibold text-text-secondary">
               {new Intl.DateTimeFormat(t.tag, { weekday: "short" }).format(day)}
             </div>
           ))}
 
           {days.map((day) => {
             const key = toDateKey(day);
-            const dayEntries = byDate.get(key) ?? [];
+            const titles = groupDayEntries(byDate.get(key) ?? []);
             const inCurrentMonth = day.getMonth() === monthIndex;
             const isToday = key === todayKey;
-            const visible = dayEntries.slice(0, MAX_VISIBLE_PER_DAY);
-            const overflowCount = dayEntries.length - visible.length;
+            const visible = titles.slice(0, MAX_VISIBLE_PER_DAY);
+            const overflow = titles.slice(MAX_VISIBLE_PER_DAY);
 
             return (
               <div
                 key={key}
-                className={`flex min-h-28 flex-col gap-1 bg-bg-0 p-1.5 sm:min-h-36 ${
+                className={`flex min-h-32 flex-col gap-1.5 p-2 sm:min-h-44 ${isToday ? "bg-bg-1" : "bg-bg-0"} ${
                   inCurrentMonth ? "" : "opacity-40"
                 }`}
               >
                 <span
-                  className={`self-start rounded-full px-1.5 text-xs ${
-                    isToday ? "bg-accent font-medium text-bg-0" : "text-text-secondary"
+                  className={`self-start rounded-full px-2 text-sm tabular-nums ${
+                    isToday ? "bg-accent font-bold text-bg-0" : "font-medium text-text-secondary"
                   }`}
                 >
                   {day.getDate()}
                 </span>
-                <div className="flex flex-1 flex-col gap-1 overflow-hidden">
-                  {visible.map((entry, i) => {
-                    const src = tmdbImageUrl(entry.posterPath, "w92");
-                    return (
-                      <Link
-                        key={`${entry.mediaType}-${entry.tmdbId}-${i}`}
-                        href={`/title/${entry.mediaType}/${entry.tmdbId}`}
-                        title={`${entry.name} — ${entry.subtitle}`}
-                        className="flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:bg-bg-1"
-                      >
-                        {src && (
-                          <Image
-                            src={src}
-                            alt=""
-                            width={16}
-                            height={24}
-                            className="h-6 w-4 shrink-0 rounded-sm object-cover"
-                          />
-                        )}
-                        <span className="truncate text-[11px] leading-tight text-text-primary">
-                          {entry.name}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                  {overflowCount > 0 && (
-                    <span className="px-1 text-[10px] text-text-secondary">
-                      {t("discover.moreOnDay", { count: overflowCount })}
-                    </span>
+                <div className="flex flex-1 flex-col gap-1">
+                  {visible.map((title) => (
+                    <CalendarRow key={`${title.first.mediaType}-${title.first.tmdbId}`} title={title} />
+                  ))}
+                  {/* "+N more" opens the rest in place: no JavaScript needed. */}
+                  {overflow.length > 0 && (
+                    <details className="group">
+                      <summary className="cursor-pointer list-none px-1.5 text-xs font-medium text-accent group-open:hidden">
+                        {t("discover.moreOnDay", { count: overflow.length })}
+                      </summary>
+                      <div className="flex flex-col gap-1">
+                        {overflow.map((title) => (
+                          <CalendarRow key={`${title.first.mediaType}-${title.first.tmdbId}`} title={title} />
+                        ))}
+                      </div>
+                    </details>
                   )}
                 </div>
               </div>
@@ -160,5 +148,29 @@ export default async function CalendarPage({
         </div>
       </div>
     </div>
+  );
+}
+
+/** One title on a day: its poster, name (two lines at most) and episode
+ * code or release type beneath. */
+function CalendarRow({ title }: { title: DayTitle<CalendarEntry> }) {
+  const { first, subtitle } = title;
+  const src = tmdbImageUrl(first.posterPath, "w92");
+  return (
+    <Link
+      href={`/title/${first.mediaType}/${first.tmdbId}`}
+      title={`${first.name} — ${subtitle}`}
+      className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-bg-2"
+    >
+      {src ? (
+        <Image src={src} alt="" width={26} height={39} className="h-[39px] w-[26px] shrink-0 rounded-[3px] object-cover" />
+      ) : (
+        <span className="h-[39px] w-[26px] shrink-0 rounded-[3px] bg-bg-2" />
+      )}
+      <span className="min-w-0">
+        <span className="line-clamp-2 text-[13px] font-semibold leading-snug text-text-primary">{first.name}</span>
+        <span className="block truncate text-[11.5px] tabular-nums text-text-secondary">{subtitle}</span>
+      </span>
+    </Link>
   );
 }

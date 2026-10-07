@@ -88,6 +88,12 @@
                         VerticalAlignment="Center" />
                 </Grid>
                 <InfoBar
+                    IsOpen="{x:Bind ViewModel.IsUnencrypted, Mode=OneWay}"
+                    Severity="Warning"
+                    Title="{x:Bind ViewModel.NotEncryptedTitle}"
+                    Message="{x:Bind ViewModel.NotEncryptedDetail}"
+                    IsClosable="False" />
+                <InfoBar
                     IsOpen="{x:Bind ViewModel.HasAuthNotice, Mode=OneWay}"
                     Severity="Informational"
                     Message="{x:Bind ViewModel.AuthNotice, Mode=OneWay}"
@@ -251,6 +257,12 @@
                         Command="{x:Bind ViewModel.ChangeServerCommand}"
                         VerticalAlignment="Center" />
                 </Grid>
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.IsUnencrypted, Mode=OneWay}"
+                    Severity="Warning"
+                    Title="{x:Bind ViewModel.NotEncryptedTitle}"
+                    Message="{x:Bind ViewModel.NotEncryptedDetail}"
+                    IsClosable="False" />
                 <TextBox
                     x:Uid="Connect_SetupNameBox"
                     Text="{x:Bind ViewModel.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

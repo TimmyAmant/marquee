@@ -83,7 +83,7 @@ struct TitleDetailView: View {
             await screen.refreshStatus(model.api, recordingIn: model.titleState)
         }
         .sheet(isPresented: $showingTrailer) {
-            if let key = screen.detail?.links.trailerYoutubeKey {
+            if let key = screen.detail?.links.trailerYoutubeKey, YouTubeTrailer.isValidKey(key) {
                 TrailerSheet(videoKey: key, title: screen.name)
             }
         }
@@ -962,6 +962,30 @@ private struct TitleActionRow: View {
                     if splitFourK { advancedChevron(viewer, filled: false) }
                 }
 
+                // components/search-missing-button.tsx (0.76+): Sonarr's /
+                // Radarr's "Search Monitored" — look for whatever's missing
+                // and download it, no episode list to pick from.
+                if menuTracking != nil && model.viewer?.isAdmin == true {
+                    Button {
+                        screen.searchNow()
+                    } label: {
+                        pillLabel(
+                            "magnifyingglass",
+                            screen.isSearching
+                                ? String(localized: "Searching…")
+                                : detail.mediaType == .tv
+                                    ? String(localized: "Search for missing")
+                                    : String(localized: "Search for movie"),
+                            size: 13
+                        )
+                    }
+                    .buttonStyle(OutlineButtonStyle(pill: .large))
+                    .disabled(screen.isSearching)
+                    .help(detail.mediaType == .tv
+                        ? String(localized: "Have Sonarr look for every monitored episode you don't have yet and download what it finds.")
+                        : String(localized: "Have Radarr look for this movie and download it."))
+                }
+
                 if !linksInMenu {
                     ForEach(arrLinks) { item in
                         Button {
@@ -1024,12 +1048,6 @@ private struct TitleActionRow: View {
                             }
                         }
                         if let tracking = menuTracking {
-                            Button {
-                                screen.searchNow()
-                            } label: {
-                                Label(screen.isSearching ? String(localized: "Searching…") : String(localized: "Search now"), systemImage: "magnifyingglass")
-                            }
-                            .disabled(screen.isSearching)
                             Button {
                                 screen.setMonitored(!tracking.monitored)
                             } label: {
@@ -1282,7 +1300,7 @@ private struct TitleActionRow: View {
     }
 
     private func open(_ link: API.ArrLink) {
-        if let url = URL(string: link.url) { openURL(url) }
+        if let url = link.link { openURL(url) }
     }
 
     /// A dot in Radarr's yellow or Sonarr's blue, the label, and an arrow
@@ -1768,8 +1786,7 @@ private struct PlayOnServerButton: View {
 
     /// The app first when one is installed for its scheme.
     private func open(_ link: API.TitleDetail.PlayLink) {
-        if let app = link.appUrl.nonBlank.flatMap(URL.init(string:)),
-           Platform.hasApp(toOpen: app) {
+        if let app = link.appLink, Platform.hasApp(toOpen: app) {
             openURL(app)
         } else if let web = link.link {
             openURL(web)

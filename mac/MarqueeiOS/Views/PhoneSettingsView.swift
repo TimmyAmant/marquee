@@ -69,6 +69,9 @@ struct PhoneSettingsView: View {
             Section("Server") {
                 if let server = model.session.server {
                     LabeledContent("Server", value: server.displayName)
+                    if server.isUnencryptedRemote {
+                        UnencryptedNote()
+                    }
                 }
                 if let version = model.session.serverInfo?.version {
                     LabeledContent("Marquee", value: version)

@@ -3133,6 +3133,9 @@
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Tâches</value>
   </data>
+  <data name="Network_EmptyTitles" xml:space="preserve">
+    <value>Aucune série trouvée pour cette chaîne pour l’instant.</value>
+  </data>
   <data name="Notifications_Empty.Text" xml:space="preserve">
     <value>Aucune notification pour le moment.</value>
   </data>
@@ -4546,6 +4549,18 @@
   <data name="Title_Retry.Content" xml:space="preserve">
     <value>Réessayer</value>
   </data>
+  <data name="Title_SearchMissingHintMovie" xml:space="preserve">
+    <value>Radarr cherche ce film et le télécharge.</value>
+  </data>
+  <data name="Title_SearchMissingHintTv" xml:space="preserve">
+    <value>Sonarr cherche chaque épisode surveillé qui vous manque et télécharge ce qu’il trouve.</value>
+  </data>
+  <data name="Title_SearchMissingMovie" xml:space="preserve">
+    <value>Rechercher le film</value>
+  </data>
+  <data name="Title_SearchMissingTv" xml:space="preserve">
+    <value>Rechercher les manquants</value>
+  </data>
   <data name="Title_Searching" xml:space="preserve">
     <value>Recherche…</value>
   </data>
@@ -5685,5 +5700,20 @@
   </data>
   <data name="CollectionOffer_NotNow" xml:space="preserve">
     <value>Pas maintenant</value>
+  </data>
+  <data name="Connect_NotEncryptedTitle" xml:space="preserve">
+    <value>Non chiffré</value>
+  </data>
+  <data name="Connect_NotEncryptedDetail" xml:space="preserve">
+    <value>Ce serveur est joint en http non chiffré : votre mot de passe et tout le reste peuvent être lus en chemin. Utilisez son adresse https:// s’il en a une.</value>
+  </data>
+  <data name="Trailer_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="Trailer_Dialog.SecondaryButtonText" xml:space="preserve">
+    <value>Ouvrir sur YouTube</value>
+  </data>
+  <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Bande-annonce</value>
   </data>
 </root>

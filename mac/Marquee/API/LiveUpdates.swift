@@ -7,7 +7,9 @@ import UserNotifications
 /// `LiveUpdates.bannersEnabled` (see `NotificationConsent`).
 @MainActor
 protocol NotificationBannerPosting: AnyObject {
-    func post(_ notification: API.NotificationItem)
+    /// - Parameter account: Whose notification it is ("server|user id"),
+    ///   so a click is only acted on while that account is signed in.
+    func post(_ notification: API.NotificationItem, account: String)
 }
 
 /// Where the newest notification this Mac has already seen is remembered, per
@@ -397,10 +399,10 @@ final class LiveUpdates {
         // The account turned device push off for these kinds (0.45+): the
         // bell has them, but no banner.
         let arrivals = fresh.filter(\.showsBanner)
-        guard bannersEnabled, !arrivals.isEmpty else { return }
+        guard bannersEnabled, !arrivals.isEmpty, let identity else { return }
         if arrivals.count <= Self.maxBannersPerCheck {
             for notification in arrivals {
-                banners.post(notification)
+                banners.post(notification, account: identity)
             }
         } else if let newest = arrivals.last {
             // One banner for the newest; its message notes the rest.
@@ -418,7 +420,7 @@ final class LiveUpdates {
                 note: newest.note,
                 requestId: newest.requestId,
                 issueId: newest.issueId
-            ))
+            ), account: identity)
         }
     }
 }
@@ -550,18 +552,21 @@ extension LiveUpdates {
 
 // MARK: - System implementations
 
-/// `UNUserNotificationCenter` banners, clicked through AppDelegate's
-/// `userInfo["route"]` handling (the same route the old engine posted).
-/// Permission is asked for by `NotificationConsent`, never from here.
+/// `UNUserNotificationCenter` banners, clicked through the app delegate's
+/// `NotificationClick(userInfo:)`: the title's route, the notification's
+/// id (to mark it read) and whose it is. Permission is asked for by
+/// `NotificationConsent`, never from here.
 @MainActor
 final class SystemNotificationBanners: NotificationBannerPosting {
-    func post(_ notification: API.NotificationItem) {
+    func post(_ notification: API.NotificationItem, account: String) {
         let content = UNMutableNotificationContent()
         content.title = notification.bannerTitle
         content.body = notification.message
         content.sound = .default
         content.threadIdentifier = "marquee.notifications"
-        content.userInfo = ["route": notification.titleID.route.absoluteString]
+        content.userInfo = NotificationClick(
+            route: notification.titleID.route, notificationID: notification.id, account: account
+        ).userInfo
         // The server id: a notification is never announced twice.
         let request = UNNotificationRequest(identifier: notification.id.uuidString.lowercased(), content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
@@ -583,5 +588,39 @@ final class DefaultsNotificationWatermarks: NotificationWatermarkStore {
 
     func setWatermark(_ date: Date, for identity: String) {
         defaults.set(date, forKey: Self.keyPrefix + identity)
+    }
+}
+
+/// A clicked banner: the title it opens, and the notification and account it
+/// belongs to (`AppModel.openNotification(_:)` marks it read only while that
+/// account is the one signed in). Banners from before 0.76 carry only the
+/// route.
+struct NotificationClick: Equatable, Sendable {
+    static let routeKey = "route"
+    static let notificationKey = "notification"
+    static let accountKey = "account"
+
+    let route: URL
+    let notificationID: UUID?
+    let account: String?
+
+    init(route: URL, notificationID: UUID?, account: String?) {
+        self.route = route
+        self.notificationID = notificationID
+        self.account = account
+    }
+
+    init?(userInfo: [AnyHashable: Any]) {
+        guard let raw = userInfo[Self.routeKey] as? String, let route = URL(string: raw), route.scheme == "marquee" else { return nil }
+        self.route = route
+        notificationID = (userInfo[Self.notificationKey] as? String).flatMap(UUID.init(uuidString:))
+        account = userInfo[Self.accountKey] as? String
+    }
+
+    var userInfo: [String: String] {
+        var info = [Self.routeKey: route.absoluteString]
+        if let notificationID { info[Self.notificationKey] = notificationID.uuidString.lowercased() }
+        if let account { info[Self.accountKey] = account }
+        return info
     }
 }

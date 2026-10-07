@@ -504,7 +504,7 @@ private struct AddNotificationChannelSheet: View {
                 Button(link == nil ? "Connect with Telegram" : "Waiting for Start…") { connectTelegram() }
                     .buttonStyle(OutlineButtonStyle(compact: true))
                     .disabled(link != nil || busy)
-                if let link, let url = URL(string: link.url) {
+                if let link, let url = SafeLink.https(link.url) {
                     Button("Open Telegram again") { openURL(url) }
                         .buttonStyle(QuietButtonStyle(color: Theme.accent))
                         .font(.system(size: 12))
@@ -552,7 +552,7 @@ private struct AddNotificationChannelSheet: View {
             do {
                 let start = try await api.notificationChannels.startTelegramLink()
                 link = start
-                if let url = URL(string: start.url) { openURL(url) }
+                if let url = SafeLink.https(start.url) { openURL(url) }
                 _ = try await TelegramLink.run {
                     try await api.notificationChannels.pollTelegramLink(code: start.code, name: name)
                 }

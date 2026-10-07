@@ -54,6 +54,7 @@
   "noSuchTitle": "Esse título não existe no TMDb.",
   "noSuchPerson": "Essa pessoa não existe no TMDb.",
   "noSuchCompany": "Essa empresa não existe no TMDb.",
+  "noSuchNetwork": "Essa emissora não existe no TMDb.",
   "onlyTvHasSeasons": "Só séries têm temporadas.",
   "noDiscoverList": "Não há nenhuma lista do Descobrir \"{list}\" (use uma de {lists}, ou o id de uma fileira do Descobrir).",
   "noAdminToAddWith": "Não há nenhuma conta de administrador para adicionar títulos.",

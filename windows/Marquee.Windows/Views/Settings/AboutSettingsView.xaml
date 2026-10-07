@@ -38,6 +38,12 @@
                         Style="{StaticResource CaptionTextBlockStyle}"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
+                <InfoBar
+                    IsOpen="{x:Bind ViewModel.IsUnencrypted, Mode=OneWay}"
+                    Severity="Warning"
+                    Title="{x:Bind ViewModel.NotEncryptedTitle}"
+                    Message="{x:Bind ViewModel.NotEncryptedDetail}"
+                    IsClosable="False" />
                 <TextBlock
                     x:Uid="About_ServerNote"
                     Style="{StaticResource CaptionTextBlockStyle}"

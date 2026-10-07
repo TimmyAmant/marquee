@@ -83,15 +83,16 @@ final class ConnectModel {
     }
 
     /// Validates the typed address by probing it, with a specific message for
-    /// each way it can fail.
+    /// each way it can fail. A bare host name off the local network is tried
+    /// over https first, then plain http (`ServerAddress.candidates(for:)`).
     func connectManually() {
         guard !isConnecting else { return }
         manualError = nil
         manualNeedsLocalNetwork = false
 
-        let address: ServerAddress
+        let candidates: [ServerAddress]
         do {
-            address = try ServerAddress.parse(manualAddress)
+            candidates = try ServerAddress.candidates(for: manualAddress)
         } catch {
             manualError = error.localizedDescription
             return
@@ -99,16 +100,26 @@ final class ConnectModel {
 
         isConnecting = true
         connectTask = Task {
-            let outcome = await ServerProbe.probe(address)
-            guard !Task.isCancelled else { return }
-            isConnecting = false
-            if case let .marquee(info) = outcome {
-                onSelect?(address, info)
-            } else {
-                manualNotice = nil
-                manualError = outcome.problemMessage(for: address)
-                manualNeedsLocalNetwork = outcome == .unreachable(.localNetworkDenied)
+            var failure: (address: ServerAddress, outcome: ProbeOutcome)?
+            for address in candidates {
+                let outcome = await ServerProbe.probe(address)
+                guard !Task.isCancelled else { return }
+                if case let .marquee(info) = outcome {
+                    isConnecting = false
+                    onSelect?(address, info)
+                    return
+                }
+                failure = (address, outcome)
+                // An older or newer Marquee answered: that's the server, so
+                // its own message beats trying the next scheme.
+                if outcome == .legacy { break }
+                if case .incompatible = outcome { break }
             }
+            isConnecting = false
+            guard let failure else { return }
+            manualNotice = nil
+            manualError = failure.outcome.problemMessage(for: failure.address)
+            manualNeedsLocalNetwork = failure.outcome == .unreachable(.localNetworkDenied)
         }
     }
 

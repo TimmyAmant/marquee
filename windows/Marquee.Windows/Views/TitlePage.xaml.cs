@@ -26,6 +26,18 @@ public sealed partial class TitlePage : Page
         InitializeComponent();
         SizeChanged += OnPageSizeChanged;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        ViewModel.TrailerPrompt = ShowTrailerAsync;
+    }
+
+    /// <summary>"▶ Trailer": plays in the app, as on the website, the Mac and the iPhone.</summary>
+    private async Task ShowTrailerAsync(string key, string title)
+    {
+        if (!YouTubeTrailer.IsValidKey(key))
+        {
+            return;
+        }
+        var dialog = new TrailerDialog(key, title) { XamlRoot = XamlRoot };
+        await dialog.TryShowAsync();
     }
 
     /// <summary>

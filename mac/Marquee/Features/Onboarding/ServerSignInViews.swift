@@ -371,7 +371,7 @@ struct SignInForm: View {
             guard let url = start.url(server: session.server?.baseURL) else {
                 throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
             }
-            browser.open(url, openURL: openURL)
+            browser.open(url, server: session.server?.baseURL, openURL: openURL)
             return try await session.finishSsoSignIn(start)
         }
     }

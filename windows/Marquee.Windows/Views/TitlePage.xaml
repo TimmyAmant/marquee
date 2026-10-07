@@ -449,7 +449,14 @@
                                                 VerticalAlignment="Center"
                                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                         </Border>
-                                        <!-- components/title-more-menu.tsx: Search now, Stop / Start monitoring, Fix ID and Block requests. -->
+                                        <!-- components/search-missing-button.tsx: look for whatever's missing and download it. -->
+                                        <Button
+                                            Style="{StaticResource TitlePillButton}"
+                                            Content="{x:Bind ViewModel.SearchMissingLabel, Mode=OneWay}"
+                                            Command="{x:Bind ViewModel.SearchNowCommand}"
+                                            ToolTipService.ToolTip="{x:Bind ViewModel.SearchMissingHint, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                        <!-- components/title-more-menu.tsx: Stop / Start monitoring, Fix ID and Block requests. -->
                                         <Button
                                             x:Uid="Title_MoreActions"
                                             Width="32"
@@ -459,10 +466,6 @@
                                             <FontIcon Glyph="&#xE712;" FontSize="14" />
                                             <Button.Flyout>
                                                 <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                                                    <MenuFlyoutItem
-                                                        Text="{x:Bind ViewModel.SearchLabel, Mode=OneWay}"
-                                                        Command="{x:Bind ViewModel.SearchNowCommand}"
-                                                        Visibility="{x:Bind ViewModel.HasTracking, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
                                                     <MenuFlyoutItem
                                                         Text="{x:Bind ViewModel.MonitorLabel, Mode=OneWay}"
                                                         Command="{x:Bind ViewModel.ToggleMonitorCommand}"

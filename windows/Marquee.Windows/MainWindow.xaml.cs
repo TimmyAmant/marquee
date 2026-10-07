@@ -189,6 +189,7 @@ public sealed partial class MainWindow : Window, INavigator
         Route.Title => (typeof(TitlePage), route),
         Route.Person => (typeof(PersonPage), route),
         Route.Company => (typeof(CompanyPage), route),
+        Route.Network => (typeof(CompanyPage), route),
         Route.Search => (typeof(SearchPage), route),
         Route.DiscoverList => (typeof(DiscoverListPage), route),
         Route.ErrorReference => (typeof(ErrorReferencePage), route),
@@ -671,12 +672,12 @@ public sealed partial class MainWindow : Window, INavigator
     {
         if (args.ChosenSuggestion is SuggestionItem picked)
         {
-            RecentSearches.Remember(model.Settings, typedQuery);
+            RecentSearches.Remember(model.Settings, model.AccountIdentity, typedQuery);
             picked.Open(model);
         }
         else if (!string.IsNullOrWhiteSpace(args.QueryText))
         {
-            RecentSearches.Remember(model.Settings, args.QueryText);
+            RecentSearches.Remember(model.Settings, model.AccountIdentity, args.QueryText);
             model.Search(args.QueryText);
         }
         else
@@ -694,7 +695,7 @@ public sealed partial class MainWindow : Window, INavigator
             return;
         }
         SearchLayer.Visibility = Visibility.Visible;
-        recentSearches = RecentSearches.Read(model.Settings);
+        recentSearches = RecentSearches.Read(model.Settings, model.AccountIdentity);
         UpdateRecentSearches();
         // Collapsed a moment ago: focus once it's in the layout.
         model.Dispatcher.TryEnqueue(() => SearchBox.Focus(FocusState.Programmatic));
@@ -774,7 +775,7 @@ public sealed partial class MainWindow : Window, INavigator
         remove.Click += (_, _) =>
         {
             recentSearches = RecentSearches.Remove(recentSearches, query);
-            RecentSearches.Write(model.Settings, recentSearches);
+            RecentSearches.Write(model.Settings, model.AccountIdentity, recentSearches);
             UpdateRecentSearches();
         };
 
@@ -790,7 +791,7 @@ public sealed partial class MainWindow : Window, INavigator
     private void OnClearRecentSearchesClick(object sender, RoutedEventArgs e)
     {
         recentSearches = [];
-        RecentSearches.Write(model.Settings, recentSearches);
+        RecentSearches.Write(model.Settings, model.AccountIdentity, recentSearches);
         UpdateRecentSearches();
         SearchBox.Focus(FocusState.Programmatic);
     }

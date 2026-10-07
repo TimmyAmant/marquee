@@ -117,7 +117,8 @@ export const API_OPERATIONS: ApiOperation[] = [
   ]),
   ...group("People & companies", [
     ["GET", "/people/{id}", "user", "A person's page: biography, the title they're best known for, official links and credits.", { response: "PersonDetail" }],
-    ["GET", "/companies/{id}", "user", "A studio's or network's page: its best-known title, website and titles.", { response: "CompanyDetail" }],
+    ["GET", "/companies/{id}", "user", "A studio's page: its best-known title, website and titles.", { response: "CompanyDetail" }],
+    ["GET", "/networks/{id}", "user", "A TV network's page (0.76+): its best-known series, website and series, as a studio's.", { response: "CompanyDetail" }],
   ]),
   ...group("Library", [
     ["GET", "/library", "user", "The Library page: everything in Plex, Jellyfin, Sonarr and Radarr, with filters, sort and paging (?type, ?status, ?source, ?resolution, ?hdr, ?codec, ?genre, ?year, ?q, ?sort, ?page).", { response: "LibraryPage" }],

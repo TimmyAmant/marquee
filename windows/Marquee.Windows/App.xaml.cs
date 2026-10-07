@@ -84,12 +84,41 @@ public partial class App : Application
         return true;
     }
 
-    /// <summary>Another launch handed over: bring the window forward. Raised on a background thread.</summary>
+    /// <summary>
+    /// Another launch handed over: bring the window forward, and open the
+    /// <c>marquee://</c> link it was started with, if any. Raised on a
+    /// background thread.
+    /// </summary>
     private static void OnActivatedByAnotherCopy(object? sender, AppActivationArguments e)
     {
         if (AppServices.TryGetModel() is { } model)
         {
-            model.Dispatcher.TryEnqueue(() => model.Navigator?.BringToFront());
+            var link = LinkIn(e);
+            model.Dispatcher.TryEnqueue(() => model.OpenLink(link));
+        }
+    }
+
+    /// <summary>
+    /// The <c>marquee://</c> link an activation carries: a protocol
+    /// activation's URI, or (the installer registers the link with the
+    /// executable, <c>"%1"</c>) a launch's argument. Null for a plain launch.
+    /// </summary>
+    private static DeepLink? LinkIn(AppActivationArguments activation)
+    {
+        try
+        {
+            return activation.Kind switch
+            {
+                ExtendedActivationKind.Protocol when activation.Data is global::Windows.ApplicationModel.Activation.IProtocolActivatedEventArgs protocol =>
+                    DeepLink.Parse(protocol.Uri?.AbsoluteUri),
+                ExtendedActivationKind.Launch when activation.Data is global::Windows.ApplicationModel.Activation.ILaunchActivatedEventArgs launch =>
+                    DeepLink.FromCommandLine(launch.Arguments),
+                _ => null,
+            };
+        }
+        catch (Exception error) when (error is InvalidCastException or System.Runtime.InteropServices.COMException)
+        {
+            return null;
         }
     }
 
@@ -112,6 +141,15 @@ public partial class App : Application
         // launched the app, that click is delivered through this registration.
         model.Notifications.Register();
         window.Activate();
+
+        // Started by a marquee:// link: it opens once signed in (an unpackaged
+        // app's own command line carries it too, in case the activation doesn't).
+        var link = LinkIn(AppInstance.GetCurrent().GetActivatedEventArgs())
+            ?? DeepLink.FromCommandLine(string.Join(' ', Environment.GetCommandLineArgs().Skip(1)));
+        if (link != null)
+        {
+            model.OpenLink(link);
+        }
 
         // Restores the saved session after the window is up, so the spinner
         // has somewhere to show.

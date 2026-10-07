@@ -259,6 +259,9 @@ public sealed partial class AppModel : ObservableObject
     /// <summary>A notification clicked before its account was signed in (it launched the app): opened once it is.</summary>
     private NotificationTarget? pendingNotification;
 
+    /// <summary>A <c>marquee://</c> link that arrived before sign-in finished (it launched the app): opened once it has.</summary>
+    private DeepLink? pendingLink;
+
     /// <param name="settings">The same store the session keeps the server in.</param>
     public AppModel(ServerSession session, DispatcherQueue dispatcher, ISettingsStore settings)
     {
@@ -520,6 +523,8 @@ public sealed partial class AppModel : ObservableObject
     public void ChangeServer()
     {
         var previous = Session.Server?.DisplayName;
+        // Whose recent searches to wipe is known only while the server is.
+        ClearRecentSearches();
         Session.ForgetServer();
         ClearSignedInState();
         ConnectionProblem = null;
@@ -552,6 +557,7 @@ public sealed partial class AppModel : ObservableObject
         Phase = AppPhase.Ready;
         StartBadgePolling();
         OpenPendingNotification();
+        OpenPendingLink();
         if (user.Language == null)
         {
             // The login answer doesn't carry the account's language; /me does.
@@ -688,12 +694,29 @@ public sealed partial class AppModel : ObservableObject
         await Session.SignOutAsync();
     }
 
+    /// <summary>"server|user id" of the account signed in now; null before sign-in has finished.</summary>
+    public string? AccountIdentity =>
+        Phase == AppPhase.Ready && Session.Server is { } server && Viewer is { } viewer
+            ? $"{server.BaseUrlString}|{viewer.Id:D}"
+            : null;
+
+    /// <summary>The signed-in account's recent searches leave with it, as on the website.</summary>
+    private void ClearRecentSearches()
+    {
+        if (AccountIdentity is { } account)
+        {
+            RecentSearches.Clear(Settings, account);
+        }
+    }
+
     private void ClearSignedInState()
     {
+        ClearRecentSearches();
         StopBadgePolling();
         Viewer = null;
         TitleState.Clear();
         pendingNotification = null;
+        pendingLink = null;
         Notifications.SignedOut();
         AvatarImages.Clear();
     }
@@ -837,13 +860,68 @@ public sealed partial class AppModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// A <c>marquee://</c> link (a click in a browser, or another app): the
+    /// window comes forward and the screen opens, the same links and the same
+    /// screens as the Mac's <c>handle(url:)</c>. A link only ever navigates.
+    /// Before sign-in has finished, the newest one waits for it.
+    /// </summary>
+    internal void OpenLink(DeepLink? link)
+    {
+        Navigator?.BringToFront();
+        if (link == null)
+        {
+            return;
+        }
+        if (Phase != AppPhase.Ready)
+        {
+            pendingLink = link;
+            return;
+        }
+        switch (link)
+        {
+            case DeepLink.Title title:
+                OpenTitle(title.Id);
+                break;
+            case DeepLink.Person person:
+                OpenPerson(person.TmdbId);
+                break;
+            case DeepLink.Company company:
+                OpenCompany(company.TmdbId);
+                break;
+            case DeepLink.DiscoverList list:
+                Select(Section.Discover);
+                Open(new Route.DiscoverList(list.List));
+                break;
+            case DeepLink.Settings:
+                Select(Section.Settings);
+                break;
+            case DeepLink.Search search:
+                Search(search.Query);
+                break;
+        }
+    }
+
+    private void OpenPendingLink()
+    {
+        if (pendingLink is not { } link)
+        {
+            return;
+        }
+        pendingLink = null;
+        OpenLink(link);
+    }
+
     public void OpenTitle(MediaType mediaType, int tmdbId) => OpenTitle(new TitleId(mediaType, tmdbId));
 
     public void OpenPerson(int tmdbId) => Open(new Route.Person(tmdbId));
 
     public void OpenCompany(int tmdbId) => Open(new Route.Company(tmdbId));
 
-    /// <summary>Genre tiles and network logos on Discover jump into a filtered grid.</summary>
+    /// <summary>A network's logo or search result: its own page, laid out as a studio's.</summary>
+    public void OpenNetwork(int tmdbId) => Open(new Route.Network(tmdbId));
+
+    /// <summary>Genre tiles on Discover jump into a filtered grid (network logos too, on a server older than 0.76).</summary>
     public void Browse(MediaType mediaType, int? genreId = null, int? networkId = null)
     {
         var filters = new BrowseQuery

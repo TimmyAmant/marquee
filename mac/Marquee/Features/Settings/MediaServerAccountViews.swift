@@ -133,7 +133,7 @@ struct LinkedAccountsCard: View {
                 guard let url = start.url(server: server) else {
                     throw APIError.server(String(localized: "Your Marquee server sent a sign-in link this app couldn't open."))
                 }
-                browser.open(url, openURL: openURL)
+                browser.open(url, server: server, openURL: openURL)
                 _ = try await PlexPoll.run(expiresAt: start.expiresAt, expired: .ssoExpired) {
                     try await api.links.ssoPoll(handle: start.handle) ? true : nil
                 }

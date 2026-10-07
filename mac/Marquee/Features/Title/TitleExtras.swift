@@ -149,10 +149,10 @@ struct TrailerSheet: View {
                 Text(title)
                     .font(.marqueeDisplay(17))
                 Spacer()
-                Button("Open on YouTube") {
-                    if let url = URL(string: "https://www.youtube.com/watch?v=\(videoKey)") { openURL(url) }
+                if let url = YouTubeTrailer.watchURL(videoKey) {
+                    Button("Open on YouTube") { openURL(url) }
+                        .buttonStyle(OutlineButtonStyle(compact: true))
                 }
-                .buttonStyle(OutlineButtonStyle(compact: true))
                 Button("Done") { dismiss() }
                     .buttonStyle(AccentButtonStyle(compact: true))
                     .keyboardShortcut(.cancelAction)
@@ -212,11 +212,15 @@ private struct YouTubePlayer: UIViewRepresentable {
 
 extension YouTubePlayer {
     fileprivate func load(into view: WKWebView) {
+        // Only a key shaped like YouTube's goes into the page; anything else
+        // leaves the player blank.
+        guard let embed = YouTubeTrailer.embedURL(videoKey) else { return }
         // YouTube's embed player needs a real https origin + referrer policy.
+        // i18n-ignore-next
         let html = """
         <!doctype html><html><head><meta name="referrer" content="strict-origin-when-cross-origin">
         <style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style></head>
-        <body><iframe src="https://www.youtube-nocookie.com/embed/\(videoKey)?autoplay=1&playsinline=1"
+        <body><iframe src="\(embed.absoluteString)"
         referrerpolicy="strict-origin-when-cross-origin"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></body></html>
         """

@@ -171,15 +171,31 @@ final class SearchTests: XCTestCase {
         XCTAssertFalse(next.contains("search 8"), "The oldest drops off")
     }
 
-    func testRecentSearchesAreRememberedPerDevice() throws {
+    func testRecentSearchesAreRememberedPerAccount() throws {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: "marquee.tests.recentSearches.\(UUID().uuidString)"))
-        XCTAssertEqual(RecentSearches.load(defaults: defaults), [])
-        RecentSearches.remember("dune", defaults: defaults)
-        XCTAssertEqual(RecentSearches.remember("Alien", defaults: defaults), ["Alien", "dune"])
-        XCTAssertEqual(RecentSearches.load(defaults: defaults), ["Alien", "dune"])
-        RecentSearches.save(RecentSearches.removing("dune", from: ["Alien", "dune"]), defaults: defaults)
-        XCTAssertEqual(RecentSearches.load(defaults: defaults), ["Alien"])
-        RecentSearches.save([], defaults: defaults)
-        XCTAssertNil(defaults.object(forKey: RecentSearches.storageKey), "Clear leaves nothing behind")
+        let timmy = "http://192.168.1.20:3000|6f1c2a4e-8b1d-4c3e-9f0a-2b7d5e8c1a90"
+        let kid = "http://192.168.1.20:3000|0a1b2c3d-0000-4000-8000-000000000001"
+        XCTAssertEqual(RecentSearches.load(account: timmy, defaults: defaults), [])
+        RecentSearches.remember("dune", account: timmy, defaults: defaults)
+        XCTAssertEqual(RecentSearches.remember("Alien", account: timmy, defaults: defaults), ["Alien", "dune"])
+        XCTAssertEqual(RecentSearches.load(account: timmy, defaults: defaults), ["Alien", "dune"])
+        XCTAssertEqual(RecentSearches.load(account: kid, defaults: defaults), [], "Another account never sees them")
+        XCTAssertEqual(RecentSearches.load(account: nil, defaults: defaults), [], "Nor does a signed-out app")
+        RecentSearches.remember("bluey", account: kid, defaults: defaults)
+
+        RecentSearches.save(RecentSearches.removing("dune", from: ["Alien", "dune"]), account: timmy, defaults: defaults)
+        XCTAssertEqual(RecentSearches.load(account: timmy, defaults: defaults), ["Alien"])
+        RecentSearches.save([], account: timmy, defaults: defaults)
+        XCTAssertNil(defaults.object(forKey: RecentSearches.key(account: timmy)), "Clear leaves nothing behind")
+
+        RecentSearches.clear(account: kid, defaults: defaults)
+        XCTAssertEqual(RecentSearches.load(account: kid, defaults: defaults), [], "Signing out wipes them")
+    }
+
+    func testTheOldPerDeviceListIsDropped() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "marquee.tests.recentSearches.\(UUID().uuidString)"))
+        defaults.set(["someone else's"], forKey: RecentSearches.storageKey)
+        XCTAssertEqual(RecentSearches.load(account: "http://tower:3000|me", defaults: defaults), [])
+        XCTAssertNil(defaults.object(forKey: RecentSearches.storageKey))
     }
 }

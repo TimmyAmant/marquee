@@ -31,7 +31,19 @@ struct AccountSettingsView: View {
                         SettingsRow(label: String(localized: "Name")) { SettingsValue(text: viewer.displayName.nonBlank ?? "—") }
                         SettingsRow(label: String(localized: "Username")) { SettingsValue(text: viewer.username) }
                         SettingsRow(label: String(localized: "Role")) { SettingsValue(text: viewer.roleLabel) }
-                        SettingsRow(label: String(localized: "Server")) { SettingsValue(text: model.session.server?.displayName ?? "—") }
+                        SettingsRow(
+                            label: String(localized: "Server"),
+                            help: model.session.server?.isUnencryptedRemote == true ? UnencryptedNote.detail : nil
+                        ) {
+                            HStack(spacing: 8) {
+                                if model.session.server?.isUnencryptedRemote == true {
+                                    Label(UnencryptedNote.title, systemImage: "lock.open.fill")
+                                        .font(.system(size: Metrics.text(12), weight: .semibold))
+                                        .foregroundStyle(Theme.unmonitored)
+                                }
+                                SettingsValue(text: model.session.server?.displayName ?? "—")
+                            }
+                        }
                         SettingsRow(
                             label: String(localized: "Sign out"),
                             help: PlatformText.signsOutHere

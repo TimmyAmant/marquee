@@ -3133,6 +3133,9 @@
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Aufgaben</value>
   </data>
+  <data name="Network_EmptyTitles" xml:space="preserve">
+    <value>Für diesen Sender wurden noch keine Serien gefunden.</value>
+  </data>
   <data name="Notifications_Empty.Text" xml:space="preserve">
     <value>Noch keine Benachrichtigungen.</value>
   </data>
@@ -4546,6 +4549,18 @@
   <data name="Title_Retry.Content" xml:space="preserve">
     <value>Erneut versuchen</value>
   </data>
+  <data name="Title_SearchMissingHintMovie" xml:space="preserve">
+    <value>Radarr sucht nach diesem Film und lädt ihn herunter.</value>
+  </data>
+  <data name="Title_SearchMissingHintTv" xml:space="preserve">
+    <value>Sonarr sucht nach allen überwachten Episoden, die noch fehlen, und lädt herunter, was es findet.</value>
+  </data>
+  <data name="Title_SearchMissingMovie" xml:space="preserve">
+    <value>Film suchen</value>
+  </data>
+  <data name="Title_SearchMissingTv" xml:space="preserve">
+    <value>Fehlende suchen</value>
+  </data>
   <data name="Title_Searching" xml:space="preserve">
     <value>Wird gesucht …</value>
   </data>
@@ -5685,5 +5700,20 @@
   </data>
   <data name="CollectionOffer_NotNow" xml:space="preserve">
     <value>Jetzt nicht</value>
+  </data>
+  <data name="Connect_NotEncryptedTitle" xml:space="preserve">
+    <value>Nicht verschlüsselt</value>
+  </data>
+  <data name="Connect_NotEncryptedDetail" xml:space="preserve">
+    <value>Dieser Server wird über unverschlüsseltes http erreicht, daher können dein Passwort und alles andere unterwegs mitgelesen werden. Verwende seine https://-Adresse, falls er eine hat.</value>
+  </data>
+  <data name="Trailer_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Fertig</value>
+  </data>
+  <data name="Trailer_Dialog.SecondaryButtonText" xml:space="preserve">
+    <value>Auf YouTube öffnen</value>
+  </data>
+  <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Trailer</value>
   </data>
 </root>

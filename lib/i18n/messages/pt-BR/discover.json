@@ -130,6 +130,7 @@
   "viewTable": "Tabela",
   "creditCount": "{count, plural, one {# crédito} other {# créditos}}",
   "emptyStudio": "Nenhum título encontrado para este estúdio ainda.",
+  "emptyNetwork": "Nenhuma série encontrada para esta emissora ainda.",
   "emptyPerson": "Nenhuma filmografia processada para esta pessoa ainda.",
   "shelfWatchlist": "Sua Watchlist",
   "emptyWatchlist": "Nada da sua Watchlist do Plex ainda — a próxima verificação vai trazer.",

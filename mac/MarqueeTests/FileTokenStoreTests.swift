@@ -19,13 +19,8 @@ final class FileTokenStoreTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory.deletingLastPathComponent())
     }
 
-    /// Never touches the real Keychain; records whether it was asked.
-    private func store(migrating token: String? = nil, asked: LockedCounter? = nil) -> FileTokenStore {
-        FileTokenStore(directory: directory) { _, persist in
-            asked?.increment()
-            guard let token else { return nil }
-            return persist(token) ? token : nil
-        }
+    private func store() -> FileTokenStore {
+        FileTokenStore(directory: directory)
     }
 
     private func permissions(_ url: URL) throws -> Int {
@@ -105,65 +100,34 @@ final class FileTokenStoreTests: XCTestCase {
         XCTAssertEqual(store.lookup(for: server), .missing)
     }
 
-    // MARK: Moving a token out of the Keychain
+    // MARK: Signing out
 
-    func testTheKeychainIsOnlyAskedBeforeTheFileExists() {
-        let asked = LockedCounter()
-        let store = store(migrating: "mqt_from_keychain", asked: asked)
-        XCTAssertEqual(store.lookup(for: server), .found("mqt_from_keychain"))
-        XCTAssertEqual(asked.value, 1)
-        XCTAssertEqual(FileTokenStore(directory: directory).lookup(for: server), .found("mqt_from_keychain"), "It moved into the file")
+    func testSigningOutOfTheLastServerRemovesTheFile() {
+        let store = store()
+        XCTAssertTrue(store.save("mqt_only", for: server))
+        store.delete(for: server)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.fileURL.path))
+        XCTAssertEqual(store.lookup(for: server), .missing)
+    }
+
+    func testSigningOutWithAnUnreadableFileStillRemovesTheToken() throws {
+        let store = store()
+        XCTAssertTrue(store.save("mqt_secret", for: server))
+        XCTAssertTrue(store.save("mqt_other", for: other))
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: store.fileURL.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: store.fileURL.path) }
 
         store.delete(for: server)
-        XCTAssertEqual(store.lookup(for: server), .missing, "Signed out stays signed out")
-        XCTAssertEqual(asked.value, 1, "Once there's a file, the Keychain is never touched again")
-    }
-
-    func testNothingInTheKeychainIsJustMissing() {
-        let asked = LockedCounter()
-        let store = store(asked: asked)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.fileURL.path), "The token isn't left behind")
         XCTAssertEqual(store.lookup(for: server), .missing)
-        XCTAssertEqual(asked.value, 1)
-        XCTAssertTrue(store.save("mqt_signed_in", for: server))
-        XCTAssertEqual(store.lookup(for: server), .found("mqt_signed_in"))
-        XCTAssertEqual(asked.value, 1)
     }
 
-    func testOnlyThisBuildsOwnKeychainItemIsRead() {
-        let thisBuild = #"cdhash H"989f7575929aedf28ecbc9b252b807cac3d19090""#
-        let earlierBuild = #"cdhash H"5baa85d00f27996aa5ae42e8ec65da8a133a0324""#
-        let items = [
-            Keychain.Item(account: server, comment: nil),
-            Keychain.Item(account: "\(server) #0f0f0f0f", comment: earlierBuild),
-            Keychain.Item(account: "\(server) #1a2b3c4d", comment: thisBuild),
-            Keychain.Item(account: other, comment: thisBuild),
-        ]
-        XCTAssertEqual(KeychainSessionMigration.account(in: items, server: server, identity: thisBuild), "\(server) #1a2b3c4d")
-        XCTAssertEqual(KeychainSessionMigration.account(in: items, server: other, identity: thisBuild), other)
-
-        // Reading any of these would bring up macOS's password prompt.
-        XCTAssertNil(KeychainSessionMigration.account(in: Array(items.prefix(2)), server: server, identity: thisBuild))
-        XCTAssertNil(KeychainSessionMigration.account(in: items, server: server, identity: nil), "An unknown identity reads nothing")
-        XCTAssertNil(KeychainSessionMigration.account(in: [], server: server, identity: thisBuild))
-        XCTAssertNil(
-            KeychainSessionMigration.account(
-                in: [Keychain.Item(account: "\(server)/other", comment: thisBuild)], server: server, identity: thisBuild
-            ),
-            "Another server's item isn't this one's"
-        )
-    }
-
-    func testWithoutAnIdentityTheKeychainIsNeverOpened() {
-        var persisted = false
-        XCTAssertNil(KeychainSessionMigration.take(server: server, identity: nil) { _ in
-            persisted = true
-            return true
-        })
-        XCTAssertFalse(persisted)
-    }
-
-    func testThisBuildHasAnIdentity() {
-        XCTAssertNotNil(CodeIdentity.current)
+    func testSigningOutWithADamagedFileRemovesIt() throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let store = store()
+        try Data(#"{"tokens": {"\#(server)": "mqt_half"#.utf8).write(to: store.fileURL)
+        store.delete(for: server)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: store.fileURL.path))
     }
 
     /// The app's real store lives in Application Support, not the container
