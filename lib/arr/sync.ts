@@ -85,6 +85,20 @@ export function sonarrRowFields(series: sonarr.SonarrSeries, queue: QueueSummary
   };
 }
 
+/** One title's cache row, fresh from its server — the download watch's and
+ * the media-server check's re-read of a single movie or series. */
+export async function fetchArrRowFields(
+  server: ArrServer,
+  kind: ArrProvider,
+  arrId: number,
+  queue: QueueSummary | undefined,
+): Promise<RowFields> {
+  const config = arrConfig(server);
+  return kind === "radarr"
+    ? radarrRowFields(await radarr.getMovie(config, arrId), queue)
+    : sonarrRowFields(await sonarr.getSeries(config, arrId), queue);
+}
+
 /** Throws when this kind's standard servers are no longer the ones this run
  * started with (one was removed, added or moved to 4K): a server removed
  * mid-run must not have its titles written back, and a later run — which

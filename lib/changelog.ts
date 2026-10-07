@@ -31,6 +31,13 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
+    version: "0.75.1",
+    date: "2026-10-05",
+    changes: [
+      "Fixed: a show or movie you moved into your library by hand could stay Downloading or incomplete until you pressed Refresh in Sonarr or Radarr. Marquee now notices when Plex or Jellyfin has it and asks Sonarr or Radarr to look again, and it keeps watching a finished download after an update or restart.",
+    ],
+  },
+  {
     version: "0.75.0",
     date: "2026-10-04",
     changes: [

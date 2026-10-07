@@ -22,6 +22,7 @@ const cleanup = vi.hoisted(() => {
 vi.mock("@/lib/plex/sync", () => ({ syncAllConnectedPlexUsers: async () => undefined }));
 vi.mock("@/lib/jellyfin/sync", () => ({ syncAllConnectedJellyfinUsers: async () => undefined }));
 vi.mock("@/lib/arr/sync", () => ({ syncAllConnectedArrUsers: async () => undefined }));
+vi.mock("@/lib/arr/media-server-check", () => ({ checkArrAgainstMediaServers: async () => undefined }));
 vi.mock("@/lib/integrations/disk-space", () => ({ snapshotDiskSpaceForAllConnectedUsers: async () => undefined }));
 vi.mock("@/lib/jobs/cleanup", () => ({ pruneOldRecords: cleanup.run }));
 vi.mock("@/lib/plex/watchlist", () => ({ syncAllPlexWatchlists: async () => undefined }));
