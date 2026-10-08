@@ -242,7 +242,7 @@ extension API {
         var wasChanged: Bool { editedAt != nil }
     }
 
-    /// `GET /requests/history`: "Past requests", the 50 most recently reviewed.
+    /// `GET /requests/history`: "Past requests", the 500 most recently reviewed (50 before 0.76.3).
     struct ReviewedRequest: Codable, Hashable, Sendable, Identifiable {
         let id: UUID
         let mediaType: MediaType

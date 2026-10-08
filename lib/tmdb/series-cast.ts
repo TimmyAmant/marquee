@@ -3,7 +3,7 @@
 // and no Sandra Oh. Pure, so it's unit tested directly; lib/tmdb/client.ts
 // folds it into the details it saves.
 
-import type { TmdbCastMember } from "./client";
+import type { TmdbCastMember, TmdbCrewMember } from "./client";
 
 export type TmdbAggregateCastMember = {
   id: number;
@@ -40,4 +40,34 @@ export function wholeSeriesCast(cast: TmdbAggregateCastMember[], limit = SERIES_
         character: [...new Set(characters)].slice(0, 2).join(" / "),
       };
     });
+}
+
+export type TmdbAggregateCrewMember = {
+  id: number;
+  name: string;
+  department: string;
+  profile_path?: string | null;
+  total_episode_count?: number;
+  jobs?: { job?: string; episode_count?: number }[];
+};
+
+/** Crew jobs kept with the details, most episodes first. */
+export const SERIES_CREW_KEPT = 80;
+
+/** The whole run's crew, one entry per job, the people who worked on the
+ * most episodes first: the page's Executive Producers include the
+ * earlier seasons', not just the latest's. */
+export function wholeSeriesCrew(crew: TmdbAggregateCrewMember[], limit = SERIES_CREW_KEPT): TmdbCrewMember[] {
+  return crew
+    .flatMap((member) =>
+      (member.jobs ?? [])
+        .filter((job) => job.job?.trim())
+        .map((job) => ({
+          episodes: job.episode_count ?? 0,
+          entry: { id: member.id, name: member.name, job: job.job!.trim(), department: member.department } as TmdbCrewMember,
+        })),
+    )
+    .sort((a, b) => b.episodes - a.episodes || a.entry.id - b.entry.id)
+    .slice(0, limit)
+    .map(({ entry }) => entry);
 }

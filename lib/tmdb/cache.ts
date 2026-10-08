@@ -5,7 +5,7 @@ import type { MediaType } from "@/lib/db/schema";
 import * as tmdb from "./client";
 import * as tvdb from "@/lib/tvdb/client";
 import { getTvdbApiKey } from "@/lib/integrations/app-settings";
-import { isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
+import { isActiveTitle, isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
 import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
 import { crewJobsByTitle } from "@/lib/tmdb/crew-jobs";
 import { SERIES_CAST_MARKER } from "@/lib/tmdb/series-cast";
@@ -227,7 +227,11 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
     .where(and(eq(titles.mediaType, mediaType), eq(titles.tmdbId, tmdbId)))
     .limit(1);
 
-  if (cached && isCacheHit(cached, Boolean(cached.rawTmdb)) && !predatesSeriesCast(cached)) {
+  if (
+    cached &&
+    isCacheHit({ ...cached, active: isActiveTitle(cached.rawTmdb) }, Boolean(cached.rawTmdb)) &&
+    !predatesSeriesCast(cached)
+  ) {
     return cached;
   }
 

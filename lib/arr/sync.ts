@@ -8,7 +8,7 @@ import { deriveRadarrStatus, deriveSonarrStatus, statusWithQueue, type QueueSumm
 import type { LibraryStatus } from "@/components/status-badge";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
-import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { getOrFetchTitle, upsertTitleLight } from "@/lib/tmdb/cache";
 import { lookupTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { loadTmdbIdOverrides } from "@/lib/library/title-overrides";
 import { isCacheHit } from "@/lib/tmdb/cache-policy";
@@ -143,7 +143,11 @@ function upsertSet(keys: readonly (keyof RowFields | "serverId" | "checkedAt")[]
 /** Makes sure the titles cache has each of these (the Library page joins
  * against it): one query for the batch, and TMDb asked only about the ones
  * getOrFetchTitle would have fetched anyway. */
-async function cacheTitles(mediaType: "movie" | "tv", tmdbIds: number[]): Promise<void> {
+async function cacheTitles(
+  mediaType: "movie" | "tv",
+  tmdbIds: number[],
+  fallbackNames: Map<number, string>,
+): Promise<void> {
   if (tmdbIds.length === 0) return;
   const cached = await db
     .select({
@@ -159,7 +163,14 @@ async function cacheTitles(mediaType: "movie" | "tv", tmdbIds: number[]): Promis
     .catch(() => []);
   const hits = new Set(cached.filter((row) => isCacheHit(row, row.hasRawTmdb)).map((row) => row.tmdbId));
   for (const tmdbId of tmdbIds) {
-    if (!hits.has(tmdbId)) await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+    if (hits.has(tmdbId)) continue;
+    const fetched = await getOrFetchTitle(mediaType, tmdbId).catch(() => null);
+    // TMDb couldn't be reached (or no longer has the id): a row with
+    // Radarr's or Sonarr's name, so the title still shows in the Library
+    // rather than disappearing from it. Without TMDb details it's fetched
+    // again on the next sync.
+    const name = fallbackNames.get(tmdbId);
+    if (!fetched && name) await upsertTitleLight({ mediaType, tmdbId, name }).catch(() => null);
   }
 }
 
@@ -178,6 +189,8 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
   const override = (tmdbId: number) => overrides.get(tmdbId) ?? tmdbId;
 
   const copies: ServerCopy<RowFields>[] = [];
+  /** Each title's name in Radarr/Sonarr, for when TMDb can't supply it. */
+  const fallbackNames = new Map<number, string>();
   let failedLookupCount = 0;
   let listings: Listing<unknown>[];
 
@@ -196,6 +209,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           tmdbId: override(movie.tmdbId),
           fields: radarrRowFields(movie, listing.queue.get(movie.id)),
         });
+        if (movie.title) fallbackNames.set(override(movie.tmdbId), movie.title);
       }
     }
   } else {
@@ -210,6 +224,11 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
       if (!("items" in listing)) continue;
       for (const series of listing.items) {
         let tmdbId = resolved.get(series.tvdbId);
+        // Sonarr's own TMDb id first; the TVDB lookup only when it has none.
+        if (tmdbId === undefined && series.tmdbId && series.tmdbId > 0) {
+          tmdbId = override(series.tmdbId);
+          resolved.set(series.tvdbId, tmdbId);
+        }
         if (tmdbId === undefined) {
           const lookup = await lookupTmdbIdFromTvdbId(series.tvdbId);
           // A failed lookup (e.g. TMDb briefly unreachable) means this series
@@ -227,6 +246,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           tmdbId,
           fields: sonarrRowFields(series, listing.queue.get(series.id)),
         });
+        if (series.title) fallbackNames.set(tmdbId, series.title);
       }
     }
   }
@@ -265,7 +285,11 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
   for (let start = 0; start < toWrite.length; start += CONNECTED_CHECK_EVERY) {
     if (start > 0) await assertSameServers(userId, kind, serverIds);
     const batch = toWrite.slice(start, start + CONNECTED_CHECK_EVERY);
-    await cacheTitles(mediaType, batch.map((copy) => copy.tmdbId));
+    await cacheTitles(
+      mediaType,
+      batch.map((copy) => copy.tmdbId),
+      fallbackNames,
+    );
     await db
       .insert(arrStatusCache)
       .values(

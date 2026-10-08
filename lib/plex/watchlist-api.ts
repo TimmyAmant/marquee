@@ -9,9 +9,10 @@ import type { MediaType } from "@/lib/db/schema";
  * Sonarr and python-plexapi all read them from. */
 const DISCOVER_BASE = "https://discover.provider.plex.tv";
 const REQUEST_TIMEOUT_MS = 10_000;
-/** The newest this many titles are read each time. A watchlist is added to
- * at the top, so anything new is always in here. */
+/** Titles per request; the whole watchlist is read a page at a time. */
 export const WATCHLIST_PAGE_SIZE = 100;
+/** Pages read at most (2,000 titles): a bound, not a limit anyone reaches. */
+export const WATCHLIST_MAX_PAGES = 20;
 
 export type WatchlistItem = { mediaType: MediaType; tmdbId: number; title: string };
 
@@ -62,26 +63,59 @@ export function parseWatchlist(body: unknown): WatchlistItem[] {
   return items;
 }
 
+/** Marks an ETag saved from a whole-watchlist read. */
+const ETAG_PREFIX = "all:";
+
+/** `MediaContainer.totalSize`: how many titles the whole watchlist holds. */
+export function watchlistTotalSize(body: unknown): number | null {
+  const container = body && typeof body === "object" ? (body as { MediaContainer?: unknown }).MediaContainer : null;
+  const total = container && typeof container === "object" ? (container as { totalSize?: unknown }).totalSize : null;
+  const value = typeof total === "string" ? Number(total) : total;
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+/**
+ * The member's whole watchlist, newest first, a page at a time (it used to
+ * stop at the newest hundred, so anything older was never requested or
+ * shown). The first page's ETag says whether anything changed at all.
+ */
 export async function fetchWatchlist(clientId: string, token: string, etag: string | null): Promise<WatchlistFetch> {
-  const params = new URLSearchParams({
-    includeGuids: "1",
-    includeFields: "title,type,year,ratingKey",
-    excludeElements: "Image",
-    sort: "watchlistedAt:desc",
-    "X-Plex-Container-Start": "0",
-    "X-Plex-Container-Size": String(WATCHLIST_PAGE_SIZE),
-  });
-  const res = await fetch(`${DISCOVER_BASE}/library/sections/watchlist/all?${params}`, {
-    headers: { ...plexHeaders(clientId, token), ...(etag ? { "If-None-Match": etag } : {}) },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    redirect: "manual",
-  });
-  if (res.status === 304) return { status: "unchanged" };
-  if (res.status === 401 || res.status === 403) return { status: "unauthorized" };
-  if (!res.ok) throw new Error(`Failed to read the Plex Watchlist (${res.status})`);
-  // plex.tv answers some blocked networks with an HTML page and a 200.
-  if (!(res.headers.get("content-type") ?? "").includes("json")) {
-    throw new Error("Plex sent something other than a watchlist");
+  // An ETag saved when only the newest hundred were read would answer 304
+  // and keep the rest unread: only one saved since (prefixed) is sent.
+  const sentEtag = etag?.startsWith(ETAG_PREFIX) ? etag.slice(ETAG_PREFIX.length) : null;
+  const items: WatchlistItem[] = [];
+  let firstEtag: string | null = null;
+  for (let page = 0; page < WATCHLIST_MAX_PAGES; page++) {
+    const params = new URLSearchParams({
+      includeGuids: "1",
+      includeFields: "title,type,year,ratingKey",
+      excludeElements: "Image",
+      sort: "watchlistedAt:desc",
+      "X-Plex-Container-Start": String(page * WATCHLIST_PAGE_SIZE),
+      "X-Plex-Container-Size": String(WATCHLIST_PAGE_SIZE),
+    });
+    const res = await fetch(`${DISCOVER_BASE}/library/sections/watchlist/all?${params}`, {
+      headers: { ...plexHeaders(clientId, token), ...(page === 0 && sentEtag ? { "If-None-Match": sentEtag } : {}) },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      redirect: "manual",
+    });
+    if (page === 0 && res.status === 304) return { status: "unchanged" };
+    if (res.status === 401 || res.status === 403) return { status: "unauthorized" };
+    if (!res.ok) throw new Error(`Failed to read the Plex Watchlist (${res.status})`);
+    // plex.tv answers some blocked networks with an HTML page and a 200.
+    if (!(res.headers.get("content-type") ?? "").includes("json")) {
+      throw new Error("Plex sent something other than a watchlist");
+    }
+    if (page === 0) {
+      const header = res.headers.get("etag");
+      firstEtag = header ? `${ETAG_PREFIX}${header}` : null;
+    }
+    const body = await res.json();
+    const metadata = (body as { MediaContainer?: { Metadata?: unknown[] } })?.MediaContainer?.Metadata;
+    items.push(...parseWatchlist(body));
+    const total = watchlistTotalSize(body);
+    const read = (page + 1) * WATCHLIST_PAGE_SIZE;
+    if (!Array.isArray(metadata) || metadata.length < WATCHLIST_PAGE_SIZE || (total !== null && read >= total)) break;
   }
-  return { status: "ok", etag: res.headers.get("etag"), items: parseWatchlist(await res.json()) };
+  return { status: "ok", etag: firstEtag, items };
 }

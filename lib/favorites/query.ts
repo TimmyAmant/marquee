@@ -2,6 +2,20 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { favorites, people, companies, titles } from "@/lib/db/schema";
 import type { FavoriteEntityType, MediaType } from "@/lib/db/schema";
+import { getOrFetchCompanyWithCatalog, getOrFetchPersonWithCredits, getOrFetchTitle } from "@/lib/tmdb/cache";
+
+/** Favorites fetched again per page load when they have no saved details
+ * (TMDb was unreachable when they were favorited): a bound, so a long
+ * outage can't make the page slow. */
+const MISSING_FETCHED_PER_LOAD = 10;
+
+/** The ids a lookup didn't find, tried against TMDb (a few per load), so a
+ * favorite saved while TMDb was down shows up instead of vanishing. */
+async function fetchMissing(ids: number[], found: Set<number>, fetch: (id: number) => Promise<unknown>) {
+  const missing = ids.filter((id) => !found.has(id)).slice(0, MISSING_FETCHED_PER_LOAD);
+  await Promise.all(missing.map((id) => fetch(id).catch(() => undefined)));
+  return missing.length > 0;
+}
 
 export async function isFavorited(
   userId: string,
@@ -50,7 +64,10 @@ export async function getFavoritePeople(userId: string) {
   const favs = await getFavorites(userId, "person");
   const ids = favs.map((f) => f.tmdbId);
   if (ids.length === 0) return [];
-  const rows = await db.select().from(people).where(inArray(people.tmdbId, ids));
+  let rows = await db.select().from(people).where(inArray(people.tmdbId, ids));
+  if (await fetchMissing(ids, new Set(rows.map((r) => r.tmdbId)), getOrFetchPersonWithCredits)) {
+    rows = await db.select().from(people).where(inArray(people.tmdbId, ids));
+  }
   // `inArray` doesn't preserve `ids`' order, so re-sort by the favorites'
   // most-recently-favorited-first order rather than whatever order Postgres
   // happens to return the joined rows in.
@@ -62,7 +79,10 @@ export async function getFavoriteCompanies(userId: string) {
   const favs = await getFavorites(userId, "company");
   const ids = favs.map((f) => f.tmdbId);
   if (ids.length === 0) return [];
-  const rows = await db.select().from(companies).where(inArray(companies.tmdbId, ids));
+  let rows = await db.select().from(companies).where(inArray(companies.tmdbId, ids));
+  if (await fetchMissing(ids, new Set(rows.map((r) => r.tmdbId)), getOrFetchCompanyWithCatalog)) {
+    rows = await db.select().from(companies).where(inArray(companies.tmdbId, ids));
+  }
   const byTmdbId = new Map(rows.map((r) => [r.tmdbId, r]));
   return ids.map((id) => byTmdbId.get(id)).filter((r) => r !== undefined);
 }
@@ -75,10 +95,15 @@ export async function getFavoriteTitles(userId: string, mediaType: MediaType) {
   const favs = await getFavorites(userId, mediaType);
   const ids = favs.map((f) => f.tmdbId);
   if (ids.length === 0) return [];
-  const rows = await db
-    .select()
-    .from(titles)
-    .where(and(eq(titles.mediaType, mediaType), inArray(titles.tmdbId, ids)));
+  const read = () =>
+    db
+      .select()
+      .from(titles)
+      .where(and(eq(titles.mediaType, mediaType), inArray(titles.tmdbId, ids)));
+  let rows = await read();
+  if (await fetchMissing(ids, new Set(rows.map((r) => r.tmdbId)), (id) => getOrFetchTitle(mediaType, id))) {
+    rows = await read();
+  }
   const byTmdbId = new Map(rows.map((r) => [r.tmdbId, r]));
   return ids.map((id) => byTmdbId.get(id)).filter((r) => r !== undefined);
 }

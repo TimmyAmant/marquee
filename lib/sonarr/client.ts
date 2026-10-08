@@ -101,6 +101,9 @@ export interface SonarrSeasonStats {
 export interface SonarrSeries {
   id: number;
   tvdbId: number;
+  /** Sonarr v4 knows the show's TMDb id too; 0 or missing when it doesn't. */
+  tmdbId?: number;
+  title?: string;
   /** The show's page in Sonarr is /series/{titleSlug}. */
   titleSlug?: string;
   status: string;
@@ -282,6 +285,8 @@ export interface SonarrCalendarEpisode {
   series?: {
     title: string;
     tvdbId: number;
+    /** Sonarr v4 knows the show's TMDb id too; 0 or missing when it doesn't. */
+    tmdbId?: number;
     images?: { coverType: string; remoteUrl?: string; url?: string }[];
   };
 }

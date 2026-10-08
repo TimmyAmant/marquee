@@ -374,8 +374,15 @@ export async function loadSearchResults(viewer: ViewerIdentity, query: string): 
   // in its heading): people with no photo nobody looks up, studios with no
   // logo that aren't exactly what was typed.
   const text = searchText(query);
-  const notablePeople = people.items.filter(isNotablePerson);
-  const notableCompanies = companies.items.filter((company) => isNotableCompany(company, text));
+  // When that would leave a section empty, it shows them anyway: otherwise
+  // the section, its count and its See all vanished, and a search with only
+  // such matches said there were none.
+  const keepNotable = <T,>(items: T[], notable: (item: T) => boolean) => {
+    const kept = items.filter(notable);
+    return kept.length > 0 ? kept : items;
+  };
+  const notablePeople = keepNotable(people.items, isNotablePerson);
+  const notableCompanies = keepNotable(companies.items, (company) => isNotableCompany(company, text));
 
   const themeItems = theme?.items ?? [];
   const extra = await enrich(viewer, [...movies.items, ...series.items, ...themeItems], notablePeople, notableCompanies);

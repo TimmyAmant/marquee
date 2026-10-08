@@ -16,6 +16,16 @@ export const CHANGELOG: ChangelogEntry[] = [
     changes: [
       "People pages now include what someone made behind the camera, not just their acting roles: Christopher Nolan's page lists Inception, Oppenheimer and the rest of his films (it used to show mostly interviews and documentaries), Steven Spielberg's goes from about 220 titles to over 400, and Tom Hanks' includes what he directed and produced. The Role column says what they did (\"Director, Writer\"), after the character when they also acted in it.",
       "People pages no longer show blank cards for titles TMDb has no artwork for.",
+      "TV pages show the cast from every season, not just the latest: Grey's Anatomy's cast now includes Sandra Oh, Justin Chambers and Patrick Dempsey, and Game of Thrones' Sean Bean. Executive producers likewise come from the whole run.",
+      "Shows that are still airing (and movies around their release) now pick up new seasons, episodes and release dates within a day, instead of up to two weeks later.",
+      "\"Currently streaming on\" now includes free and ad-supported services like Tubi, Pluto TV and Freevee.",
+      "Request from my Plex Watchlist now reads your whole watchlist, not just the newest 100 titles, so older titles on it get requested and show in Your Watchlist too.",
+      "Search: a section no longer disappears when all its matches are less well known (people without a photo, studios without a logo); they're shown instead of nothing.",
+      "Discover shows every genre, not just the first twelve (Mystery, Romance, Science Fiction, Thriller, War and Western were missing).",
+      "Calendar: a show's episodes no longer go missing when its TheTVDB lookup fails; Sonarr's own TMDb id is used first.",
+      "Library: a title Radarr or Sonarr has no longer disappears when TMDb couldn't be reached during the sync; it shows with its name until TMDb answers again.",
+      "Favorites: something favorited while TMDb couldn't be reached now appears once TMDb answers, instead of never.",
+      "Requests: Past requests lists the last 500 reviewed, up from 50.",
     ],
   },
   {

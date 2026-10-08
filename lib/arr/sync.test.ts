@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db/client", async () => (await import("@/lib/test/pglite")).testDatabase());
-type Movie = { id: number; tmdbId: number; monitored: boolean; status: string; hasFile: boolean; movieFile?: object };
+type Movie = { id: number; tmdbId: number; monitored: boolean; status: string; hasFile: boolean; movieFile?: object; title?: string };
 const radarr = vi.hoisted(() => ({
   movies: [] as Movie[],
   /** Runs while Radarr is being listed — something else writing meanwhile. */
@@ -29,7 +29,10 @@ vi.mock("@/lib/arr/servers", () => ({
   listLibraryServers: async (_userId: string, kind: string) => (kind === "radarr" ? servers.list : []),
   ownersWithLibraryServers: async () => [],
 }));
-const tmdb = vi.hoisted(() => ({ getOrFetchTitle: vi.fn(async (..._args: unknown[]) => null) }));
+const tmdb = vi.hoisted(() => ({
+  getOrFetchTitle: vi.fn(async (..._args: unknown[]) => null),
+  upsertTitleLight: vi.fn(async (..._args: unknown[]) => null),
+}));
 vi.mock("@/lib/tmdb/cache", () => tmdb);
 vi.mock("@/lib/tmdb/cross-reference", () => ({ lookupTmdbIdFromTvdbId: async () => ({ tmdbId: null, failed: false }) }));
 
@@ -114,6 +117,12 @@ describe("syncArrLibrary (Radarr)", () => {
     radarr.movies = [movie(1), movie(2)];
     await syncArrLibrary(admin, "radarr");
     expect(tmdb.getOrFetchTitle.mock.calls).toEqual([["movie", 2]]);
+  });
+
+  it("saves Radarr's name for a title TMDb can't supply, so the Library still lists it", async () => {
+    radarr.movies = [{ ...movie(3), title: "Only In Radarr" }];
+    await syncArrLibrary(admin, "radarr");
+    expect(tmdb.upsertTitleLight).toHaveBeenCalledWith({ mediaType: "movie", tmdbId: 3, name: "Only In Radarr" });
   });
 
   it("keeps what the download watch wrote while the sync was still going", async () => {

@@ -24,3 +24,14 @@ describe("wholeSeriesCast", () => {
     expect(wholeSeriesCast([{ id: 9, name: "X", profile_path: null, order: 0, roles: [{ character: "Small", episode_count: 1 }, { character: "Main", episode_count: 40 }] }])[0].character).toBe("Main / Small");
   });
 });
+
+describe("wholeSeriesCrew", () => {
+  it("lists one entry per job, most episodes first", async () => {
+    const { wholeSeriesCrew } = await import("./series-cast");
+    const crew = wholeSeriesCrew([
+      { id: 1, name: "Late", department: "Production", jobs: [{ job: "Executive Producer", episode_count: 20 }] },
+      { id: 2, name: "Shonda", department: "Production", jobs: [{ job: "Executive Producer", episode_count: 400 }, { job: "Writer", episode_count: 30 }] },
+    ]);
+    expect(crew.map((c) => `${c.name}:${c.job}`)).toEqual(["Shonda:Executive Producer", "Shonda:Writer", "Late:Executive Producer"]);
+  });
+});
