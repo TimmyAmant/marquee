@@ -91,3 +91,14 @@ describe("title facts", () => {
     expect(streamingProvidersFor(providers, "US").link).toBeNull();
   });
 });
+
+describe("free and ad-supported streaming", () => {
+  it("lists them after the subscriptions, once each", () => {
+    const entry = (provider_id: number, provider_name: string) => ({ provider_id, provider_name, logo_path: "/l.png" });
+    const { providers } = streamingProvidersFor(
+      { results: { US: { flatrate: [entry(8, "Netflix")], free: [entry(73, "Tubi TV")], ads: [entry(300, "Pluto TV"), entry(73, "Tubi TV")] } } },
+      "us",
+    );
+    expect(providers.map((p) => p.name)).toEqual(["Netflix", "Tubi TV", "Pluto TV"]);
+  });
+});

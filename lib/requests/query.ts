@@ -146,8 +146,12 @@ export async function getPendingRequests(viewerUserId: string) {
 
 /** Already-reviewed requests (approved or rejected), most recent first — for
  * the admin's Requests page history section below the pending queue. Every
- * request under "Couldn't add" is included however old, first. */
-export async function getReviewedRequests(limit = 50) {
+ * request under "Couldn't add" is included however old, first. The 500 most
+ * recent (it was 50, which a busy household outgrew in weeks). */
+/** How many reviewed requests "Past requests" lists. */
+export const REVIEWED_REQUESTS_SHOWN = 500;
+
+export async function getReviewedRequests(limit = REVIEWED_REQUESTS_SHOWN) {
   const [failed, recent] = await Promise.all([
     reviewedQuery()
       .where(and(eq(requests.status, "approved"), isNotNull(requests.addFailedAt)))

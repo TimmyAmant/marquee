@@ -2309,7 +2309,7 @@ may change seasons and 4K before approving, `PATCH /requests/{id}`) and
 
 ### `GET /requests/history` — admin
 
-"Past requests": the 50 most recently reviewed — after every request
+"Past requests": the 500 most recently reviewed (50 before 0.76.3) — after every request
 under "Couldn't add" (0.46+), however old, which come first.
 
 ```json

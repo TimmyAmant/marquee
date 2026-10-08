@@ -9,7 +9,8 @@ import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, titles } from "@/lib/db/schema";
 import { pickCatalogKnownFor } from "@/lib/tmdb/known-for";
 import { buildEntityLinks, type EntityLink, type TmdbPersonExternalIds } from "@/lib/tmdb/entity-links";
-import { getLocale } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
+import { jobMessageKey } from "@/lib/tmdb/crew-jobs";
 import type { Locale } from "@/lib/i18n/locales";
 import { contentLanguageFor, getLocalizedPerson } from "@/lib/tmdb/client";
 import { getSavedTranslations, saveLightTranslations } from "@/lib/tmdb/translations";
@@ -169,7 +170,20 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
       ])
     : [new Map<string, LibraryStatus>(), null, null, false];
 
-  const entries: EntityMediaEntry[] = filmography.map(({ credit, title }) =>
+  // The role column: the character they played, then what they did behind
+  // the camera ("Cobb", "Director, Writer", "Mr. White · Director").
+  const t = await getT();
+  const role = (character: string | null | undefined, jobs: string[]) => {
+    const work = jobs
+      .map((job) => {
+        const key = jobMessageKey(job);
+        return key ? t(key) : job;
+      })
+      .join(", ");
+    return [character, work].filter(Boolean).join(" · ") || null;
+  };
+
+  const entries: EntityMediaEntry[] = filmography.map(({ credit, crewJobs, title }) =>
     overlayCard(
       {
         titleId: title.id,
@@ -178,7 +192,7 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
         name: title.name,
         posterPath: title.posterPath,
         year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
-        subtitle: credit.characterName,
+        subtitle: role(credit?.characterName, crewJobs),
         status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
       },
       inLanguage?.cards.get(title.id),

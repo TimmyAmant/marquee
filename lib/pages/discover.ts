@@ -134,8 +134,10 @@ export async function loadDiscoverShelves(viewer: ViewerIdentity) {
     .slice(0, 20);
   const upcomingSeriesItems = upcomingSeries.results.slice(0, 20);
 
-  const movieGenreList = movieGenres.genres.slice(0, 12);
-  const tvGenreList = tvGenres.genres.slice(0, 12);
+  // Every genre: TMDb lists them alphabetically, so the first twelve left
+  // out Mystery, Romance, Science Fiction, Thriller, War and Western.
+  const movieGenreList = movieGenres.genres;
+  const tvGenreList = tvGenres.genres;
   const [movieGenreBackdrops, tvGenreBackdropList] = await Promise.all([
     fetchMovieGenreBackdrops(movieGenreList),
     fetchTvGenreBackdrops(tvGenreList),

@@ -282,7 +282,7 @@ public sealed record PendingRequest
     public TitleId TitleId => new(MediaType, TmdbId);
 }
 
-/// <summary><c>GET /requests/history</c>: "Past requests", the 50 most recently reviewed.</summary>
+/// <summary><c>GET /requests/history</c>: "Past requests", the 500 most recently reviewed (50 before 0.76.3).</summary>
 public sealed record ReviewedRequest
 {
     public required Guid Id { get; init; }
