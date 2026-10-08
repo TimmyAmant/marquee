@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { companies, companyTitles, credits, people, titles } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
@@ -7,6 +7,7 @@ import * as tvdb from "@/lib/tvdb/client";
 import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 import { isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
 import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
+import { crewJobsByTitle } from "@/lib/tmdb/crew-jobs";
 
 /** TMDb's Discover stops at page 500 (10,000 titles); no studio or network
  * comes close (Warner Bros. Pictures is ~160 pages, Netflix ~150). */
@@ -298,8 +299,17 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
 /** A person cached before their details carried external_ids (and the
  * best-known title picked alongside them) is refreshed once, so the header's
  * artwork and links show up without waiting out the TTL. */
+/** Set on a person's cached details once their credits include what they
+ * did behind the camera, so people saved with acting credits only (a
+ * director's page listed their interviews, not their films) refresh once. */
+const CREW_CREDITS_MARKER = "marquee_crew_credits";
+
+/** Saved before the page's header picked a best-known title (no
+ * external_ids), or before crew credits were kept. */
 function predatesKnownFor(rawTmdb: unknown): boolean {
-  return !rawTmdb || typeof rawTmdb !== "object" || !("external_ids" in rawTmdb);
+  return (
+    !rawTmdb || typeof rawTmdb !== "object" || !("external_ids" in rawTmdb) || !(CREW_CREDITS_MARKER in rawTmdb)
+  );
 }
 
 function knownForCredit(item: tmdb.TmdbCreditItem): KnownForCredit {
@@ -338,7 +348,7 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
         deathday: details.deathday || null,
         placeOfBirth: details.place_of_birth,
         profilePath: details.profile_path,
-        rawTmdb: details,
+        rawTmdb: { ...details, [CREW_CREDITS_MARKER]: true },
         refreshedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -351,7 +361,7 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
           deathday: details.deathday || null,
           placeOfBirth: details.place_of_birth,
           profilePath: details.profile_path,
-          rawTmdb: details,
+          rawTmdb: { ...details, [CREW_CREDITS_MARKER]: true },
           refreshedAt: new Date(),
         },
       })
@@ -360,38 +370,66 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
     // Replaced wholesale on each refresh: TMDb renames characters ("Mr.
     // Fantastic" → "Mister Fantastic"), and the unique key includes the
     // character, so keeping the old rows listed the same title twice.
-    await db.delete(credits).where(and(eq(credits.personId, personRow.id), eq(credits.department, "Acting")));
+    await db.delete(credits).where(eq(credits.personId, personRow.id));
 
-    // Acting credits only (department/character-driven filmography); dedupe by media_type+id.
-    const seen = new Map<string, string>();
+    // Every title they worked on that has a poster: a role in front of the
+    // camera (one row per title, the first character TMDb lists) and the
+    // jobs behind it ("Director, Writer") — a filmmaker's page is their
+    // films, not just their interviews. Posterless entries are left out.
+    const castByTitle = new Map<string, tmdb.TmdbCreditItem>();
     for (const item of combinedCredits.cast) {
       const key = `${item.media_type}:${item.id}`;
-      if (seen.has(key)) continue;
+      if (item.poster_path && !castByTitle.has(key)) castByTitle.set(key, item);
+    }
+    const jobsByTitle = crewJobsByTitle(combinedCredits.crew.filter((item) => item.poster_path));
+    const crewItem = new Map(combinedCredits.crew.map((item) => [`${item.media_type}:${item.id}`, item]));
 
-      const titleRow = await upsertTitleLight({
-        mediaType: item.media_type,
-        tmdbId: item.id,
-        name: item.title || item.name || "Untitled",
-        overview: item.overview,
-        posterPath: item.poster_path,
-        backdropPath: item.backdrop_path,
-        releaseDate: item.release_date,
-        firstAirDate: item.first_air_date,
-        voteCount: item.vote_count,
+    const keys = new Set([...castByTitle.keys(), ...jobsByTitle.keys()]);
+    const savedTitles = await upsertTitlesLight(
+      [...keys].map((key) => {
+        const item = castByTitle.get(key) ?? crewItem.get(key)!;
+        return {
+          mediaType: item.media_type,
+          tmdbId: item.id,
+          name: item.title || item.name || "Untitled",
+          overview: item.overview,
+          posterPath: item.poster_path,
+          backdropPath: item.backdrop_path,
+          releaseDate: item.release_date,
+          firstAirDate: item.first_air_date,
+          voteCount: item.vote_count,
+        };
+      }),
+    );
+    const seen = new Map(savedTitles.map((row) => [`${row.mediaType}:${row.tmdbId}`, row.id]));
+
+    const creditRows: (typeof credits.$inferInsert)[] = [];
+    for (const [key, item] of castByTitle) {
+      const titleId = seen.get(key);
+      if (!titleId) continue;
+      creditRows.push({
+        personId: personRow.id,
+        titleId,
+        department: "Acting",
+        characterName: item.character || null,
+        episodeCount: item.episode_count ?? null,
+        order: item.order ?? null,
       });
-      seen.set(key, titleRow.id);
-
-      await db
-        .insert(credits)
-        .values({
-          personId: personRow.id,
-          titleId: titleRow.id,
-          department: "Acting",
-          characterName: item.character || null,
-          episodeCount: item.episode_count ?? null,
-          order: item.order ?? null,
-        })
-        .onConflictDoNothing();
+    }
+    for (const [key, jobs] of jobsByTitle) {
+      const titleId = seen.get(key);
+      if (!titleId) continue;
+      creditRows.push({
+        personId: personRow.id,
+        titleId,
+        department: CREW_DEPARTMENT,
+        characterName: jobs.join(CREW_JOB_SEPARATOR),
+        episodeCount: crewItem.get(key)?.episode_count ?? null,
+        order: null,
+      });
+    }
+    for (let i = 0; i < creditRows.length; i += 1000) {
+      await db.insert(credits).values(creditRows.slice(i, i + 1000)).onConflictDoNothing();
     }
 
     // The title behind their page's header, from the credits just fetched —
@@ -430,23 +468,40 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
   return getPersonWithCreditsFromDb(cachedPerson.id);
 }
 
+/** A crew credit's row: its jobs, joined, stand where an actor's
+ * character goes. */
+export const CREW_DEPARTMENT = "Crew";
+const CREW_JOB_SEPARATOR = ", ";
+
 async function getPersonWithCreditsFromDb(personId: string) {
   const [person] = await db.select().from(people).where(eq(people.id, personId)).limit(1);
-  const filmography = await db
+  const rows = await db
     .select({ credit: credits, title: titles })
     .from(credits)
     .innerJoin(titles, eq(credits.titleId, titles.id))
-    .where(eq(credits.personId, personId))
-    .orderBy(desc(sql`coalesce(${titles.releaseDate}, ${titles.firstAirDate})`));
+    .where(and(eq(credits.personId, personId), isNotNull(titles.posterPath)))
+    .orderBy(sql`coalesce(${titles.releaseDate}, ${titles.firstAirDate}) desc nulls last`);
   const [knownFor] = person?.knownForTitleId
     ? await db.select().from(titles).where(eq(titles.id, person.knownForTitleId)).limit(1)
     : [];
 
-  // One entry per title, even for rows saved before refreshes replaced them.
-  const seenTitles = new Set<string>();
-  const unique = filmography.filter(({ title }) => !seenTitles.has(title.id) && seenTitles.add(title.id));
+  // One entry per title: the role they played, if any, and the jobs they
+  // did on it (crewJobs, untranslated TMDb names).
+  const byTitle = new Map<
+    string,
+    { credit: typeof credits.$inferSelect | null; crewJobs: string[]; title: typeof titles.$inferSelect }
+  >();
+  for (const { credit, title } of rows) {
+    const entry = byTitle.get(title.id) ?? { credit: null, crewJobs: [], title };
+    if (credit.department === CREW_DEPARTMENT) {
+      entry.crewJobs = (credit.characterName ?? "").split(CREW_JOB_SEPARATOR).filter(Boolean);
+    } else if (!entry.credit) {
+      entry.credit = credit;
+    }
+    byTitle.set(title.id, entry);
+  }
 
-  return { person, filmography: unique, knownFor: knownFor ?? null };
+  return { person, filmography: [...byTitle.values()], knownFor: knownFor ?? null };
 }
 
 /**

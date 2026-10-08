@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.76.3",
+    date: "2026-10-07",
+    changes: [
+      "People pages now include what someone made behind the camera, not just their acting roles: Christopher Nolan's page lists Inception, Oppenheimer and the rest of his films (it used to show mostly interviews and documentaries), Steven Spielberg's goes from about 220 titles to over 400, and Tom Hanks' includes what he directed and produced. The Role column says what they did (\"Director, Writer\"), after the character when they also acted in it.",
+      "People pages no longer show blank cards for titles TMDb has no artwork for.",
+    ],
+  },
+  {
     version: "0.76.2",
     date: "2026-10-07",
     changes: [
