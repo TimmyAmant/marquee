@@ -8,6 +8,7 @@ import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 import { isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
 import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
 import { crewJobsByTitle } from "@/lib/tmdb/crew-jobs";
+import { SERIES_CAST_MARKER } from "@/lib/tmdb/series-cast";
 
 /** TMDb's Discover stops at page 500 (10,000 titles); no studio or network
  * comes close (Warner Bros. Pictures is ~160 pages, Netflix ~150). */
@@ -213,6 +214,12 @@ async function upsertTitleFull(input: {
   return row;
 }
 
+/** A show saved while its cast was the latest season's only: fetched again
+ * once for the whole run's (lib/tmdb/series-cast.ts). */
+function predatesSeriesCast(row: { mediaType: MediaType; rawTmdb: unknown }): boolean {
+  return row.mediaType === "tv" && Boolean(row.rawTmdb) && rawField(row.rawTmdb, SERIES_CAST_MARKER) === undefined;
+}
+
 export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
   const [cached] = await db
     .select()
@@ -220,7 +227,7 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
     .where(and(eq(titles.mediaType, mediaType), eq(titles.tmdbId, tmdbId)))
     .limit(1);
 
-  if (cached && isCacheHit(cached, Boolean(cached.rawTmdb))) {
+  if (cached && isCacheHit(cached, Boolean(cached.rawTmdb)) && !predatesSeriesCast(cached)) {
     return cached;
   }
 

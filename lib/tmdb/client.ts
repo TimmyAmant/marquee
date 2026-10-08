@@ -1,4 +1,5 @@
 import "server-only";
+import { SERIES_CAST_MARKER, wholeSeriesCast, type TmdbAggregateCastMember } from "./series-cast";
 import { getStoredDiscoverLocale, getTmdbAccessToken } from "@/lib/integrations/app-settings";
 import { resolveDiscoverLocale, type DiscoverLocale } from "@/lib/discover/locale";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
@@ -638,10 +639,22 @@ export interface TmdbTvDetails {
 }
 
 export function getTvDetails(id: number) {
-  return tmdbFetch<TmdbTvDetails>(`/tv/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,images,content_ratings",
+  return tmdbFetch<TmdbTvDetails & { aggregate_credits?: { cast?: TmdbAggregateCastMember[] } }>(`/tv/${id}`, {
+    append_to_response:
+      "videos,external_ids,credits,aggregate_credits,recommendations,keywords,watch/providers,images,content_ratings",
     include_image_language: TITLE_IMAGE_LANGUAGES,
-  }).then(trimTitleImages);
+  })
+    .then(trimTitleImages)
+    .then(({ aggregate_credits, ...details }): TmdbTvDetails => {
+      // The whole run's cast in place of the latest season's, trimmed: a
+      // long-running show's aggregate list is thousands of guest stars.
+      if (!aggregate_credits?.cast?.length) return details;
+      return {
+        ...details,
+        credits: { cast: wholeSeriesCast(aggregate_credits.cast), crew: details.credits?.crew ?? [] },
+        [SERIES_CAST_MARKER]: true,
+      } as TmdbTvDetails;
+    });
 }
 
 /** A movie's or show's words and artwork in one language — laid over the
