@@ -11,6 +11,14 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.76.4",
+    date: "2026-10-26",
+    changes: [
+      "Adding or approving a brand-new show no longer fails with \"Couldn't resolve this show for Sonarr\" when TMDb hasn't linked it to TheTVDB yet (common for a few weeks after a premiere). Marquee now asks Sonarr to find the show by its TMDb or IMDb id instead.",
+      "A show added to Sonarr by hand before TMDb knew its TheTVDB id now gets that id from Sonarr on the next sync, so its season status and requests for it update like any other show's.",
+    ],
+  },
+  {
     version: "0.76.3",
     date: "2026-10-07",
     changes: [

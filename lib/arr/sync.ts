@@ -8,7 +8,7 @@ import { deriveRadarrStatus, deriveSonarrStatus, statusWithQueue, type QueueSumm
 import type { LibraryStatus } from "@/components/status-badge";
 import * as sonarr from "@/lib/sonarr/client";
 import * as radarr from "@/lib/radarr/client";
-import { getOrFetchTitle, upsertTitleLight } from "@/lib/tmdb/cache";
+import { getOrFetchTitle, saveTvdbIds, upsertTitleLight } from "@/lib/tmdb/cache";
 import { lookupTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import { loadTmdbIdOverrides } from "@/lib/library/title-overrides";
 import { isCacheHit } from "@/lib/tmdb/cache-policy";
@@ -191,6 +191,8 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
   const copies: ServerCopy<RowFields>[] = [];
   /** Each title's name in Radarr/Sonarr, for when TMDb can't supply it. */
   const fallbackNames = new Map<number, string>();
+  /** Each show's TVDB id per Sonarr, for titles TMDb hasn't linked yet. */
+  const tvdbIds = new Map<number, number>();
   let failedLookupCount = 0;
   let listings: Listing<unknown>[];
 
@@ -247,6 +249,7 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
           fields: sonarrRowFields(series, listing.queue.get(series.id)),
         });
         if (series.title) fallbackNames.set(tmdbId, series.title);
+        if (series.tvdbId > 0) tvdbIds.set(tmdbId, series.tvdbId);
       }
     }
   }
@@ -290,6 +293,14 @@ async function runSyncArrLibrary(userId: string, kind: ArrProvider): Promise<{ c
       batch.map((copy) => copy.tmdbId),
       fallbackNames,
     );
+    // A show added to Sonarr before TMDb linked it to TVDB (or added by hand
+    // in Sonarr) gets its TVDB id from Sonarr, so season status and request
+    // fulfilment can find it.
+    if (tvdbIds.size > 0) {
+      await saveTvdbIds(new Map(batch.flatMap((c) => (tvdbIds.has(c.tmdbId) ? [[c.tmdbId, tvdbIds.get(c.tmdbId)!]] : [])))).catch(
+        (err) => console.error("[arr-sync] saving TVDB ids failed:", err),
+      );
+    }
     await db
       .insert(arrStatusCache)
       .values(

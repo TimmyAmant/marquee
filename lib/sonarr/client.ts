@@ -75,14 +75,41 @@ export interface SonarrSeriesLookupResult {
   images: { coverType: string; url: string }[];
   seasons: { seasonNumber: number; monitored?: boolean }[];
   year: number;
+  /** The show's TMDb id as Sonarr knows it (v4); 0 or missing when it doesn't. */
+  tmdbId?: number;
+  imdbId?: string;
+}
+
+function lookupSeries(config: ArrConfig, term: string) {
+  return sonarrFetch<SonarrSeriesLookupResult[]>(config, `/series/lookup?term=${encodeURIComponent(term)}`, {
+    timeoutMs: ADD_TIMEOUT_MS,
+  });
 }
 
 export function lookupByTvdbId(config: ArrConfig, tvdbId: number) {
-  return sonarrFetch<SonarrSeriesLookupResult[]>(
-    config,
-    `/series/lookup?term=${encodeURIComponent(`tvdb:${tvdbId}`)}`,
-    { timeoutMs: ADD_TIMEOUT_MS },
+  return lookupSeries(config, `tvdb:${tvdbId}`);
+}
+
+/** The TVDB id Sonarr's metadata has for a show TMDb hasn't linked to TVDB
+ * yet — common for a series that premiered days ago. Asks by TMDb id, then
+ * by IMDb id, and takes only a result carrying that same id: a `tmdb:` search
+ * also returns whatever show happens to have that number as its TVDB id. */
+export async function findTvdbId(
+  config: ArrConfig,
+  ids: { tmdbId: number; imdbId?: string | null },
+): Promise<number | null> {
+  return pickTvdbId(await lookupSeries(config, `tmdb:${ids.tmdbId}`), ids) ??
+    (ids.imdbId ? pickTvdbId(await lookupSeries(config, `imdb:${ids.imdbId}`), ids) : null);
+}
+
+export function pickTvdbId(
+  results: readonly SonarrSeriesLookupResult[],
+  ids: { tmdbId: number; imdbId?: string | null },
+): number | null {
+  const match = results.find(
+    (r) => r.tvdbId > 0 && (r.tmdbId === ids.tmdbId || (Boolean(ids.imdbId) && r.imdbId === ids.imdbId)),
   );
+  return match?.tvdbId ?? null;
 }
 
 export interface SonarrSeasonStats {

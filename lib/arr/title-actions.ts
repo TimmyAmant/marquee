@@ -10,7 +10,7 @@ import { describeArrError } from "@/lib/arr/errors";
 import { hasOverrides, matchRootFolder, resolveAdd, serverDefaults, type AddDefaults, type AddOverrides } from "@/lib/arr/add-options";
 import { pickServer, titleIsAnime } from "@/lib/arr/add-options-server";
 import { statusRank } from "@/lib/arr/fan-out";
-import { getOrFetchTitle } from "@/lib/tmdb/cache";
+import { getOrFetchTitle, saveTvdbIds } from "@/lib/tmdb/cache";
 import { findByImdbId } from "@/lib/tmdb/client";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
 import * as sonarr from "@/lib/sonarr/client";
@@ -241,7 +241,19 @@ export async function addSeriesToSonarrForUser(
   const { server, resolved } = target;
 
   const title = await getOrFetchTitle("tv", tmdbId).catch(() => undefined);
-  if (!title?.tvdbId) {
+  // Sonarr adds by TVDB id. TMDb only links a new show to TVDB some time
+  // after it premieres, so for one it hasn't, ask Sonarr's own metadata.
+  let tvdbId = title?.tvdbId ?? null;
+  if (title && !tvdbId) {
+    tvdbId = await sonarr
+      .findTvdbId(arrConfig(server), { tmdbId, imdbId: title.imdbId })
+      .catch((err) => {
+        console.error("[arr] finding the TVDB id of show %d in %s failed:", tmdbId, server.name, err);
+        return null;
+      });
+    if (tvdbId) await saveTvdbIds(new Map([[tmdbId, tvdbId]])).catch(() => null);
+  }
+  if (!tvdbId) {
     return fail("conflict", t(SONARR_UNRESOLVED), "sonarr_unresolved");
   }
 
@@ -255,7 +267,7 @@ export async function addSeriesToSonarrForUser(
     // added before, then "Stop monitoring" was used. Sonarr's add endpoint
     // rejects a duplicate add in that case, so re-enable monitoring on the
     // existing entry instead of trying to add it again from scratch.
-    const existing = await sonarr.getSeriesByTvdbId(config, title.tvdbId).catch(() => null);
+    const existing = await sonarr.getSeriesByTvdbId(config, tvdbId).catch(() => null);
     if (existing && seasons) {
       const known = seasonsSonarrKnows(existing.seasons ?? [], seasons);
       if (known.length === 0) return fail("conflict", t(SONARR_UNKNOWN_SEASONS));
@@ -281,7 +293,7 @@ export async function addSeriesToSonarrForUser(
       added = existing;
     } else {
       adding = true;
-      const [lookupResult] = await sonarr.lookupByTvdbId(config, title.tvdbId);
+      const [lookupResult] = await sonarr.lookupByTvdbId(config, tvdbId);
       if (!lookupResult) throw new Error("No lookup result");
       if (seasons && seasonsSonarrKnows(lookupResult.seasons ?? [], seasons).length === 0) {
         return fail("conflict", t(SONARR_UNKNOWN_SEASONS));
@@ -300,7 +312,7 @@ export async function addSeriesToSonarrForUser(
   } catch (err) {
     console.error("[arr] adding series %d to %s failed:", tmdbId, server.name, err);
     // See addMovieToRadarrForUser: a timed-out add often went through.
-    const there = adding ? await sonarr.getSeriesByTvdbId(arrConfig(server), title.tvdbId).catch(() => null) : null;
+    const there = adding ? await sonarr.getSeriesByTvdbId(arrConfig(server), tvdbId).catch(() => null) : null;
     if (!there) {
       return fail("upstream", withReason(t("notify.addSeriesFailed", { server: serverLabel(t, server) }), err));
     }

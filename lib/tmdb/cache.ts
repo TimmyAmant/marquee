@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { companies, companyTitles, credits, people, titles } from "@/lib/db/schema";
 import type { MediaType } from "@/lib/db/schema";
@@ -204,7 +204,10 @@ async function upsertTitleFull(input: {
         firstAirDate: values.firstAirDate,
         status: values.status,
         rawTvdb: values.rawTvdb,
-        tvdbId: values.tvdbId,
+        // TMDb links a new show to TVDB days or weeks after it premieres; until
+        // then the id Sonarr gave us (saveTvdbId) stands rather than being
+        // wiped on every refresh.
+        tvdbId: sql`coalesce(excluded.tvdb_id, ${titles.tvdbId})`,
         imdbId: values.imdbId,
         rawTmdb: values.rawTmdb,
         refreshedAt: values.refreshedAt,
@@ -212,6 +215,23 @@ async function upsertTitleFull(input: {
     })
     .returning();
   return row;
+}
+
+/** Records the TVDB id for shows TMDb hasn't linked to TVDB yet (found
+ * through Sonarr). Never replaces an id the row already has. */
+export async function saveTvdbIds(pairs: ReadonlyMap<number, number>): Promise<void> {
+  if (pairs.size === 0) return;
+  const missing = await db
+    .select({ tmdbId: titles.tmdbId })
+    .from(titles)
+    .where(and(eq(titles.mediaType, "tv"), inArray(titles.tmdbId, [...pairs.keys()]), isNull(titles.tvdbId)));
+  for (const { tmdbId } of missing) {
+    const tvdbId = pairs.get(tmdbId)!;
+    await db
+      .update(titles)
+      .set({ tvdbId })
+      .where(and(eq(titles.mediaType, "tv"), eq(titles.tmdbId, tmdbId), isNull(titles.tvdbId)));
+  }
 }
 
 /** A show saved while its cast was the latest season's only: fetched again
