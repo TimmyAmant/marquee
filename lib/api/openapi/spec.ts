@@ -144,6 +144,12 @@ const SCHEMAS: Record<string, Json> = {
         description:
           "Series in the library only: aired episodes on disk against episodes aired, specials left out (the poster's \"96/96\"). Null for a movie or a show the library doesn't have; left out by older servers.",
       },
+      creditKinds: {
+        type: "array",
+        items: { type: "string", enum: ["acting", "self", "crew"] },
+        description:
+          "A person's credits only: a part (acting), an appearance as themselves (self: documentaries, talk shows, stand-up) and/or work behind the camera (crew). Left out elsewhere and by older servers.",
+      },
     },
   },
   KnownForTitle: {
@@ -189,6 +195,11 @@ const SCHEMAS: Record<string, Json> = {
         description: "IMDb, socials and their website, only the ones they have. Missing on older servers.",
       },
       credits: { type: "array", items: { $ref: "#/components/schemas/TitleCard" } },
+      defaultCreditFilter: {
+        type: "string",
+        enum: ["acting", "self", "crew", "all"],
+        description: "Where the Roles filter over credits opens. Missing on older servers.",
+      },
     },
   },
   CompanyDetail: {

@@ -34,11 +34,13 @@ export const GET = withApi<{ id: string }>(async (request, params): Promise<Pers
     favorited: data.favorited,
     knownForTitle: knownForTitleDto(data.knownFor),
     externalLinks: externalLinkDtos(data.links),
+    defaultCreditFilter: data.defaultCreditFilter,
     credits: data.entries.map((entry) =>
       titleCard(entry, {
         subtitle: entry.subtitle ?? null,
         status: entry.status ?? null,
         episodes: entry.episodes,
+        creditKinds: entry.creditKinds,
         favorited: data.favoritedKeys.has(statusKey(entry.mediaType, entry.tmdbId)),
         ...posterActions(rules, entry.mediaType, entry.tmdbId, entry.status),
       }),

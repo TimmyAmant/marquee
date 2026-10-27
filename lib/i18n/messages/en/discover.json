@@ -169,5 +169,10 @@
   "searchNetwork": "Network",
   "searchBackToAll": "← All results for “{query}”",
   "searchSectionFor": "{section} for “{query}”",
-  "noResultsHint": "Check the spelling, or try a shorter title, a person's name or a studio."
+  "noResultsHint": "Check the spelling, or try a shorter title, a person's name or a studio.",
+  "rolesLabel": "Roles",
+  "rolesActing": "Acting roles",
+  "rolesSelf": "As themselves",
+  "rolesCrew": "Behind the camera",
+  "rolesAll": "All credits"
 }

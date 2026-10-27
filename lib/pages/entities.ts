@@ -1,3 +1,4 @@
+import { defaultCreditFilter, type CreditKind } from "@/lib/tmdb/credit-kind";
 import { getOrFetchPersonWithCredits, getOrFetchCompanyWithCatalog, getNetworkWithCatalog } from "@/lib/tmdb/cache";
 import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
 import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
@@ -35,6 +36,8 @@ export type EntityMediaEntry = {
   status?: LibraryStatus;
   /** Series in the library: have/total aired episodes. */
   episodes?: EpisodeCounts | null;
+  /** A person's page only: what they did on it, for the Roles filter. */
+  creditKinds?: CreditKind[];
 };
 
 /** The title a person or studio is best known for: its backdrop goes behind
@@ -148,11 +151,9 @@ async function enrichEntries(viewer: ViewerIdentity, entries: EntityMediaEntry[]
 
 /** Returns null when TMDb has no such person (the page's notFound()). */
 export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
-  const { person, filmography, knownFor } = await getOrFetchPersonWithCredits(tmdbId).catch(() => ({
-    person: undefined,
-    filmography: [],
-    knownFor: null,
-  }));
+  const { person, filmography, knownFor, knownForDepartment } = await getOrFetchPersonWithCredits(tmdbId).catch(
+    () => ({ person: undefined, filmography: [], knownFor: null, knownForDepartment: null }),
+  );
 
   if (!person) return null;
 
@@ -183,8 +184,8 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
     return [character, work].filter(Boolean).join(" · ") || null;
   };
 
-  const entries: EntityMediaEntry[] = filmography.map(({ credit, crewJobs, title }) =>
-    overlayCard(
+  const entries: EntityMediaEntry[] = filmography.map(({ credit, crewJobs, kinds, title }) => ({
+    ...overlayCard(
       {
         titleId: title.id,
         mediaType: title.mediaType,
@@ -197,7 +198,8 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
       },
       inLanguage?.cards.get(title.id),
     ),
-  );
+    creditKinds: kinds,
+  }));
 
   const favoritedKeys = await enrichEntries(viewer, entries);
   const shownKnownFor = knownForTitle(knownFor);
@@ -212,6 +214,11 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
         : shownKnownFor,
     links: linksFromRaw(person.rawTmdb),
     entries,
+    // Where the Roles filter opens: their parts for an actor.
+    defaultCreditFilter: defaultCreditFilter(
+      knownForDepartment,
+      entries.map((entry) => entry.creditKinds ?? []),
+    ),
     favorited: favorited as boolean,
     favoritedKeys,
     arrConfigured: {

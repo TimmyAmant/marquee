@@ -7,6 +7,7 @@ import * as tvdb from "@/lib/tvdb/client";
 import { getTvdbApiKey } from "@/lib/integrations/app-settings";
 import { isActiveTitle, isCacheHit, isStale } from "@/lib/tmdb/cache-policy";
 import { pickPersonKnownFor, type KnownForCredit } from "@/lib/tmdb/known-for";
+import { isSelfAppearance, type CreditKind } from "@/lib/tmdb/credit-kind";
 import { crewJobsByTitle } from "@/lib/tmdb/crew-jobs";
 import { SERIES_CAST_MARKER } from "@/lib/tmdb/series-cast";
 
@@ -334,12 +335,16 @@ export async function getOrFetchTitle(mediaType: MediaType, tmdbId: number) {
  * did behind the camera, so people saved with acting credits only (a
  * director's page listed their interviews, not their films) refresh once. */
 const CREW_CREDITS_MARKER = "marquee_crew_credits";
+/** Set once cast credits are saved as parts ("Acting") or appearances as
+ * themselves ("Self"), so people saved before the Roles filter refresh once. */
+const SELF_CREDITS_MARKER = "marquee_self_credits";
 
 /** Saved before the page's header picked a best-known title (no
  * external_ids), or before crew credits were kept. */
 function predatesKnownFor(rawTmdb: unknown): boolean {
   return (
-    !rawTmdb || typeof rawTmdb !== "object" || !("external_ids" in rawTmdb) || !(CREW_CREDITS_MARKER in rawTmdb)
+    !rawTmdb || typeof rawTmdb !== "object" || !("external_ids" in rawTmdb) || !(CREW_CREDITS_MARKER in rawTmdb) ||
+    !(SELF_CREDITS_MARKER in rawTmdb)
   );
 }
 
@@ -379,7 +384,7 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
         deathday: details.deathday || null,
         placeOfBirth: details.place_of_birth,
         profilePath: details.profile_path,
-        rawTmdb: { ...details, [CREW_CREDITS_MARKER]: true },
+        rawTmdb: { ...details, [CREW_CREDITS_MARKER]: true, [SELF_CREDITS_MARKER]: true },
         refreshedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -392,7 +397,7 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
           deathday: details.deathday || null,
           placeOfBirth: details.place_of_birth,
           profilePath: details.profile_path,
-          rawTmdb: { ...details, [CREW_CREDITS_MARKER]: true },
+          rawTmdb: { ...details, [CREW_CREDITS_MARKER]: true, [SELF_CREDITS_MARKER]: true },
           refreshedAt: new Date(),
         },
       })
@@ -407,10 +412,17 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
     // camera (one row per title, the first character TMDb lists) and the
     // jobs behind it ("Director, Writer") — a filmmaker's page is their
     // films, not just their interviews. Posterless entries are left out.
+    // A title they both acted in and appeared in as themselves keeps the part.
     const castByTitle = new Map<string, tmdb.TmdbCreditItem>();
+    const selfTitles = new Set<string>();
     for (const item of combinedCredits.cast) {
+      if (!item.poster_path) continue;
       const key = `${item.media_type}:${item.id}`;
-      if (item.poster_path && !castByTitle.has(key)) castByTitle.set(key, item);
+      const isSelf = isSelfAppearance(item, details.name);
+      if (castByTitle.has(key) && (isSelf || !selfTitles.has(key))) continue;
+      castByTitle.set(key, item);
+      if (isSelf) selfTitles.add(key);
+      else selfTitles.delete(key);
     }
     const jobsByTitle = crewJobsByTitle(combinedCredits.crew.filter((item) => item.poster_path));
     const crewItem = new Map(combinedCredits.crew.map((item) => [`${item.media_type}:${item.id}`, item]));
@@ -441,7 +453,7 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
       creditRows.push({
         personId: personRow.id,
         titleId,
-        department: "Acting",
+        department: selfTitles.has(key) ? SELF_DEPARTMENT : ACTING_DEPARTMENT,
         characterName: item.character || null,
         episodeCount: item.episode_count ?? null,
         order: item.order ?? null,
@@ -502,6 +514,10 @@ export async function getOrFetchPersonWithCredits(tmdbId: number) {
 /** A crew credit's row: its jobs, joined, stand where an actor's
  * character goes. */
 export const CREW_DEPARTMENT = "Crew";
+/** A cast credit that's a part, and one that's an appearance as themselves
+ * (lib/tmdb/credit-kind.ts). */
+const ACTING_DEPARTMENT = "Acting";
+const SELF_DEPARTMENT = "Self";
 const CREW_JOB_SEPARATOR = ", ";
 
 async function getPersonWithCreditsFromDb(personId: string) {
@@ -516,23 +532,36 @@ async function getPersonWithCreditsFromDb(personId: string) {
     ? await db.select().from(titles).where(eq(titles.id, person.knownForTitleId)).limit(1)
     : [];
 
-  // One entry per title: the role they played, if any, and the jobs they
-  // did on it (crewJobs, untranslated TMDb names).
+  // One entry per title: the role they played, if any, the jobs they did
+  // on it (crewJobs, untranslated TMDb names), and which of the Roles
+  // filter's kinds it falls under.
   const byTitle = new Map<
     string,
-    { credit: typeof credits.$inferSelect | null; crewJobs: string[]; title: typeof titles.$inferSelect }
+    {
+      credit: typeof credits.$inferSelect | null;
+      crewJobs: string[];
+      kinds: CreditKind[];
+      title: typeof titles.$inferSelect;
+    }
   >();
   for (const { credit, title } of rows) {
-    const entry = byTitle.get(title.id) ?? { credit: null, crewJobs: [], title };
+    const entry = byTitle.get(title.id) ?? { credit: null, crewJobs: [], kinds: [], title };
     if (credit.department === CREW_DEPARTMENT) {
       entry.crewJobs = (credit.characterName ?? "").split(CREW_JOB_SEPARATOR).filter(Boolean);
+      if (entry.crewJobs.length > 0 && !entry.kinds.includes("crew")) entry.kinds.push("crew");
     } else if (!entry.credit) {
       entry.credit = credit;
+      entry.kinds.push(credit.department === SELF_DEPARTMENT ? "self" : "acting");
     }
     byTitle.set(title.id, entry);
   }
 
-  return { person, filmography: [...byTitle.values()], knownFor: knownFor ?? null };
+  const knownForDepartment =
+    person?.rawTmdb && typeof person.rawTmdb === "object" && "known_for_department" in person.rawTmdb
+      ? String((person.rawTmdb as { known_for_department?: unknown }).known_for_department ?? "") || null
+      : null;
+
+  return { person, filmography: [...byTitle.values()], knownFor: knownFor ?? null, knownForDepartment };
 }
 
 /**

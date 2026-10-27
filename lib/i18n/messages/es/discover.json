@@ -169,5 +169,10 @@
   "searchNetwork": "Cadena",
   "searchBackToAll": "← Todos los resultados para «{query}»",
   "searchSectionFor": "{section} para «{query}»",
-  "noResultsHint": "Revisa la ortografía o prueba con un título más corto, el nombre de una persona o un estudio."
+  "noResultsHint": "Revisa la ortografía o prueba con un título más corto, el nombre de una persona o un estudio.",
+  "rolesLabel": "Papeles",
+  "rolesActing": "Papeles de actuación",
+  "rolesSelf": "Como sí mismo",
+  "rolesCrew": "Detrás de cámara",
+  "rolesAll": "Todos los créditos"
 }

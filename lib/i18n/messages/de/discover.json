@@ -169,5 +169,10 @@
   "searchNetwork": "Sender",
   "searchBackToAll": "← Alle Ergebnisse für „{query}“",
   "searchSectionFor": "{section} für „{query}“",
-  "noResultsHint": "Prüfe die Schreibweise oder versuche einen kürzeren Titel, einen Namen oder ein Studio."
+  "noResultsHint": "Prüfe die Schreibweise oder versuche einen kürzeren Titel, einen Namen oder ein Studio.",
+  "rolesLabel": "Rollen",
+  "rolesActing": "Schauspielrollen",
+  "rolesSelf": "Als sie selbst",
+  "rolesCrew": "Hinter der Kamera",
+  "rolesAll": "Alle Mitwirkungen"
 }

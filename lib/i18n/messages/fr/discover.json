@@ -169,5 +169,10 @@
   "searchNetwork": "Chaîne",
   "searchBackToAll": "← Tous les résultats pour « {query} »",
   "searchSectionFor": "{section} pour « {query} »",
-  "noResultsHint": "Vérifiez l’orthographe, ou essayez un titre plus court, le nom d’une personne ou un studio."
+  "noResultsHint": "Vérifiez l’orthographe, ou essayez un titre plus court, le nom d’une personne ou un studio.",
+  "rolesLabel": "Rôles",
+  "rolesActing": "Rôles d’acteur",
+  "rolesSelf": "Dans son propre rôle",
+  "rolesCrew": "Derrière la caméra",
+  "rolesAll": "Tous les crédits"
 }

@@ -35,6 +35,10 @@ extension API {
         /// episodes, specials left out ("96/96"). nil for a movie, a show the
         /// library doesn't have, and from servers older than the field.
         var episodes: EpisodeCounts? = nil
+        /// A person's credits only: what they did on the title — "acting",
+        /// "self" (an appearance as themselves) and/or "crew". nil elsewhere
+        /// and from servers older than the field.
+        var creditKinds: [String]? = nil
 
         var id: TitleID { TitleID(mediaType, tmdbId) }
     }

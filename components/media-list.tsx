@@ -15,6 +15,7 @@ import { useT } from "@/lib/i18n/client";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 import { resolutionTierOf } from "@/lib/quality";
 import type { EpisodeCounts } from "@/lib/library/episode-counts";
+import { CREDIT_FILTERS, matchesCreditFilter, type CreditFilter, type CreditKind } from "@/lib/tmdb/credit-kind";
 
 export type MediaEntry = {
   titleId: string;
@@ -45,6 +46,8 @@ export type MediaEntry = {
    * path for this title — likely two separate files on disk. */
   possibleDuplicate?: boolean;
   otherFilePath?: string | null;
+  /** A person's page only: what they did on it, for the Roles filter. */
+  creditKinds?: CreditKind[];
 };
 
 type SortOrder = "newest" | "oldest" | "az" | "recent";
@@ -66,6 +69,13 @@ const SOURCE_LABELS: Record<NonNullable<MediaEntry["source"]>, string> = {
   jellyfin: "Jellyfin",
   sonarr: "Sonarr",
   radarr: "Radarr",
+};
+
+const ROLE_LABELS: Record<CreditFilter, MessageKey> = {
+  acting: "discover.rolesActing",
+  self: "discover.rolesSelf",
+  crew: "discover.rolesCrew",
+  all: "discover.rolesAll",
 };
 
 const TYPE_LABELS: Record<TypeFilter, MessageKey> = {
@@ -162,6 +172,7 @@ export function MediaList({
   emptyMessage,
   favoritedKeys,
   showFavorite = false,
+  defaultRoleFilter,
 }: {
   entries: MediaEntry[];
   /** The subtitle column's heading (already translated), when there is one. */
@@ -180,6 +191,9 @@ export function MediaList({
    * between a movie and a TV show. */
   favoritedKeys?: Set<string>;
   showFavorite?: boolean;
+  /** A person's page: shows the Roles filter (acting, as themselves, behind
+   * the camera), opened on this one. */
+  defaultRoleFilter?: CreditFilter;
 }) {
   const t = useT();
   const router = useRouter();
@@ -197,6 +211,18 @@ export function MediaList({
     const v = searchParams.get("type");
     return VALID_TYPE.includes(v as TypeFilter) ? (v as TypeFilter) : "all";
   });
+  const [roleFilter, setRoleFilter] = useState<CreditFilter>(() => {
+    const v = searchParams.get("role");
+    return CREDIT_FILTERS.includes(v as CreditFilter) ? (v as CreditFilter) : (defaultRoleFilter ?? "all");
+  });
+  // Only the kinds this person has, so the menu never offers an empty list.
+  const roleOptions = useMemo(
+    () =>
+      CREDIT_FILTERS.filter(
+        (filter) => filter === "all" || entries.some((entry) => entry.creditKinds?.includes(filter)),
+      ),
+    [entries],
+  );
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(() => {
     const v = searchParams.get("status");
     return VALID_STATUS.includes(v as StatusFilter) ? (v as StatusFilter) : "all";
@@ -225,6 +251,7 @@ export function MediaList({
   const filteredEntries = useMemo(() => {
     const q = query.trim().toLowerCase();
     return entries.filter((entry) => {
+      if (defaultRoleFilter && !matchesCreditFilter(entry.creditKinds, roleFilter)) return false;
       if (typeFilter !== "all" && entry.mediaType !== typeFilter) return false;
       if (statusFilter !== "all" && entry.status !== statusFilter) return false;
       if (upgradeOnly && !entry.qualityCutoffNotMet) return false;
@@ -232,7 +259,7 @@ export function MediaList({
       if (q && !entry.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [entries, typeFilter, statusFilter, upgradeOnly, duplicatesOnly, query]);
+  }, [entries, defaultRoleFilter, roleFilter, typeFilter, statusFilter, upgradeOnly, duplicatesOnly, query]);
 
   // "Recently added" relies on `addedAt`, which is only ever populated for
   // Plex-sourced rows — for an arr-only library it would silently sort
@@ -289,6 +316,25 @@ export function MediaList({
               placeholder={t("discover.searchLibrary")}
               className="w-44 rounded-full border border-border bg-bg-0 px-3.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-accent"
             />
+          )}
+
+          {defaultRoleFilter && roleOptions.length > 1 && (
+            <select
+              aria-label={t("discover.rolesLabel")}
+              value={roleFilter}
+              onChange={(e) => {
+                const next = e.target.value as CreditFilter;
+                setRoleFilter(next);
+                syncParam("role", next, defaultRoleFilter);
+              }}
+              className="rounded-full border border-border bg-bg-0 px-3 py-1.5 text-xs text-text-secondary outline-none transition-colors hover:border-border-strong focus:border-accent"
+            >
+              {roleOptions.map((filter) => (
+                <option key={filter} value={filter}>
+                  {t(ROLE_LABELS[filter])}
+                </option>
+              ))}
+            </select>
           )}
 
           {showTypeFilter && (

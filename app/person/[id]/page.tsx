@@ -28,7 +28,7 @@ export default async function PersonPage({
   ]);
   if (!data) notFound();
 
-  const { person, knownFor, links, entries, favorited, favoritedKeys, arrConfigured } = data;
+  const { person, knownFor, links, entries, favorited, favoritedKeys, arrConfigured, defaultCreditFilter } = data;
 
   return (
     <div className="pb-6 sm:pb-7">
@@ -68,6 +68,7 @@ export default async function PersonPage({
             itemLabel="credits"
             showSearch
             showTypeFilter
+            defaultRoleFilter={defaultCreditFilter}
             arrConfigured={arrConfigured}
             emptyMessage={t("discover.emptyPerson")}
             favoritedKeys={favoritedKeys}
