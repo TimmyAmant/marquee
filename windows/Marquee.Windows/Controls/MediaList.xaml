@@ -40,7 +40,13 @@
                     Width="200"
                     IsSpellCheckEnabled="False"
                     TextChanged="OnSearchTextChanged" />
-                <!-- Both option lists are set from code-behind (MediaListViewModel.TypeOptions / OrderOptions). -->
+                <!-- The option lists are set from code-behind (MediaListViewModel.RoleOptions / TypeOptions / OrderOptions). -->
+                <ComboBox
+                    x:Name="RoleBox"
+                    x:Uid="Media_RoleBox"
+                    Visibility="{x:Bind List.HasRoleOptions, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
+                    SelectionChanged="OnRoleChanged"
+                    VerticalAlignment="Center" />
                 <ComboBox
                     x:Name="TypeBox"
                     SelectionChanged="OnTypeChanged"

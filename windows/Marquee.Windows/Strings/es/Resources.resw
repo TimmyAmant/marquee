@@ -5716,4 +5716,19 @@
   <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Tráiler</value>
   </data>
+  <data name="Media_RoleActing" xml:space="preserve">
+    <value>Papeles de actuación</value>
+  </data>
+  <data name="Media_RoleSelf" xml:space="preserve">
+    <value>Como sí mismo</value>
+  </data>
+  <data name="Media_RoleCrew" xml:space="preserve">
+    <value>Detrás de cámara</value>
+  </data>
+  <data name="Media_RoleAll" xml:space="preserve">
+    <value>Todos los créditos</value>
+  </data>
+  <data name="Media_RoleBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Papeles</value>
+  </data>
 </root>

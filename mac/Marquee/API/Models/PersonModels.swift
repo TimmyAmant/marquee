@@ -26,6 +26,10 @@ extension API {
         /// favorites and quick-add. Empty → "No processed filmography found
         /// for this person yet."
         let credits: [TitleCard]
+        /// Where the Roles filter opens: "acting" for an actor, "crew" for a
+        /// director or writer, "all" when that'd be empty. Nil on a server
+        /// older than the field (no Roles filter).
+        let defaultCreditFilter: String?
 
         var id: Int { tmdbId }
 

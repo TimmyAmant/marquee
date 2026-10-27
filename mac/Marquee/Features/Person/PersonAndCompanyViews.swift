@@ -20,6 +20,7 @@ struct PersonDetailView: View {
                         countLabel: { String(localized: "\($0) credits") },
                         showTypeFilter: true,
                         showSearch: true,
+                        defaultRoleFilter: person.defaultCreditFilter.flatMap(MediaListView.RoleFilter.init(rawValue:)),
                         emptyMessage: String(localized: "No processed filmography found for this person yet.")
                     )
                 }

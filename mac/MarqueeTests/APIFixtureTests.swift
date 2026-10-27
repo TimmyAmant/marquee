@@ -471,6 +471,8 @@ final class APIFixtureTests: XCTestCase {
         XCTAssertEqual(person.birthday?.string, "1964-09-02")
         XCTAssertNil(person.deathday)
         XCTAssertNotNil(person.age)
+        XCTAssertEqual(person.credits.first?.creditKinds, ["acting"])
+        XCTAssertEqual(person.defaultCreditFilter, "acting")
     }
 
     func testSeriesEpisodeCounts() throws {

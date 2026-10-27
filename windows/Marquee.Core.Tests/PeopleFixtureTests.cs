@@ -35,6 +35,8 @@ public sealed class PeopleFixtureTests
         Assert.Null(credit.Year);
         Assert.Null(credit.Status);
         Assert.True(credit.CanQuickAdd);
+        Assert.Equal(["acting"], credit.CreditKinds);
+        Assert.Equal("acting", person.DefaultCreditFilter);
     }
 
     [Fact]

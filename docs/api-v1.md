@@ -228,6 +228,12 @@ where the real server needed something the core contract didn't spell out.
     logos on Discover and network search results open it instead of
     `/series?network=`. A server older than this answers `404` — open the
     Series page filtered to the network, as before.
+28. **A person's Roles filter (0.77+, additive).** `GET /people/{tmdbId}`
+    gains `defaultCreditFilter`, and each of its `credits` gains
+    `creditKinds` — `"acting"`, `"self"` (an appearance as themselves) and/or
+    `"crew"` — for a Roles menu that opens on their parts rather than their
+    documentaries and talk-show spots (§ `GET /people/{tmdbId}`). A server
+    older than this omits both — show every credit and no menu.
 
 ---
 
@@ -1883,8 +1889,10 @@ Errors: `409 conflict` "Not tracked in Radarr/Sonarr.", `502 upstream`
   "credits": [
     { "mediaType": "movie", "tmdbId": 1638103, "name": "Constantine 2", "posterPath": "/aAcC.jpg", "year": null,
       "subtitle": "John Constantine", "overview": null, "rating": null, "status": null,
-      "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false }
-  ]
+      "favorited": false, "requested": false, "canQuickAdd": true, "canRequest": false,
+      "creditKinds": ["acting"] }
+  ],
+  "defaultCreditFilter": "acting"
 }
 ```
 
@@ -1900,8 +1908,17 @@ full-width band behind the header with the title page's fades, and a small
 "From {name}" link at the band's bottom right opens that title. Without it,
 keep the plain header.
 
-`credits` is the acting filmography (`subtitle` = character) with status,
-favorites and quick-add. The website's list defaults to **"Newest first"
+`credits` is the filmography (`subtitle` = character, then the jobs behind
+the camera) with status, favorites and quick-add. Each credit's
+`creditKinds` says what they did on it: `"acting"` (a part — playing
+yourself by name in a scripted film counts), `"self"` (an appearance as
+themselves: documentaries, biographies, talk/news/reality TV, stand-up,
+award shows, archive footage) and/or `"crew"` (directed, wrote, produced, …).
+The website's **Roles** menu filters on it — "Acting roles", "As themselves",
+"Behind the camera", "All credits", offering only the kinds present (hidden
+when there's just one) — and opens on `defaultCreditFilter` (`"acting"` for
+an actor, `"crew"` for a director or writer, `"all"` when that'd be empty).
+A server older than this omits both — show every credit and no menu. The website's list defaults to **"Newest first"
 (by year, unknown years last)** and offers client-side sorts ("Oldest first",
 "A–Z"), a type filter (All/Movies/TV), a title search and a grid/table toggle
 ("Role" column) — do those locally. Empty → "No processed filmography found

@@ -41,6 +41,13 @@ public sealed record PersonDetail
     /// </summary>
     public required IReadOnlyList<TitleCard> Credits { get; init; }
 
+    /// <summary>
+    /// Where the Roles filter opens: "acting" for an actor, "crew" for a
+    /// director or writer, "all" when that'd be empty. Null from a server
+    /// older than the field (no Roles filter).
+    /// </summary>
+    public string? DefaultCreditFilter { get; init; }
+
     public int Id => TmdbId;
 
     /// <summary>The official links this app can open, in the server's order.</summary>

@@ -5920,4 +5920,24 @@
   <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
     <value>Trailer</value>
   </data>
+  <data name="Media_RoleActing" xml:space="preserve">
+    <value>Acting roles</value>
+    <comment>Roles filter on a person's page: parts they acted.</comment>
+  </data>
+  <data name="Media_RoleSelf" xml:space="preserve">
+    <value>As themselves</value>
+    <comment>Roles filter: documentaries, talk shows and other appearances as themselves.</comment>
+  </data>
+  <data name="Media_RoleCrew" xml:space="preserve">
+    <value>Behind the camera</value>
+    <comment>Roles filter: directed, wrote, produced…</comment>
+  </data>
+  <data name="Media_RoleAll" xml:space="preserve">
+    <value>All credits</value>
+    <comment>Roles filter: everything.</comment>
+  </data>
+  <data name="Media_RoleBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Roles</value>
+    <comment>Screen-reader name of the Roles filter.</comment>
+  </data>
 </root>

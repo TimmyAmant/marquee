@@ -3,6 +3,7 @@
 // timestamps with milliseconds, "YYYY-MM-DD" calendar dates, and nullable
 // fields always present as null (never omitted).
 
+import type { CreditFilter, CreditKind } from "@/lib/tmdb/credit-kind";
 import type { DiscoverList, DiscoverShelfKey, SeeAllTarget } from "@/lib/discover/lists";
 import type { PermissionMap } from "@/lib/users/permissions";
 
@@ -324,6 +325,11 @@ export type TitleCard = {
    * show the library doesn't have, or when no source counts it. Older
    * servers leave the field out. */
   episodes: EpisodeCounts | null;
+  /** A person's credits only: what they did on the title — "acting" (a
+   * part), "self" (an appearance as themselves: documentaries, talk shows,
+   * stand-up) and/or "crew" (behind the camera). Left out elsewhere and by
+   * older servers. */
+  creditKinds?: CreditKind[];
 };
 
 export type EpisodeCounts = {
@@ -902,6 +908,10 @@ export type PersonDetail = {
   knownForTitle: KnownForTitleDto | null;
   externalLinks: ExternalLinkDto[];
   credits: TitleCard[];
+  /** Where the Roles filter over `credits` opens: "acting" for an actor,
+   * "crew" for a director or writer, "all" when that'd be empty. Older
+   * servers leave it out. */
+  defaultCreditFilter: CreditFilter;
 };
 
 export type CompanyDetail = {

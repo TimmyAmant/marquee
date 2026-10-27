@@ -10,6 +10,8 @@ struct MediaListView: View {
     var countLabel: (Int) -> String = { String(localized: "\($0) titles") }
     var showTypeFilter = false
     var showSearch = false
+    /// A person's page: shows the Roles filter, opened on this one.
+    var defaultRoleFilter: RoleFilter? = nil
     var emptyMessage = String(localized: "Nothing found.")
 
     @Environment(AppModel.self) private var model
@@ -46,6 +48,21 @@ struct MediaListView: View {
         }
     }
 
+    /// lib/tmdb/credit-kind.ts: a part, an appearance as themselves, work
+    /// behind the camera, or everything.
+    enum RoleFilter: String, CaseIterable, Identifiable {
+        case acting, themselves = "self", crew, all
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .acting: return String(localized: "Acting roles")
+            case .themselves: return String(localized: "As themselves")
+            case .crew: return String(localized: "Behind the camera")
+            case .all: return String(localized: "All credits")
+            }
+        }
+    }
+
     enum Layout: String, CaseIterable, Identifiable {
         case grid, table
         var id: String { rawValue }
@@ -54,17 +71,48 @@ struct MediaListView: View {
     @State private var query = ""
     @State private var order: API.TitleListOrder = .newestFirst
     @State private var typeFilter: TypeFilter = .all
+    /// nil until picked: `defaultRoleFilter` until then.
+    @State private var pickedRoleFilter: RoleFilter?
     @AppStorage("marquee.mediaList.layout") private var layout: Layout = .grid
 
     private var visible: [API.TitleCard] {
         let needle = query.trimmingCharacters(in: .whitespaces).lowercased()
         return cards
             .filter { card in
+                if defaultRoleFilter != nil, roleFilter != .all,
+                   let kinds = card.creditKinds, !kinds.contains(roleFilter.rawValue) { return false }
                 if let wanted = typeFilter.mediaType, card.mediaType != wanted { return false }
                 if !needle.isEmpty && !card.name.lowercased().contains(needle) { return false }
                 return true
             }
             .sorted(by: order)
+    }
+
+    private var roleFilter: RoleFilter { pickedRoleFilter ?? defaultRoleFilter ?? .all }
+
+    /// Only the kinds this person has, so the menu never offers an empty list.
+    private var roleOptions: [RoleFilter] {
+        guard defaultRoleFilter != nil else { return [] }
+        let options = RoleFilter.allCases.filter { filter in
+            filter == .all || cards.contains { $0.creditKinds?.contains(filter.rawValue) == true }
+        }
+        return options.count > 1 ? options : []
+    }
+
+    private var roleBinding: Binding<RoleFilter> {
+        Binding(get: { roleFilter }, set: { pickedRoleFilter = $0 })
+    }
+
+    @ViewBuilder
+    private var rolePicker: some View {
+        let options = roleOptions
+        if !options.isEmpty {
+            Picker("Roles", selection: roleBinding) {
+                ForEach(options) { Text($0.label).tag($0) }
+            }
+            .labelsHidden()
+            .fixedSize()
+        }
     }
 
     var body: some View {
@@ -107,6 +155,7 @@ struct MediaListView: View {
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 200)
             }
+            rolePicker
             if showTypeFilter {
                 Picker("Type", selection: $typeFilter) {
                     ForEach(TypeFilter.allCases) { Text($0.label).tag($0) }
@@ -163,6 +212,12 @@ struct MediaListView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 96)
+            }
+            if !roleOptions.isEmpty {
+                HStack(spacing: 10) {
+                    rolePicker
+                    Spacer(minLength: 0)
+                }
             }
             HStack(spacing: 10) {
                 if showTypeFilter {

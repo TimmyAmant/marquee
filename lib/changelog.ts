@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.77.0",
+    date: "2026-10-27",
+    changes: [
+      "People pages have a new Roles menu: Acting roles, As themselves, Behind the camera, or All credits. An actor's page now opens on just the movies and shows they acted in, so documentaries, biographies, talk-show and award-show spots, stand-up specials and archive footage no longer sit among their films. Playing yourself in a real movie (Bill Murray in Zombieland) still counts as acting. A director's page opens on what they directed, wrote and produced. Works on the website, Mac, iPhone and Windows.",
+    ],
+  },
+  {
     version: "0.76.4",
     date: "2026-10-26",
     changes: [

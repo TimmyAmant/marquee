@@ -77,6 +77,13 @@ public sealed record TitleCard
     /// </summary>
     public EpisodeCounts? Episodes { get; init; }
 
+    /// <summary>
+    /// A person's credits only: what they did on the title — "acting",
+    /// "self" (an appearance as themselves) and/or "crew". Null elsewhere
+    /// and from servers older than the field.
+    /// </summary>
+    public IReadOnlyList<string>? CreditKinds { get; init; }
+
     public TitleId Id => new(MediaType, TmdbId);
 
     /// <summary>Subtitle and year joined the way the card footer shows them: "Neo · 1999".</summary>
