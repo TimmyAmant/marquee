@@ -135,7 +135,8 @@ export interface JellyfinEpisodeItem {
  * which series have any file at all, specials included (an empty show
  * folder still gets a Series entry). One listing of every episode, trimmed
  * to the few fields it needs; a missing episode Jellyfin only knows from
- * metadata ("Virtual") doesn't count. */
+ * metadata ("Virtual") doesn't count. Throws when the answer can't be
+ * used (see `episodeListingIsUsable`). */
 export async function getEpisodeFileCountsBySeries(
   config: JellyfinConfig,
 ): Promise<{ counts: Map<string, number>; withFiles: Set<string> }> {
@@ -147,13 +148,23 @@ export async function getEpisodeFileCountsBySeries(
     EnableImages: "false",
     EnableUserData: "false",
   });
-  const body = await jellyfinFetch<{ Items: JellyfinEpisodeItem[] }>(
+  const { Items: items } = await jellyfinFetch<{ Items?: unknown }>(
     config,
     `/Items?${params.toString()}`,
     LIBRARY_TIMEOUT_MS,
   );
-  const items = body.Items ?? [];
+  if (!episodeListingIsUsable(items)) throw new Error("Jellyfin's episode listing came back unusable");
   return { counts: countEpisodeFilesBySeries(items), withFiles: seriesWithEpisodeFiles(items) };
+}
+
+/** Whether an episode listing says anything about which series have files:
+ * it has to be a list, and if it lists episodes, at least one has to name
+ * its series. The sync drops a show with no files, so reading anything else
+ * as "no series has a file" would take every show out of the library; an
+ * empty list is a real answer (a server with no episodes yet). Pure. */
+export function episodeListingIsUsable(items: unknown): items is JellyfinEpisodeItem[] {
+  if (!Array.isArray(items)) return false;
+  return items.length === 0 || items.some((item: JellyfinEpisodeItem) => Boolean(item?.SeriesId));
 }
 
 /** The series with at least one episode file, specials included. Pure. */

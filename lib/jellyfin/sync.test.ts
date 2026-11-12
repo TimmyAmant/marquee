@@ -30,58 +30,55 @@ vi.mock("@/lib/library/title-overrides", () => ({ applyTmdbIdOverride: async (_u
 
 import { resetTestDatabase, testDatabase } from "@/lib/test/pglite";
 import { jellyfinLibraryItems, users } from "@/lib/db/schema";
-import { seriesWithEpisodeFiles } from "@/lib/jellyfin/client";
 import { syncJellyfinLibrary } from "@/lib/jellyfin/sync";
 
 let userId: string;
 
 const series = (id: string, tmdb: string) => ({ Id: id, Type: "Series", Name: id, ProviderIds: { Tmdb: tmdb } });
+const movie = (id: string, tmdb: string) => ({ Id: id, Type: "Movie", Name: id, ProviderIds: { Tmdb: tmdb } });
 
 beforeEach(async () => {
   await resetTestDatabase();
   const { db } = await testDatabase();
   const [u] = await db.insert(users).values({ username: "admin", role: "admin", permissions: [] }).returning();
   userId = u.id;
-  api.items = [series("full", "1"), series("empty", "2"), series("specials", "3")];
+  api.items = [series("full", "1"), series("empty", "2"), series("specials", "3"), movie("film", "4")];
   api.episodes = new Map([["full", 10]]);
   api.withFiles = new Set(["full", "specials"]);
 });
 
-async function storedIds() {
+/** What's stored: each item's id and the episodes it has (specials left out). */
+async function stored() {
   const { db } = await testDatabase();
-  return (await db.select({ id: jellyfinLibraryItems.itemId }).from(jellyfinLibraryItems)).map((r) => r.id).sort();
+  const rows = await db
+    .select({ id: jellyfinLibraryItems.itemId, have: jellyfinLibraryItems.episodesHave })
+    .from(jellyfinLibraryItems);
+  return rows.map((r) => [r.id, r.have] as const).sort(([a], [b]) => a.localeCompare(b));
 }
 
 describe("the Jellyfin sync", () => {
-  it("leaves out a show with no episode files, and keeps one with only specials", async () => {
+  it("leaves out a show with no episode files, and keeps a movie and a show with only specials", async () => {
     await syncJellyfinLibrary(userId);
-    expect(await storedIds()).toEqual(["full", "specials"]);
+    expect(await stored()).toEqual([["film", null], ["full", 10], ["specials", 0]]);
   });
 
   it("drops a show stored earlier once its files are gone", async () => {
+    api.episodes = new Map([["full", 10], ["empty", 3]]);
     api.withFiles = new Set(["full", "empty", "specials"]);
     await syncJellyfinLibrary(userId);
-    expect(await storedIds()).toEqual(["empty", "full", "specials"]);
+    expect(await stored()).toEqual([["empty", 3], ["film", null], ["full", 10], ["specials", 0]]);
+    api.episodes = new Map([["full", 10]]);
     api.withFiles = new Set(["full", "specials"]);
     await syncJellyfinLibrary(userId);
-    expect(await storedIds()).toEqual(["full", "specials"]);
+    expect(await stored()).toEqual([["film", null], ["full", 10], ["specials", 0]]);
   });
 
-  it("keeps every show when the episode listing fails", async () => {
+  it("keeps every show, with no episode count, when the episode listing fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     api.episodes = null;
     await syncJellyfinLibrary(userId);
-    expect(await storedIds()).toEqual(["empty", "full", "specials"]);
-  });
-});
-
-describe("seriesWithEpisodeFiles", () => {
-  it("counts specials, not episodes Jellyfin only knows from metadata", () => {
-    expect([
-      ...seriesWithEpisodeFiles([
-        { SeriesId: "a", ParentIndexNumber: 0 },
-        { SeriesId: "b", ParentIndexNumber: 1, LocationType: "Virtual" },
-        { ParentIndexNumber: 1 },
-      ]),
-    ]).toEqual(["a"]);
+    expect(await stored()).toEqual([["empty", null], ["film", null], ["full", null], ["specials", null]]);
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 });

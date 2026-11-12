@@ -51,9 +51,12 @@ async function runSyncJellyfinLibrary(
     return { itemCount: 0 };
   }
   // Best-effort: without it a Jellyfin-only show just has no episode count
-  // on its poster.
+  // on its poster, and a show with no files stays in (see the loop below).
   const episodesBySeries = items.some((i) => i.Type === "Series")
-    ? await jellyfin.getEpisodeFileCountsBySeries(credential).catch(() => null)
+    ? await jellyfin.getEpisodeFileCountsBySeries(credential).catch((err) => {
+        console.warn(`[jellyfin-sync] episode listing failed for user ${userId}, keeping every show:`, err);
+        return null;
+      })
     : null;
   let itemCount = 0;
   const seenItemIds = new Set<string>();
@@ -68,7 +71,7 @@ async function runSyncJellyfinLibrary(
     // A show with no episode files — an empty folder Sonarr made when the
     // show was added — is listed by Jellyfin all the same, but isn't in the
     // library: storing it would make it Owned. (Unknown, when the episode
-    // listing failed, keeps it.)
+    // listing failed or couldn't be used, keeps it.)
     if (item.Type === "Series" && episodesBySeries && !episodesBySeries.withFiles.has(item.Id)) continue;
     seenItemIds.add(item.Id);
     const mediaType: MediaType = item.Type === "Movie" ? "movie" : "tv";
