@@ -5,6 +5,7 @@ import { saveNotFoundAfterHoursAction } from "@/app/settings/jobs/actions";
 import { useT } from "@/lib/i18n/client";
 import { showToast } from "@/components/toast";
 import { rich } from "@/lib/i18n/rich";
+import { orError } from "@/lib/async/or-error";
 
 /** Settings › Jobs, under the Can't Find Check: how many hours after
  * approval an unfound request is flagged. */
@@ -18,7 +19,7 @@ export function NotFoundHoursSetting({ initial }: { initial: number }) {
   async function save() {
     setBusy(true);
     setMessage(null);
-    const result = await saveNotFoundAfterHoursAction(Number(value));
+    const result = await orError(saveNotFoundAfterHoursAction(Number(value)), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) {
       setMessage({ error: result.error });
@@ -32,7 +33,8 @@ export function NotFoundHoursSetting({ initial }: { initial: number }) {
   }
 
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+    // A <span>, not a <div>: it sits inside the row's help text, a <p>.
+    <span className="mt-2 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
       {/* One sentence with the box inside it, wherever the language puts it. */}
       <label className="flex flex-wrap items-center gap-2">
         {rich(t("requests.notFoundHoursSetting"), {
@@ -61,6 +63,6 @@ export function NotFoundHoursSetting({ initial }: { initial: number }) {
       )}
       {message?.error && <span className="text-red-400">{message.error}</span>}
       {message?.ok && Number(value) === saved && <span className="text-owned">{message.ok}</span>}
-    </div>
+    </span>
   );
 }

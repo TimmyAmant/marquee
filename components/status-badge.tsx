@@ -26,7 +26,7 @@ export function StatusBadge({
   if (compact) {
     return (
       <span
-        className={`inline-flex h-[17px] items-center gap-1 rounded-[9px] border pl-[5px] pr-[6px] text-[10px] font-semibold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.35)] backdrop-blur-sm ${className}`}
+        className={`inline-flex h-[17px] items-center gap-1 rounded-[9px] border pl-[5px] pr-[6px] text-[10px] font-semibold leading-none shadow-[0_1px_4px_rgba(0,0,0,0.35)] ${className}`}
       >
         <span className="h-[5px] w-[5px] rounded-full bg-current" />
         {text.compactLabel}

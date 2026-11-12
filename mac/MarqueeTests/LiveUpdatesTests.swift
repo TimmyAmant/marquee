@@ -119,8 +119,12 @@ final class LiveUpdatesTests: XCTestCase {
 
     private final class FakeBanners: NotificationBannerPosting {
         var posted: [API.NotificationItem] = []
+        var accounts: [String] = []
 
-        func post(_ notification: API.NotificationItem) { posted.append(notification) }
+        func post(_ notification: API.NotificationItem, account: String) {
+            posted.append(notification)
+            accounts.append(account)
+        }
     }
 
     private final class MemoryWatermarks: NotificationWatermarkStore {

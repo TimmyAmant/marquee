@@ -11,6 +11,7 @@ import {
   nameMatchScore,
   normalizeName,
   parseQuery,
+  dottedSpelling,
   rankCompanies,
   rankPeople,
   rankTitles,
@@ -56,6 +57,12 @@ describe("nameMatchScore", () => {
     expect(nameMatchScore("Children of Dune", q)).toBe(300);
     expect(nameMatchScore("Arrakis", q)).toBe(0);
     expect(nameMatchScore(null, q)).toBe(0);
+  });
+
+  it("ignores word breaks for an exact match", () => {
+    expect(nameMatchScore("WALL·E", parseQuery("wall-e"))).toBe(1000);
+    expect(nameMatchScore("WALL·E", parseQuery("walle"))).toBe(1000);
+    expect(nameMatchScore("WALL·E", parseQuery("wall e 2008"))).toBe(900);
   });
 });
 
@@ -225,5 +232,17 @@ describe("hasExactName", () => {
   it("is true only for an exact (normalized) name", () => {
     expect(hasExactName(["Dune: Part Two", "DUNE"], "dune")).toBe(true);
     expect(hasExactName(["Dune: Part Two"], "dune")).toBe(false);
+  });
+});
+
+describe("dottedSpelling", () => {
+  it("turns hyphens between letters into dots", () => {
+    expect(dottedSpelling("wall-e")).toBe("wall·e");
+    expect(dottedSpelling("Spider-Man")).toBe("Spider·Man");
+  });
+
+  it("is null without one", () => {
+    expect(dottedSpelling("walle")).toBeNull();
+    expect(dottedSpelling("1917 - 2019")).toBeNull();
   });
 });

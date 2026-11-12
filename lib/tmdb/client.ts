@@ -1,4 +1,11 @@
 import "server-only";
+import {
+  SERIES_CAST_MARKER,
+  wholeSeriesCast,
+  wholeSeriesCrew,
+  type TmdbAggregateCastMember,
+  type TmdbAggregateCrewMember,
+} from "./series-cast";
 import { getStoredDiscoverLocale, getTmdbAccessToken } from "@/lib/integrations/app-settings";
 import { resolveDiscoverLocale, type DiscoverLocale } from "@/lib/discover/locale";
 import { TmdbError, TmdbNotConfiguredError } from "@/lib/tmdb/errors";
@@ -112,6 +119,7 @@ export async function verifyTmdbAccessToken(token: string): Promise<boolean> {
       ...(isV4Token ? { Authorization: `Bearer ${token}` } : {}),
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   return res.ok;
 }
@@ -488,7 +496,10 @@ export interface TmdbWatchProviderEntry {
 }
 
 export interface TmdbWatchProviders {
-  results?: Record<string, { link?: string; flatrate?: TmdbWatchProviderEntry[] }>;
+  results?: Record<
+    string,
+    { link?: string; flatrate?: TmdbWatchProviderEntry[]; free?: TmdbWatchProviderEntry[]; ads?: TmdbWatchProviderEntry[] }
+  >;
 }
 
 /** One of a movie's release dates in one country (release_dates append).
@@ -637,10 +648,26 @@ export interface TmdbTvDetails {
 }
 
 export function getTvDetails(id: number) {
-  return tmdbFetch<TmdbTvDetails>(`/tv/${id}`, {
-    append_to_response: "videos,external_ids,credits,recommendations,keywords,watch/providers,images,content_ratings",
+  return tmdbFetch<TmdbTvDetails & { aggregate_credits?: { cast?: TmdbAggregateCastMember[]; crew?: TmdbAggregateCrewMember[] } }>(`/tv/${id}`, {
+    append_to_response:
+      "videos,external_ids,credits,aggregate_credits,recommendations,keywords,watch/providers,images,content_ratings",
     include_image_language: TITLE_IMAGE_LANGUAGES,
-  }).then(trimTitleImages);
+  })
+    .then(trimTitleImages)
+    .then(({ aggregate_credits, ...details }): TmdbTvDetails => {
+      // The whole run's cast and crew in place of the latest season's,
+      // trimmed: a long-running show's aggregate list is thousands of guest
+      // stars.
+      if (!aggregate_credits?.cast?.length) return details;
+      return {
+        ...details,
+        credits: {
+          cast: wholeSeriesCast(aggregate_credits.cast),
+          crew: aggregate_credits.crew?.length ? wholeSeriesCrew(aggregate_credits.crew) : (details.credits?.crew ?? []),
+        },
+        [SERIES_CAST_MARKER]: true,
+      } as TmdbTvDetails;
+    });
 }
 
 /** A movie's or show's words and artwork in one language — laid over the
@@ -734,6 +761,7 @@ export interface TmdbNetworkDetails {
   id: number;
   name: string;
   logo_path: string | null;
+  homepage?: string | null;
 }
 
 export function getNetworkDetails(id: number) {
@@ -824,13 +852,16 @@ export function getTvSeasonDetails(tvId: number, seasonNumber: number, language?
   return tmdbFetch<{ episodes: TmdbEpisode[] }>(`/tv/${tvId}/season/${seasonNumber}`, { language });
 }
 
-/** A studio's most-voted titles (one page), which its newest pages miss
- * when it has been around a while: what lib/tmdb/cache.ts adds to a
- * company's catalog so its best-known pick sees the classics. */
-export function discoverTopVotedByCompany(mediaType: "movie" | "tv", companyId: number) {
-  return tmdbFetch<TmdbDiscoverResponse>(`/discover/${mediaType}`, {
-    with_companies: companyId,
-    sort_by: "vote_count.desc",
-    page: 1,
+/** A network's series (app/network/[id]): one page in `sort` order. */
+export function discoverTvByNetwork(
+  networkId: number,
+  sort: "first_air_date.desc" | "popularity.desc" | "vote_count.desc",
+  page = 1,
+) {
+  return tmdbFetch<TmdbDiscoverResponse>("/discover/tv", {
+    with_networks: networkId,
+    sort_by: sort,
+    page,
   });
 }
+

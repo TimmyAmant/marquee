@@ -54,6 +54,7 @@
   "noSuchTitle": "Diesen Titel gibt es auf TMDb nicht.",
   "noSuchPerson": "Diese Person gibt es auf TMDb nicht.",
   "noSuchCompany": "Diese Firma gibt es auf TMDb nicht.",
+  "noSuchNetwork": "Diesen Sender gibt es auf TMDb nicht.",
   "onlyTvHasSeasons": "Nur Serien haben Staffeln.",
   "noDiscoverList": "Keine Entdecken-Liste \"{list}\" (eine von {lists} oder die ID einer Entdecken-Reihe).",
   "noAdminToAddWith": "Es gibt kein Admin-Konto, mit dem Titel hinzugefügt werden können.",

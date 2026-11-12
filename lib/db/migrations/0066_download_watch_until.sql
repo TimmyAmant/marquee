@@ -1,0 +1,1 @@
+ALTER TABLE "arr_status_cache" ADD COLUMN "watch_until" timestamp with time zone;

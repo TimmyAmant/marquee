@@ -113,8 +113,6 @@ targets:
           # The Mac keeps its token in a file (ad-hoc signing breaks the login
           # Keychain across updates); iOS uses the Keychain (KeychainTokenStore).
           - Connection/FileTokenStore.swift
-          - Core/Security/CodeIdentity.swift
-          - Core/Security/Keychain.swift
           - App/Updates/**
           - Features/Shell/**
           - Resources/Assets.xcassets/**

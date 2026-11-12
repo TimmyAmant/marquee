@@ -53,6 +53,7 @@ public sealed partial class CodeStringsTests
         "RailScroll.cs: Pan",
         "ServerSession.cs: Windows PC",
         "SsoModels.cs: openid profile email",
+        "TrailerDialog.xaml.cs: Content-Type: text/html; charset=utf-8",
         "UpdateService.cs: Accept",
         "Updater.cs: /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /NORESTARTAPPLICATIONS /relaunch=1",
         "WhatsNew.cs: export const CHANGELOG",

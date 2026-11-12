@@ -24,6 +24,7 @@ import { rich } from "@/lib/i18n/rich";
 import { timeAgo } from "@/lib/i18n/format";
 import type { Translator } from "@/lib/i18n/translator";
 import { eventLabel, isPreferenceEvent } from "@/lib/notifications/events";
+import { orError } from "@/lib/async/or-error";
 
 // Settings › Account › Notifications, below "this device": the account's own
 // channels (Telegram, Pushover, email, Discord, ntfy, Slack, Gotify,
@@ -136,7 +137,7 @@ function ChannelRow({
   async function run(action: () => Promise<{ channel?: PersonalNotificationChannel; error?: string }>, ok?: string) {
     setBusy(true);
     setMessage(null);
-    const result = await action();
+    const result = await orError(action(), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.channel) onChange(result.channel);
     if (result.error) setMessage({ tone: "error", text: result.error });
@@ -145,7 +146,7 @@ function ChannelRow({
 
   async function remove() {
     setBusy(true);
-    const result = await removeChannelAction(channel.id);
+    const result = await orError(removeChannelAction(channel.id), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) setMessage({ tone: "error", text: result.error });
     else onRemoved();
@@ -355,7 +356,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
     setNotice(null);
     const config: Record<string, string> = {};
     for (const field of fieldsFor(t, kind, available, ntfyMode)) config[field.name] = String(form.get(field.name) ?? "");
-    const result = await addChannelAction({ kind, name: String(form.get("name") ?? ""), config });
+    const result = await orError(addChannelAction({ kind, name: String(form.get("name") ?? ""), config }), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) {
       setError(result.error);
@@ -374,7 +375,7 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
 
   async function connectTelegram() {
     setError(null);
-    const started = await startTelegramLinkAction();
+    const started = await orError(startTelegramLinkAction(), t("common.somethingWentWrong"));
     if (!started.code || !started.url) {
       setError(started.error ?? t("settings.telegramStartFailed"));
       return;
@@ -385,7 +386,9 @@ function AddChannel({ available, onAdded }: { available: PersonalNotificationCha
     for (let i = 0; i < 120 && run === polling.current; i++) {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       if (run !== polling.current) return;
-      const result = await pollTelegramLinkAction(started.code);
+      const result = await pollTelegramLinkAction(started.code).catch(() => ({ pending: true, error: undefined }));
+      if (run !== polling.current) return;
+      // A dropped connection counts as still waiting: ask again next time.
       if (result.pending) continue;
       setLink(null);
       if (result.error) setError(result.error);
@@ -511,6 +514,7 @@ function PreferenceMatrix({
   const usable = channels.filter((c) => c.verified);
 
   async function toggle(event: string, change: { inApp?: boolean; push?: boolean; channels?: Record<string, boolean> }) {
+    const before = rows;
     setSaving(true);
     setError(null);
     // Straight away on screen; put right from the answer.
@@ -521,9 +525,10 @@ function PreferenceMatrix({
           : row,
       ),
     );
-    const result = await savePreferencesAction([{ event, ...change }]);
+    const result = await orError(savePreferencesAction([{ event, ...change }]), t("common.somethingWentWrong"));
     setSaving(false);
     if (result.data) onSaved(result.data.events);
+    else if (result.error) onSaved(before);
     if (result.error) setError(result.error);
   }
 

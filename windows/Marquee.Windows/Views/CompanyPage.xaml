@@ -87,6 +87,7 @@
                                     IsTextSelectionEnabled="True"
                                     VerticalAlignment="Center" />
                                 <Button
+                                    Visibility="{x:Bind ViewModel.ShowsFavorite, Mode=OneWay, Converter={StaticResource BoolToVisibility}}"
                                     Command="{x:Bind ViewModel.ToggleFavoriteCommand}"
                                     Padding="8,4"
                                     VerticalAlignment="Center"

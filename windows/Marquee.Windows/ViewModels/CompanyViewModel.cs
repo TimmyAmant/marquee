@@ -18,6 +18,7 @@ namespace Marquee.Windows.ViewModels;
 public sealed partial class CompanyViewModel : ObservableObject
 {
     public static string EmptyTitles => Loc.Get("Company_EmptyTitles");
+    public static string EmptyNetworkTitles => Loc.Get("Network_EmptyTitles");
 
     private readonly AppModel model;
     private CancellationTokenSource? loadCancellation;
@@ -74,6 +75,13 @@ public sealed partial class CompanyViewModel : ObservableObject
     /// <summary>The studio this page shows; 0 until <see cref="Activate"/> says which.</summary>
     public int TmdbId { get; private set; }
 
+    /// <summary>A TV network's page (app/network/[id]): no favorite.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsFavorite))]
+    private bool isNetwork;
+
+    public bool ShowsFavorite => !IsNetwork;
+
     public bool HasCompany => Company != null;
     public bool ShowsError => ErrorMessage != null && !HasCompany;
 
@@ -96,9 +104,9 @@ public sealed partial class CompanyViewModel : ObservableObject
     // MARK: Lifecycle
 
     /// <summary>The page is on screen for <paramref name="tmdbId"/>: follow reloads and fetch (once).</summary>
-    public void Activate(int tmdbId)
+    public void Activate(int tmdbId, bool isNetwork = false)
     {
-        if (active && tmdbId == TmdbId)
+        if (active && tmdbId == TmdbId && isNetwork == IsNetwork)
         {
             return;
         }
@@ -106,9 +114,10 @@ public sealed partial class CompanyViewModel : ObservableObject
         {
             Deactivate();
         }
-        if (tmdbId != TmdbId)
+        if (tmdbId != TmdbId || isNetwork != IsNetwork)
         {
             TmdbId = tmdbId;
+            IsNetwork = isNetwork;
             logoUrl = null;
             logo = null;
             Titles = null;
@@ -153,7 +162,9 @@ public sealed partial class CompanyViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var fresh = await model.Api.Companies.DetailAsync(TmdbId, token);
+            var fresh = IsNetwork
+                ? await model.Api.Companies.NetworkAsync(TmdbId, token)
+                : await model.Api.Companies.DetailAsync(TmdbId, token);
             if (token.IsCancellationRequested)
             {
                 return;
@@ -161,7 +172,7 @@ public sealed partial class CompanyViewModel : ObservableObject
             logoUrl = fresh.LogoPath.Url(ImageSize.W342);
             logo = null;
             IsFavorited = fresh.Favorited;
-            Titles = new MediaListViewModel(model, fresh.Titles, MediaListNoun.Title, EmptyTitles);
+            Titles = new MediaListViewModel(model, fresh.Titles, MediaListNoun.Title, IsNetwork ? EmptyNetworkTitles : EmptyTitles);
             Hero = EntityHeroItem.For(model, fresh.KnownForTitle);
             Links = EntityLinkItems.From(fresh.Links);
             Company = fresh;
@@ -170,6 +181,13 @@ public sealed partial class CompanyViewModel : ObservableObject
         {
             if (error.IsCancellation || token.IsCancellationRequested)
             {
+                return;
+            }
+            if (IsNetwork && Company == null && error.Kind == ApiErrorKind.NotFound)
+            {
+                // A server older than 0.76 has no network pages: the Series
+                // grid filtered to the network, as before.
+                model.Browse(MediaType.Tv, networkId: TmdbId);
                 return;
             }
             if (Company == null)

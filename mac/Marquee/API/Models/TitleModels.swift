@@ -80,7 +80,10 @@ extension API {
             let appUrl: String?
 
             var id: String { url }
-            var link: URL? { URL(string: url) }
+            /// The web app's page: http or https only (`SafeLink`).
+            var link: URL? { SafeLink.web(url) }
+            /// The media server's app link (`plex://` and friends only).
+            var appLink: URL? { SafeLink.mediaApp(appUrl) }
 
             /// The menu's line when there are several: the label, and the
             /// server's name when it has one.
@@ -119,12 +122,9 @@ extension API {
             /// The ordered button row after "▶ Trailer".
             let external: [ExternalLink]
 
-            /// `https://www.youtube.com/watch?v={trailerYoutubeKey}`.
-            var trailerURL: URL? {
-                guard let key = trailerYoutubeKey.nonBlank,
-                      let encoded = key.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return nil }
-                return URL(string: "https://www.youtube.com/watch?v=\(encoded)")
-            }
+            /// `https://www.youtube.com/watch?v={trailerYoutubeKey}`, or nil
+            /// when there's no key or it isn't shaped like one (`YouTubeTrailer`).
+            var trailerURL: URL? { YouTubeTrailer.watchURL(trailerYoutubeKey) }
         }
 
         struct ExternalLink: Codable, Hashable, Sendable {
@@ -132,7 +132,7 @@ extension API {
             let label: String
             let url: String
 
-            var link: URL? { URL(string: url) }
+            var link: URL? { SafeLink.web(url) }
         }
 
         /// A season row in the "Episodes" accordion.

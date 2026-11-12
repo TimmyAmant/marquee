@@ -63,6 +63,7 @@ export function titleCard(
     canRequest: extra.canRequest ?? false,
     // Series only, whatever a caller passes.
     episodes: base.mediaType === "tv" ? (extra.episodes ?? null) : null,
+    ...(extra.creditKinds ? { creditKinds: extra.creditKinds } : {}),
   };
 }
 

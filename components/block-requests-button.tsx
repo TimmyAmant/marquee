@@ -6,6 +6,7 @@ import { blockTitleAction, unblockTitleAction } from "@/lib/requests/blocklist-a
 import type { MediaType } from "@/lib/db/schema";
 import { useT } from "@/lib/i18n/client";
 import { MENU_ITEM, PILL_NOTE, PILL_OUTLINE } from "@/components/pill-styles";
+import { orError } from "@/lib/async/or-error";
 
 /** The admin's "Block requests" / "Unblock requests" on a title page
  * (lib/requests/blocklist.ts). A title blocked by a keyword can only be
@@ -32,7 +33,7 @@ export function BlockRequestsButton({
   async function run(action: () => Promise<{ error?: string }>) {
     setBusy(true);
     setError(null);
-    const result = await action();
+    const result = await orError(action(), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) setError(result.error);
     else {

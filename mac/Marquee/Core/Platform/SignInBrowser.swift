@@ -16,7 +16,11 @@ final class SignInBrowser {
     private let anchor = PresentationAnchor()
     #endif
 
-    func open(_ url: URL, openURL: OpenURLAction) {
+    /// - Parameter server: The Marquee server, whose own address may serve
+    ///   the page over plain http; otherwise only https is opened
+    ///   (`SafeLink.allowsSignInPage`), and anything else is ignored.
+    func open(_ url: URL, server: URL? = nil, openURL: OpenURLAction) {
+        guard SafeLink.allowsSignInPage(url, server: server) else { return }
         #if os(iOS)
         close()
         // The server's page never redirects to marquee://, so the sheet stays

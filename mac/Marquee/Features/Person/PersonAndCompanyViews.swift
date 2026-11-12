@@ -20,6 +20,7 @@ struct PersonDetailView: View {
                         countLabel: { String(localized: "\($0) credits") },
                         showTypeFilter: true,
                         showSearch: true,
+                        defaultRoleFilter: person.defaultCreditFilter.flatMap(MediaListView.RoleFilter.init(rawValue:)),
                         emptyMessage: String(localized: "No processed filmography found for this person yet.")
                     )
                 }
@@ -205,9 +206,12 @@ struct PersonDetailView: View {
     }
 }
 
-/// app/company/[id]/page.tsx + components/company-header.tsx.
+/// app/company/[id]/page.tsx + components/company-header.tsx — and
+/// app/network/[id]/page.tsx, a TV network's page laid out the same (no
+/// favorite, no Movies/TV filter).
 struct CompanyDetailView: View {
     let tmdbId: Int
+    var isNetwork = false
 
     @Environment(AppModel.self) private var model
     @State private var company: API.CompanyDetail?
@@ -221,9 +225,11 @@ struct CompanyDetailView: View {
                 } rows: {
                     MediaListView(
                         cards: company.titles,
-                        showTypeFilter: true,
+                        showTypeFilter: !isNetwork,
                         showSearch: true,
-                        emptyMessage: String(localized: "No titles found for this studio yet.")
+                        emptyMessage: isNetwork
+                            ? String(localized: "No series found for this network yet.")
+                            : String(localized: "No titles found for this studio yet.")
                     )
                 }
             } else {
@@ -231,9 +237,11 @@ struct CompanyDetailView: View {
                     Group {
                         if let error {
                             EmptyStateView(
-                                title: String(localized: "Couldn't load this studio"),
+                                title: isNetwork
+                                    ? String(localized: "Couldn't load this network")
+                                    : String(localized: "Couldn't load this studio"),
                                 message: error,
-                                systemImage: "building.2",
+                                systemImage: isNetwork ? "tv" : "building.2",
                                 actionTitle: String(localized: "Try again"),
                                 action: { model.reload() }
                             )
@@ -298,7 +306,9 @@ struct CompanyDetailView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
+            if !isNetwork {
+                FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
+            }
             if let summary = company.shortDescription {
                 Text(summary)
                     .font(.system(size: Metrics.text(13.5)))
@@ -335,7 +345,9 @@ struct CompanyDetailView: View {
                         .font(.marqueeDisplay(38))
                         .foregroundStyle(Theme.textPrimary)
                         .shadow(color: .black.opacity(0.25), radius: 10, y: 2)
-                    FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
+                    if !isNetwork {
+                        FavoriteButton(target: FavoriteTarget(.company, company.tmdbId, favorited: company.favorited))
+                    }
                 }
                 Text("\(company.titleCount) titles in the catalog")
                     .font(.system(size: Metrics.text(13)))
@@ -355,12 +367,18 @@ struct CompanyDetailView: View {
 
     private func load() async {
         do {
-            let fresh = try await model.api.companies.detail(tmdbId)
+            let fresh = isNetwork
+                ? try await model.api.companies.network(tmdbId)
+                : try await model.api.companies.detail(tmdbId)
             if Task.isCancelled { return }
             company = fresh
             error = nil
         } catch let failure as APIError where failure.isCancellation {
             return
+        } catch APIError.notFound where isNetwork && company == nil {
+            // A server older than 0.76 has no network pages: the Series
+            // page filtered to the network, as before.
+            model.browse(.tv, networkId: tmdbId)
         } catch {
             if company == nil { self.error = error.localizedDescription }
         }

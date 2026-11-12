@@ -50,13 +50,13 @@
     {
       "id": "disk-space-snapshot",
       "name": "Disk Space Snapshot",
-      "schedule": "Daily at 3:00 AM",
+      "schedule": "Daily at 3:00 AM (UTC)",
       "description": "Records free/used disk space for the storage forecast shown elsewhere in the app."
     },
     {
       "id": "cleanup",
       "name": "Database Cleanup",
-      "schedule": "Daily at 3:30 AM",
+      "schedule": "Daily at 3:30 AM (UTC)",
       "description": "Clears out old notifications and activity, year-old disk snapshots, and expired app sign-ins so the database doesn't grow forever."
     }
   ]

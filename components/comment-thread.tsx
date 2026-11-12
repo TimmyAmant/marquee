@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import type { Comment, CommentThread } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import type { MessageKey, Translator } from "@/lib/i18n/translator";
 
 // The conversation on a request or problem report (lib/comments): the
@@ -44,6 +45,7 @@ function CommentItem({
   onChanged: () => void;
 }) {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.body);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ function CommentItem({
           <span className="font-medium text-text-primary">{comment.author.label}</span>
           {role && <span>{role}</span>}
           {note && <span>· {note}</span>}
-          <span>· {formatDate(t, comment.createdAt, "dateTime")}</span>
+          <span>· {formatDate(t, comment.createdAt, "dateTime", timeZone)}</span>
           {comment.editedAt && <span>· {t("title.edited")}</span>}
         </p>
         {editing ? (

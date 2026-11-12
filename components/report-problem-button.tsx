@@ -10,6 +10,7 @@ import {
   type IssueKind,
   type MediaType,
 } from "@/lib/db/schema";
+import { orError } from "@/lib/async/or-error";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -45,12 +46,15 @@ export function ReportProblemButton({
     }
     setBusy(true);
     setError(null);
-    const result = await reportIssueAction(mediaType, tmdbId, {
-      kind,
-      message,
-      seasonNumber: season || null,
-      episodeNumber: episode || null,
-    });
+    const result = await orError(
+      reportIssueAction(mediaType, tmdbId, {
+        kind,
+        message,
+        seasonNumber: season || null,
+        episodeNumber: episode || null,
+      }),
+      t("common.somethingWentWrong"),
+    );
     setBusy(false);
     if (result.error) {
       setError(result.error);

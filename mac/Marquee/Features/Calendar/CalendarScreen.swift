@@ -12,6 +12,8 @@ struct CalendarScreen: View {
     @State private var error: String?
 
     private static let maxVisiblePerDay = 4
+    /// Days whose "+N more" was clicked: every title shows.
+    @State private var expandedDays: Set<API.CalendarDay> = []
 
     var body: some View {
         Group {
@@ -44,7 +46,7 @@ struct CalendarScreen: View {
                     }
                     .padding(.horizontal, 32)
                     .padding(.vertical, 28)
-                    .frame(maxWidth: 1240)
+                    .frame(maxWidth: 1680)
                     .frame(maxWidth: .infinity)
                 }
                 .scrollsUnderNavRail()
@@ -92,10 +94,10 @@ struct CalendarScreen: View {
                 // Sunday first, like the server's grid, in the app's language.
                 ForEach(Array(API.CalendarDay.gregorian.shortWeekdaySymbols.enumerated()), id: \.offset) { _, label in
                     Text(label)
-                        .font(.system(size: Metrics.text(11.5), weight: .medium))
+                        .font(.system(size: Metrics.text(13), weight: .semibold))
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 10)
                         .background(Theme.bg1)
                 }
             }
@@ -105,10 +107,11 @@ struct CalendarScreen: View {
                         day: day.day,
                         isToday: day == page.today,
                         inMonth: day.month == page.month.month && day.year == page.month.year,
-                        entries: byDay[day] ?? [],
-                        maxVisible: Self.maxVisiblePerDay
-                    ) { entry in
-                        model.openTitle(entry.titleID)
+                        titles: API.CalendarDayTitle.group(byDay[day] ?? []),
+                        maxVisible: expandedDays.contains(day) ? .max : Self.maxVisiblePerDay,
+                        expand: { expandedDays.insert(day) }
+                    ) { title in
+                        model.openTitle(title.titleID)
                     }
                 }
             }
@@ -144,62 +147,76 @@ private struct DayCell: View {
     let day: Int
     let isToday: Bool
     let inMonth: Bool
-    let entries: [API.CalendarEntry]
+    let titles: [API.CalendarDayTitle]
     let maxVisible: Int
-    let open: (API.CalendarEntry) -> Void
+    let expand: () -> Void
+    let open: (API.CalendarDayTitle) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("\(day)")
-                .font(.system(size: Metrics.text(11.5), weight: isToday ? .semibold : .regular))
+                .font(.system(size: Metrics.text(14), weight: isToday ? .bold : .medium))
+                .monospacedDigit()
                 .foregroundStyle(isToday ? Theme.bg0 : Theme.textSecondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 1)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
                 .background(Capsule().fill(isToday ? Theme.accent : .clear))
 
-            ForEach(entries.prefix(maxVisible)) { entry in
-                EntryRow(entry: entry) { open(entry) }
+            ForEach(titles.prefix(maxVisible)) { title in
+                EntryRow(title: title) { open(title) }
             }
-            if entries.count > maxVisible {
-                Text("+\(entries.count - maxVisible) more")
-                    .font(.system(size: Metrics.text(10)))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.leading, 4)
+            if titles.count > maxVisible {
+                Button(action: expand) {
+                    Text("+\(titles.count - maxVisible) more")
+                        .font(.system(size: Metrics.text(12), weight: .medium))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.leading, 6)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
             }
             Spacer(minLength: 0)
         }
-        .padding(6)
-        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
-        .background(Theme.bg0)
+        .padding(8)
+        .frame(maxWidth: .infinity, minHeight: 168, alignment: .topLeading)
+        .background(isToday ? Theme.bg1 : Theme.bg0)
         .opacity(inMonth ? 1 : 0.4)
     }
 }
 
 private struct EntryRow: View {
-    let entry: API.CalendarEntry
+    let title: API.CalendarDayTitle
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                RemoteImage(entry.posterPath, size: .w92, showsShimmer: false)
-                    .frame(width: 16, height: 24)
+            HStack(spacing: 8) {
+                RemoteImage(title.posterPath, size: .w92, showsShimmer: false)
+                    .frame(width: 26, height: 39)
                     .background(Theme.bg2)
-                    .clipShape(RoundedRectangle(cornerRadius: 2))
-                Text(entry.name)
-                    .font(.system(size: Metrics.text(11)))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title.name)
+                        .font(.system(size: Metrics.text(13), weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(title.subtitle)
+                        .font(.system(size: Metrics.text(11.5)))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.textSecondary)
+                        .lineLimit(1)
+                }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 2)
-            .background(RoundedRectangle(cornerRadius: 5).fill(hovering ? Theme.bg1 : .clear))
+            .padding(.horizontal, 5)
+            .padding(.vertical, 4)
+            .background(RoundedRectangle(cornerRadius: 6).fill(hovering ? Theme.bg2 : .clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("\(entry.name) — \(entry.subtitle)")
+        .help("\(title.name) — \(title.subtitle)")
         .onHover { hovering = $0 }
     }
 }

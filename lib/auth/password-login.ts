@@ -76,8 +76,12 @@ export async function authenticateWithPassword(
  *    whoever made the failures is affected.
  *  - Per username, from anywhere: past 5 failures, attempts on it are queued
  *    one at a time, spaced 1s, 2s, 4s… up to 10s apart. That caps the guess
- *    rate however many addresses an attacker uses, but never refuses — the
- *    right password still gets in, after at most a short wait.
+ *    rate however many addresses an attacker uses. The queue holds at most
+ *    10s of waiting: an attempt that would wait longer is refused outright
+ *    (and not counted) instead of booked, so a burst of hundreds of parallel
+ *    guesses can't push the next free slot an hour out and make the right
+ *    password wait behind them. Once the burst stops, the queue drains
+ *    within 10s and the owner gets straight back in.
  * Without a trusted address (no TRUSTED_PROXY_HOPS) there is no first layer:
  * everyone would share one address bucket, and filling it would lock
  * everyone out. A `check` that throws (the service behind it unreachable)
@@ -109,7 +113,8 @@ export async function withLoginBudget<T extends object>(
   // a free guess. The slot is booked in the same synchronous step for the
   // same reason. A correct password gets its attempt refunded below, so
   // normal use costs nothing.
-  const wait = reserveSlot(usernameKey, loginBackoffMs(attemptCount(usernameKey)));
+  const wait = reserveSlot(usernameKey, loginBackoffMs(attemptCount(usernameKey)), LOGIN_BACKOFF_MAX_MS);
+  if (wait === null) return { ok: false, reason: "rate_limited" };
   recordFailedAttempt(usernameKey, LOGIN_WINDOW_MS);
   for (const [key] of clientLimits) recordFailedAttempt(key, LOGIN_WINDOW_MS);
   if (wait > 0) await sleep(wait);

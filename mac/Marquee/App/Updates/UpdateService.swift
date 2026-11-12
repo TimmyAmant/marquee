@@ -65,8 +65,8 @@ struct UpdateService: Sendable {
 
     // MARK: Downloading
 
-    /// Downloads the zip into `directory`, hashing as it goes, and refuses it
-    /// unless its size and SHA-256 match.
+    /// Downloads the zip into `directory`, then refuses it unless its size
+    /// and SHA-256 match.
     @concurrent
     func download(
         _ update: AvailableUpdate,
@@ -78,14 +78,32 @@ struct UpdateService: Sendable {
             throw UpdateError.untrustedHost(update.download.host ?? update.download.absoluteString)
         }
         let delegate = RedirectGuard()
-        let bytes: URLSession.AsyncBytes
+        // URLSession writes the download to a file of its own; this only
+        // reports how far it's got, and stops one that's bigger than promised
+        // rather than let it fill the disk.
+        let monitor = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(200))
+                guard let received = delegate.bytesReceived, received > 0 else { continue }
+                if received > update.size {
+                    delegate.cancelOversized()
+                    return
+                }
+                progress(Double(received) / Double(update.size))
+            }
+        }
+        defer { monitor.cancel() }
+
+        let temporary: URL
         let response: URLResponse
         do {
-            (bytes, response) = try await session.bytes(for: URLRequest(url: update.download), delegate: delegate)
+            (temporary, response) = try await session.download(for: URLRequest(url: update.download), delegate: delegate)
         } catch {
             if let host = delegate.refusedHost { throw UpdateError.untrustedHost(host) }
+            if delegate.wasOversized { throw UpdateError.sizeMismatch }
             throw UpdateError.downloadFailed
         }
+        defer { try? FileManager.default.removeItem(at: temporary) }
         if let host = delegate.refusedHost { throw UpdateError.untrustedHost(host) }
         // Where the redirects ended up.
         guard Self.isAllowed(response.url) else {
@@ -94,46 +112,37 @@ struct UpdateService: Sendable {
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError.downloadFailed }
 
         let file = directory.appendingPathComponent(AvailableUpdate.assetName)
-        guard FileManager.default.createFile(atPath: file.path, contents: nil),
-              let handle = try? FileHandle(forWritingTo: file)
-        else { throw UpdateError.downloadFailed }
-        defer { try? handle.close() }
-
-        var hasher = SHA256()
-        var received = 0
-        var buffer = Data()
-        buffer.reserveCapacity(Self.chunkSize)
         do {
-            for try await byte in bytes {
-                buffer.append(byte)
-                guard buffer.count == Self.chunkSize else { continue }
-                received += try write(buffer, to: handle, hashing: &hasher)
-                buffer.removeAll(keepingCapacity: true)
-                // Bigger than promised: stop now rather than fill the disk.
-                if received > update.size { throw UpdateError.sizeMismatch }
-                progress(Double(received) / Double(update.size))
-            }
-            received += try write(buffer, to: handle, hashing: &hasher)
-        } catch let error as UpdateError {
-            throw error
+            try? FileManager.default.removeItem(at: file)
+            try FileManager.default.moveItem(at: temporary, to: file)
         } catch {
             throw UpdateError.downloadFailed
         }
+        let size = (try? FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.intValue
+        guard size == update.size else { throw UpdateError.sizeMismatch }
         progress(1)
 
-        guard received == update.size else { throw UpdateError.sizeMismatch }
-        let actual = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        let actual: String
+        do {
+            actual = try Self.sha256(of: file)
+        } catch {
+            throw UpdateError.downloadFailed
+        }
         guard actual == expected.lowercased() else { throw UpdateError.checksumMismatch }
         return file
     }
 
     private static let chunkSize = 256 * 1024
 
-    private func write(_ chunk: Data, to handle: FileHandle, hashing hasher: inout SHA256) throws -> Int {
-        guard !chunk.isEmpty else { return 0 }
-        hasher.update(data: chunk)
-        try handle.write(contentsOf: chunk)
-        return chunk.count
+    /// The file's SHA-256 as lowercase hex, read a chunk at a time.
+    static func sha256(of file: URL) throws -> String {
+        let handle = try FileHandle(forReadingFrom: file)
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while let chunk = try handle.read(upToCount: chunkSize), !chunk.isEmpty {
+            hasher.update(data: chunk)
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     private func fetch(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
@@ -154,12 +163,29 @@ struct UpdateService: Sendable {
     }
 }
 
-/// Follows a redirect only to another allowed host over HTTPS.
+/// Follows a redirect only to another allowed host over HTTPS, and keeps
+/// hold of its task so a download's progress can be read.
 private final class RedirectGuard: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private let lock = NSLock()
     private var refused: String?
+    private var task: URLSessionTask?
+    private var oversized = false
 
     var refusedHost: String? { lock.withLock { refused } }
+    var wasOversized: Bool { lock.withLock { oversized } }
+    var bytesReceived: Int? { lock.withLock { task.map { Int($0.countOfBytesReceived) } } }
+
+    func cancelOversized() {
+        let task = lock.withLock {
+            oversized = true
+            return self.task
+        }
+        task?.cancel()
+    }
+
+    func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
+        lock.withLock { self.task = task }
+    }
 
     func urlSession(
         _ session: URLSession,

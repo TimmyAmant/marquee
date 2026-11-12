@@ -17,4 +17,11 @@ public sealed class CompaniesEndpoints(MarqueeApi.Transport transport)
     /// </summary>
     public Task<CompanyDetail> DetailAsync(int tmdbId, CancellationToken ct = default) =>
         transport.GetAsync<CompanyDetail>($"/companies/{tmdbId}", timeout: MarqueeApi.Timeouts.Tmdb, ct: ct);
+
+    /// <summary>
+    /// <c>GET /networks/{tmdbId}</c> (0.76+): a TV network and its series, in
+    /// a studio's shape. A server older than that answers NotFound.
+    /// </summary>
+    public Task<CompanyDetail> NetworkAsync(int tmdbId, CancellationToken ct = default) =>
+        transport.GetAsync<CompanyDetail>($"/networks/{tmdbId}", timeout: MarqueeApi.Timeouts.Tmdb, ct: ct);
 }

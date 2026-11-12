@@ -56,16 +56,30 @@ export function originalTitleOf(type: "movie" | "tv", raw: TmdbMovieDetails | Tm
 
 export type WatchProvider = { providerId: number; name: string; logoPath: string | null };
 
-/** "Currently streaming on": the subscription services in `region`, plus
- * TMDb's (JustWatch) page for the title there. Empty when none. */
+/** An https address as given, or null: TMDb's watch link becomes a link on
+ * the title page, so nothing else (a javascript: URL, plain http) gets
+ * through. */
+export function httpsUrlOrNull(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return new URL(value.trim()).protocol === "https:" ? value.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** "Currently streaming on": the services in `region` it streams on with
+ * no extra charge — subscriptions, then free and ad-supported ones (Tubi,
+ * Pluto TV, Freevee) — plus TMDb's (JustWatch) page for the title there.
+ * Empty when none. Rentals and purchases aren't "streaming on". */
 export function streamingProvidersFor(
   providers: TmdbWatchProviders | undefined,
   region: string,
 ): { region: string; providers: WatchProvider[]; link: string | null } {
   const entry = providers?.results?.[region.toUpperCase()];
   const seen = new Set<number>();
-  const list = (entry?.flatrate ?? [])
+  const list = [...(entry?.flatrate ?? []), ...(entry?.free ?? []), ...(entry?.ads ?? [])]
     .filter((p) => (seen.has(p.provider_id) ? false : (seen.add(p.provider_id), true)))
     .map((p) => ({ providerId: p.provider_id, name: p.provider_name, logoPath: p.logo_path ?? null }));
-  return { region: region.toUpperCase(), providers: list, link: entry?.link ?? null };
+  return { region: region.toUpperCase(), providers: list, link: httpsUrlOrNull(entry?.link) };
 }

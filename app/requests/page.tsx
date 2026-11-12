@@ -24,6 +24,8 @@ import { CouldntAddSection } from "@/components/couldnt-add-section";
 import { NotFoundSection } from "@/components/not-found-section";
 import { getNotFoundAfterHours, getNotFoundRequests } from "@/lib/requests/not-found";
 import { can } from "@/lib/users/permissions";
+import { attentionCount } from "@/lib/requests/access";
+import { RequestsAutoRefresh } from "@/components/requests-auto-refresh";
 
 const BADGE_CLASS: Record<MyRequestBadgeTone, string> = {
   pending: "bg-info-bg text-info",
@@ -203,13 +205,14 @@ export default async function RequestsPage() {
   // holds the Sonarr/Radarr credentials — today that's always this admin,
   // but resolve properly rather than assuming session.user.id === owner, in
   // case a second admin account without its own integrations ever exists.
-  const [pending, reviewed, sonarrCred, sonarr4kCred, notFound, notFoundAfterHours] = await Promise.all([
+  const [pending, reviewed, sonarrCred, sonarr4kCred, notFound, notFoundAfterHours, attention] = await Promise.all([
     getPendingRequests(viewer.libraryOwnerId),
     getReviewedRequests(),
     getArrCredential(viewer.libraryOwnerId, "sonarr"),
     getArrCredential(viewer.libraryOwnerId, "sonarr4k"),
     getNotFoundRequests().catch(() => []),
     getNotFoundAfterHours().catch(() => 24),
+    attentionCount(user).catch(() => 0),
   ]);
   const sonarrUrl = sonarrCred?.baseUrl ?? null;
   const requestComments = await countComments("request", [...pending.map((r) => r.id), ...reviewed.map((r) => r.id)]);
@@ -220,6 +223,7 @@ export default async function RequestsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12">
+      <RequestsAutoRefresh initialCount={attention} />
       {pending.length > 1 && reviews && (
         <div className="flex justify-end">
           <ApproveAllRequestsButton />

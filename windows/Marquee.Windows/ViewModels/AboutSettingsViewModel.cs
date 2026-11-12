@@ -47,6 +47,12 @@ public sealed partial class AboutSettingsViewModel : ObservableObject
     /// <summary>"192.168.1.20:3000", or the full URL for HTTPS.</summary>
     public string ServerLabel => model.Session.Server?.DisplayName ?? "";
 
+    /// <summary>"Not encrypted": the server is across the internet over plain http.</summary>
+    public bool IsUnencrypted => model.Session.Server?.IsUnencryptedRemote == true;
+
+    public string NotEncryptedTitle => Loc.Get("Connect_NotEncryptedTitle");
+    public string NotEncryptedDetail => Loc.Get("Connect_NotEncryptedDetail");
+
     /// <summary>"Marquee 0.28.0", from the last server-info answer.</summary>
     public string ServerVersionLabel => model.Session.ServerInfo is { } info ? $"Marquee {info.Version}" : "";
 
@@ -198,6 +204,7 @@ public sealed partial class AboutSettingsViewModel : ObservableObject
     private void NotifyServer()
     {
         OnPropertyChanged(nameof(ServerLabel));
+        OnPropertyChanged(nameof(IsUnencrypted));
         OnPropertyChanged(nameof(ServerVersionLabel));
         OnPropertyChanged(nameof(ServerUpdateText));
         OnPropertyChanged(nameof(HasServerUpdateText));

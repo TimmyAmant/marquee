@@ -136,7 +136,7 @@ struct SearchResultsView: View {
 
     private func open(_ company: API.SearchCompanyCard) {
         if company.isNetwork {
-            model.browse(.tv, networkId: company.tmdbId)
+            model.openNetwork(company.tmdbId)
         } else {
             model.open(.company(company.tmdbId))
         }

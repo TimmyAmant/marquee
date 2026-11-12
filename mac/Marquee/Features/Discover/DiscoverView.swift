@@ -108,7 +108,7 @@ struct DiscoverView: View {
             Shelf(title: row.title, seeAll: seeAll) {
                 ForEach(networks) { network in
                     LogoCard(name: network.name, logoPath: network.logoPath) {
-                        model.browse(.tv, networkId: network.tmdbId)
+                        model.openNetwork(network.tmdbId)
                     }
                 }
             }

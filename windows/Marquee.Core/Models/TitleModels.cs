@@ -137,6 +137,13 @@ public sealed record PlayLink
 
     public Uri? Link => Uri.TryCreate(Url, UriKind.Absolute, out var link) ? link : null;
 
+    /// <summary>The media servers' own app schemes (lib/media-servers/play-links.ts: <c>plex://preplay/…</c>).</summary>
+    public static readonly IReadOnlySet<string> AppSchemes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "plex", "jellyfin", "emby" };
+
+    /// <summary><see cref="AppUrl"/> when it's one of <see cref="AppSchemes"/>; never another app's scheme.</summary>
+    public Uri? AppLink =>
+        Uri.TryCreate(AppUrl ?? "", UriKind.Absolute, out var app) && AppSchemes.Contains(app.Scheme) ? app : null;
+
     /// <summary>The label, with the server's name when there are several to tell apart.</summary>
     public string ButtonLabel(bool several) =>
         several && ServerName.NonBlank() is { } name ? $"{Label} ({name})" : Label;
@@ -178,12 +185,11 @@ public sealed record TitleLinks
     /// <summary>The ordered button row after "▶ Trailer".</summary>
     public required IReadOnlyList<ExternalLink> External { get; init; }
 
-    /// <summary><c>https://www.youtube.com/watch?v={trailerYoutubeKey}</c>.</summary>
-    public Uri? TrailerUrl =>
-        TrailerYoutubeKey.NonBlank() is { } key
-        && Uri.TryCreate("https://www.youtube.com/watch?v=" + Uri.EscapeDataString(key), UriKind.Absolute, out var url)
-            ? url
-            : null;
+    /// <summary>
+    /// <c>https://www.youtube.com/watch?v={trailerYoutubeKey}</c>, or null
+    /// when there's no key or it isn't shaped like one (<see cref="YouTubeTrailer"/>).
+    /// </summary>
+    public Uri? TrailerUrl => YouTubeTrailer.WatchUrl(TrailerYoutubeKey);
 }
 
 public sealed record ExternalLink

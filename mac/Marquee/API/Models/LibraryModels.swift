@@ -76,6 +76,9 @@ extension API {
         let serverName: String
         let is4k: Bool
         let url: String
+
+        /// The Radarr/Sonarr page: http or https only (`SafeLink`).
+        var link: URL? { SafeLink.web(url) }
     }
 
     /// An `ArrLink` with its button's title.

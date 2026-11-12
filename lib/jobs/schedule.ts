@@ -82,6 +82,13 @@ export function sameSchedule(a: JobSchedule, b: JobSchedule): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/** The zone the schedules run in: the server process's own (TZ in Docker,
+ * UTC when it isn't set). node-cron and nextRunAfter both read the clock in
+ * it, so a "daily at" time is a time there, not in the viewer's zone. */
+export function serverTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
 /** node-cron's expression for it. */
 export function cronExpression(schedule: JobSchedule, offset: number): string {
   if ("dailyAt" in schedule) return `${schedule.dailyAt.minute} ${schedule.dailyAt.hour} * * *`;

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { linkJellyfinAction, pollPlexLinkAction, startPlexLinkAction, startSsoLinkAction, unlinkAction } from "./media-actions";
 import { runPlexApproval, type ApprovalAttempts } from "./plex-approval";
 import { useT } from "@/lib/i18n/client";
+import { orError } from "@/lib/async/or-error";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-text-primary outline-none transition-colors focus:border-accent";
@@ -31,7 +32,7 @@ function UnlinkButton({ provider, onError }: { provider: "plex" | "jellyfin" | "
       onClick={async () => {
         setBusy(true);
         onError(null);
-        const result = await unlinkAction(provider);
+        const result = await orError(unlinkAction(provider), t("common.somethingWentWrong"));
         setBusy(false);
         if (result.error) onError(result.error);
         else router.refresh();
@@ -175,7 +176,7 @@ function SsoRow({ linked, name, message }: { linked: boolean; name: string | nul
   async function handleLink() {
     setError(null);
     setBusy(true);
-    const started = await startSsoLinkAction();
+    const started = await orError(startSsoLinkAction(), t("common.somethingWentWrong"));
     if (started.authUrl) {
       window.location.href = started.authUrl;
       return;

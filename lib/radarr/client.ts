@@ -1,3 +1,4 @@
+import { arrRequestError } from "@/lib/arr/errors";
 import { summarizeQueue, type ArrQueueRecord, type QueueSummary } from "@/lib/integrations/arr-status-logic";
 
 export type ArrConfig = { baseUrl: string; apiKey: string };
@@ -12,6 +13,12 @@ const REQUEST_TIMEOUT_MS = 8000;
  * body too, and a few thousand movies' JSON off a home server can take far
  * longer than 8s — this runs in the background, so it can afford to wait. */
 export const LIBRARY_TIMEOUT_MS = 120_000;
+
+/** Looking a movie up and adding it make Radarr fetch its metadata from the
+ * internet first, which can take well over 8s — above all while it's busy
+ * with a handful of approvals at once. An add that timed out here often went
+ * through anyway. */
+export const ADD_TIMEOUT_MS = 45_000;
 
 async function radarrFetch<T>(
   config: ArrConfig,
@@ -29,9 +36,7 @@ async function radarrFetch<T>(
     signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS),
   });
 
-  if (!res.ok) {
-    throw new Error(`Radarr request failed: ${path} (${res.status})`);
-  }
+  if (!res.ok) throw await arrRequestError("Radarr", path, res);
 
   // A delete answers with nothing to read (or an empty object).
   if (res.status === 204 || options.method === "DELETE") return undefined as T;
@@ -77,8 +82,35 @@ export interface RadarrMovieLookupResult {
   year: number;
 }
 
-export function lookupByTmdbId(config: ArrConfig, tmdbId: number) {
-  return radarrFetch<RadarrMovieLookupResult>(config, `/movie/lookup/tmdb?tmdbId=${tmdbId}`);
+/** Radarr's lookup by TMDb id, falling back to its search ("tmdb:123", the
+ * same search its own Add New page runs) and then the IMDb id: the direct
+ * lookup sometimes fails for a movie the search still finds. */
+export async function lookupByTmdbId(
+  config: ArrConfig,
+  tmdbId: number,
+  imdbId?: string | null,
+): Promise<RadarrMovieLookupResult> {
+  const timeoutMs = ADD_TIMEOUT_MS;
+  let firstError: unknown;
+  try {
+    const direct = await radarrFetch<RadarrMovieLookupResult>(config, `/movie/lookup/tmdb?tmdbId=${tmdbId}`, { timeoutMs });
+    if (direct?.tmdbId === tmdbId) return direct;
+  } catch (err) {
+    // Radarr itself didn't answer: the fallbacks wouldn't fare better.
+    if (!(err instanceof Error) || err.name === "TimeoutError" || err.message === "fetch failed") throw err;
+    firstError = err;
+  }
+  const terms = [`tmdb:${tmdbId}`, ...(imdbId ? [`imdb:${imdbId}`] : [])];
+  for (const term of terms) {
+    const results = await radarrFetch<RadarrMovieLookupResult[]>(
+      config,
+      `/movie/lookup?term=${encodeURIComponent(term)}`,
+      { timeoutMs },
+    ).catch(() => []);
+    const match = results.find((movie) => movie.tmdbId === tmdbId);
+    if (match) return match;
+  }
+  throw firstError ?? new Error(`Radarr couldn't find TMDb ${tmdbId}`);
 }
 
 export interface RadarrMovie {
@@ -207,6 +239,7 @@ export function addMovie(
 ) {
   return radarrFetch<RadarrMovie>(config, "/movie", {
     method: "POST",
+    timeoutMs: ADD_TIMEOUT_MS,
     body: {
       ...input.lookupResult,
       qualityProfileId: input.qualityProfileId,

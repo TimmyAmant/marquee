@@ -35,6 +35,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         nameof(RetryNowLabel),
         nameof(ServerLabel),
         nameof(ServerVersionLabel),
+        nameof(IsUnencrypted),
         nameof(AuthNotice),
         nameof(HasAuthNotice),
         nameof(OffersSetup),
@@ -189,6 +190,12 @@ public sealed partial class ConnectViewModel : ObservableObject
     /// <summary>"Marquee 0.28.0", once server-info has answered.</summary>
     public string ServerVersionLabel => model.Session.ServerInfo is { } info ? $"Marquee {info.Version}" : "";
 
+    /// <summary>"Not encrypted": the server is across the internet over plain http.</summary>
+    public bool IsUnencrypted => model.Session.Server?.IsUnencryptedRemote == true;
+
+    public string NotEncryptedTitle => Loc.Get("Connect_NotEncryptedTitle");
+    public string NotEncryptedDetail => Loc.Get("Connect_NotEncryptedDetail");
+
     public string? AuthNotice => model.AuthNotice;
     public bool HasAuthNotice => !string.IsNullOrEmpty(model.AuthNotice);
 
@@ -309,10 +316,12 @@ public sealed partial class ConnectViewModel : ObservableObject
     private async Task CheckAsync()
     {
         AddressError = null;
-        ServerAddress parsed;
+        IReadOnlyList<ServerAddress> candidates;
         try
         {
-            parsed = ServerAddress.Parse(Address);
+            // A bare host name off the local network is tried over https
+            // first, then plain http.
+            candidates = ServerAddress.Candidates(Address);
         }
         catch (ServerAddressParseException error)
         {
@@ -323,15 +332,27 @@ public sealed partial class ConnectViewModel : ObservableObject
         IsChecking = true;
         try
         {
-            // The probe never throws for a bad server; it classifies instead.
-            var outcome = await ServerProbe.ProbeAsync(parsed);
-            if (outcome is ProbeOutcome.Marquee marquee)
+            (ServerAddress Address, ProbeOutcome Outcome)? failure = null;
+            foreach (var candidate in candidates)
             {
-                await model.SelectServerAsync(parsed, marquee.Info);
+                // The probe never throws for a bad server; it classifies instead.
+                var outcome = await ServerProbe.ProbeAsync(candidate);
+                if (outcome is ProbeOutcome.Marquee marquee)
+                {
+                    await model.SelectServerAsync(candidate, marquee.Info);
+                    return;
+                }
+                failure = (candidate, outcome);
+                // An older or newer Marquee answered: that's the server, so
+                // its own message beats trying the next scheme.
+                if (outcome is ProbeOutcome.Legacy or ProbeOutcome.Incompatible)
+                {
+                    break;
+                }
             }
-            else
+            if (failure is { } last)
             {
-                AddressError = outcome.ProblemMessage(parsed);
+                AddressError = last.Outcome.ProblemMessage(last.Address);
             }
         }
         finally

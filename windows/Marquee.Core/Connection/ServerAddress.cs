@@ -111,6 +111,79 @@ public sealed record ServerAddress
     public override string ToString() => BaseUrlString;
 
     /// <summary>
+    /// On this network rather than across the internet: loopback, a private
+    /// (RFC 1918) or link-local address, an IPv6 unique-local or link-local
+    /// one, a <c>.local</c> / <c>.lan</c> / <c>.home.arpa</c> name, or a
+    /// single-label name like <c>tower</c>. Plain http is the norm there;
+    /// anywhere else it's worth a "Not encrypted" note, and a bare host name
+    /// tries https first. The same rule as <c>isLocalNetwork</c> on the Mac.
+    /// </summary>
+    public bool IsLocalNetwork
+    {
+        get
+        {
+            if (IsLoopback)
+            {
+                return true;
+            }
+            if (IsIPv6Literal)
+            {
+                // fe80::/10 link-local, fc00::/7 unique-local.
+                return Host.StartsWith("fe8", StringComparison.Ordinal) || Host.StartsWith("fe9", StringComparison.Ordinal)
+                    || Host.StartsWith("fea", StringComparison.Ordinal) || Host.StartsWith("feb", StringComparison.Ordinal)
+                    || Host.StartsWith("fc", StringComparison.Ordinal) || Host.StartsWith("fd", StringComparison.Ordinal);
+            }
+            if (IPv4.Parse(Host) is { } ip)
+            {
+                var first = ip >> 24;
+                var second = (ip >> 16) & 0xFF;
+                return first == 10
+                    || (first == 172 && second is >= 16 and <= 31)
+                    || (first == 192 && second == 168)
+                    || (first == 169 && second == 254)
+                    || first == 127;
+            }
+            var name = Host.TrimEnd('.');
+            if (!name.Contains('.'))
+            {
+                return true;
+            }
+            return LocalSuffixes.Any(suffix => name.EndsWith(suffix, StringComparison.Ordinal));
+        }
+    }
+
+    private static readonly string[] LocalSuffixes = [".local", ".lan", ".home.arpa", ".internal", ".localhost"];
+
+    /// <summary>
+    /// Plain http to a server that isn't on the local network: what's sent,
+    /// the password included, can be read along the way.
+    /// </summary>
+    public bool IsUnencryptedRemote => Scheme == ServerScheme.Http && !IsLocalNetwork;
+
+    /// <summary>
+    /// The addresses to try, in order, for what was typed. A host that isn't
+    /// on the local network, typed without a scheme, tries https first (on
+    /// the typed port, else 443) and then plain http as before; anything
+    /// else is just <see cref="Parse"/>.
+    /// </summary>
+    /// <exception cref="ServerAddressParseException">With the message to show inline.</exception>
+    public static IReadOnlyList<ServerAddress> Candidates(string input)
+    {
+        var address = Parse(input);
+        var trimmed = input.Trim();
+        if (trimmed.Contains("://", StringComparison.Ordinal) || address.IsLocalNetwork)
+        {
+            return [address];
+        }
+        var authorityEnd = trimmed.IndexOfAny(['/', '?', '#']);
+        var authority = authorityEnd >= 0 ? trimmed[..authorityEnd] : trimmed;
+        var typedPort = SplitHostAndPort(authority).Port != null;
+        var secure = new ServerAddress(address.Host, typedPort ? address.Port : null, ServerScheme.Https);
+        return [secure, address];
+    }
+
+
+    /// <summary>
     /// Parses user input. Any path, query or fragment is dropped, since Marquee
     /// always serves from the root, so a pasted <c>http://tower:3000/discover</c> works.
     /// </summary>

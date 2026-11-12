@@ -270,5 +270,28 @@ struct ServerChip: View {
         .padding(.vertical, 8)
         .background(Theme.bg0, in: RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Theme.border))
+        if address.isUnencryptedRemote {
+            UnencryptedNote()
+        }
+    }
+}
+
+/// "Not encrypted": the saved server is across the internet over plain
+/// http. The same words as Windows (Connect_NotEncrypted…).
+struct UnencryptedNote: View {
+    static let title = String(localized: "Not encrypted")
+    static let detail = String(localized: "This server is reached over plain http, so your password and everything else can be read on the way. Use its https:// address if it has one.")
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label(Self.title, systemImage: "lock.open.fill")
+                .font(.system(size: Metrics.text(12), weight: .semibold))
+                .foregroundStyle(Theme.unmonitored)
+            Text(Self.detail)
+                .font(.system(size: Metrics.text(11.5)))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
     }
 }

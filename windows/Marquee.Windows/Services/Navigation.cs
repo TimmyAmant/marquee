@@ -54,6 +54,9 @@ public abstract record Route
 
     public sealed record Company(int TmdbId) : Route;
 
+    /// <summary>A TV network (0.76+): <c>CompanyPage</c> laid out the same, without a favorite.</summary>
+    public sealed record Network(int TmdbId) : Route;
+
     public sealed record Search(string Query) : Route;
 
     /// <summary>

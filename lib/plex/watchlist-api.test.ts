@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseWatchlist } from "./watchlist-api";
+import { parseWatchlist, fetchWatchlist } from "./watchlist-api";
 
 describe("parseWatchlist", () => {
   it("reads movies and shows with their TMDB ids", () => {
@@ -48,5 +48,43 @@ describe("parseWatchlist", () => {
     expect(parseWatchlist({ MediaContainer: { size: 0 } })).toEqual([]);
     expect(parseWatchlist("<html>")).toEqual([]);
     expect(parseWatchlist(null)).toEqual([]);
+  });
+});
+
+describe("fetchWatchlist paging", () => {
+  const page = (start: number, count: number, total: number) => ({
+    MediaContainer: {
+      totalSize: total,
+      Metadata: Array.from({ length: count }, (_, i) => ({
+        type: "movie",
+        title: `M${start + i}`,
+        Guid: [{ id: `tmdb://${start + i + 1}` }],
+      })),
+    },
+  });
+
+  it("reads every page, and sends only an ETag saved from a whole read", async () => {
+    const calls: { url: string; etag: string | null }[] = [];
+    const original = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init?: RequestInit) => {
+      const start = Number(new URL(url).searchParams.get("X-Plex-Container-Start"));
+      calls.push({ url, etag: (init?.headers as Record<string, string>)["If-None-Match"] ?? null });
+      return new Response(JSON.stringify(page(start, Math.min(100, 230 - start), 230)), {
+        headers: { "content-type": "application/json", etag: start === 0 ? '"abc"' : '"x"' },
+      });
+    }) as typeof fetch;
+    try {
+      const old = await fetchWatchlist("client", "token", '"abc"');
+      expect(old.status).toBe("ok");
+      expect(calls[0].etag).toBeNull();
+      expect(old.status === "ok" && old.items.length).toBe(230);
+      expect(old.status === "ok" && old.etag).toBe('all:"abc"');
+      expect(calls).toHaveLength(3);
+      calls.length = 0;
+      await fetchWatchlist("client", "token", 'all:"abc"');
+      expect(calls[0].etag).toBe('"abc"');
+    } finally {
+      globalThis.fetch = original;
+    }
   });
 });

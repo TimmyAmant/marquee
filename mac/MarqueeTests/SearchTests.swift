@@ -3,8 +3,8 @@ import XCTest
 
 /// Search in sections (0.55+): the page's order — Movies, TV Shows, People,
 /// Studios & Networks — from a new server and an older one, the theme's
-/// place, the type-ahead's groups and ↑↓ order, and decoding kinds this
-/// build doesn't know.
+/// place, the type-ahead's groups and ↑↓ order, decoding kinds this
+/// build doesn't know, and recent searches.
 final class SearchTests: XCTestCase {
     private func decode<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
         try APIClient.decoder.decode(type, from: Data(json.utf8))
@@ -144,5 +144,58 @@ final class SearchTests: XCTestCase {
         )
         XCTAssertEqual(studios.results.first?.isNetwork, true)
         XCTAssertEqual(API.SearchSectionName.allCases.map(\.rawValue), ["movies", "series", "people", "studios"])
+    }
+
+    // MARK: Recent searches
+
+    func testARecentSearchGoesToTheFront() {
+        XCTAssertEqual(RecentSearches.adding("dune", to: []), ["dune"])
+        XCTAssertEqual(RecentSearches.adding("  alien ", to: ["dune"]), ["alien", "dune"], "Trimmed, newest first")
+        XCTAssertEqual(RecentSearches.adding("   ", to: ["dune"]), ["dune"], "Blank is ignored")
+    }
+
+    func testTheSameSearchTypedDifferentlyMovesUp() {
+        let list = ["alien", "Wall-E", "dune"]
+        XCTAssertEqual(RecentSearches.adding("wall·e", to: list), ["wall·e", "alien", "dune"])
+        XCTAssertEqual(RecentSearches.adding("DUNE", to: list), ["DUNE", "alien", "Wall-E"])
+        XCTAssertEqual(RecentSearches.adding("Amélie", to: ["amelie"]), ["Amélie"], "Accents don't count")
+        XCTAssertEqual(RecentSearches.adding("Fast & Furious", to: ["fast and furious"]), ["Fast & Furious"])
+        XCTAssertEqual(RecentSearches.adding("!!", to: ["!!", "?"]), ["!!", "?"], "Punctuation alone still compares")
+    }
+
+    func testRecentSearchesKeepTheLastEight() {
+        let full = (1...8).map { "search \($0)" }
+        let next = RecentSearches.adding("new", to: full)
+        XCTAssertEqual(next.count, RecentSearches.limit)
+        XCTAssertEqual(next.first, "new")
+        XCTAssertFalse(next.contains("search 8"), "The oldest drops off")
+    }
+
+    func testRecentSearchesAreRememberedPerAccount() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "marquee.tests.recentSearches.\(UUID().uuidString)"))
+        let timmy = "http://192.168.1.20:3000|6f1c2a4e-8b1d-4c3e-9f0a-2b7d5e8c1a90"
+        let kid = "http://192.168.1.20:3000|0a1b2c3d-0000-4000-8000-000000000001"
+        XCTAssertEqual(RecentSearches.load(account: timmy, defaults: defaults), [])
+        RecentSearches.remember("dune", account: timmy, defaults: defaults)
+        XCTAssertEqual(RecentSearches.remember("Alien", account: timmy, defaults: defaults), ["Alien", "dune"])
+        XCTAssertEqual(RecentSearches.load(account: timmy, defaults: defaults), ["Alien", "dune"])
+        XCTAssertEqual(RecentSearches.load(account: kid, defaults: defaults), [], "Another account never sees them")
+        XCTAssertEqual(RecentSearches.load(account: nil, defaults: defaults), [], "Nor does a signed-out app")
+        RecentSearches.remember("bluey", account: kid, defaults: defaults)
+
+        RecentSearches.save(RecentSearches.removing("dune", from: ["Alien", "dune"]), account: timmy, defaults: defaults)
+        XCTAssertEqual(RecentSearches.load(account: timmy, defaults: defaults), ["Alien"])
+        RecentSearches.save([], account: timmy, defaults: defaults)
+        XCTAssertNil(defaults.object(forKey: RecentSearches.key(account: timmy)), "Clear leaves nothing behind")
+
+        RecentSearches.clear(account: kid, defaults: defaults)
+        XCTAssertEqual(RecentSearches.load(account: kid, defaults: defaults), [], "Signing out wipes them")
+    }
+
+    func testTheOldPerDeviceListIsDropped() throws {
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: "marquee.tests.recentSearches.\(UUID().uuidString)"))
+        defaults.set(["someone else's"], forKey: RecentSearches.storageKey)
+        XCTAssertEqual(RecentSearches.load(account: "http://tower:3000|me", defaults: defaults), [])
+        XCTAssertNil(defaults.object(forKey: RecentSearches.storageKey))
     }
 }

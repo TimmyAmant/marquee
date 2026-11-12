@@ -174,12 +174,18 @@ public sealed class CollectionItem
 /// </summary>
 public sealed class LinkItem
 {
-    public LinkItem(string label, Uri url)
+    /// <param name="open">What a click does instead of opening the browser (the trailer plays in the app).</param>
+    public LinkItem(string label, Uri url, Func<Task>? open = null)
     {
         Label = label;
         Url = url;
         Open = new AsyncRelayCommand(async () =>
         {
+            if (open != null)
+            {
+                await open();
+                return;
+            }
             await ExternalLinks.OpenAsync(url);
         });
     }
@@ -205,7 +211,7 @@ public sealed class PlayItem
         Label = link.ButtonLabel(several);
         Open = new AsyncRelayCommand(async () =>
         {
-            if (Uri.TryCreate(link.AppUrl ?? "", UriKind.Absolute, out var app)
+            if (link.AppLink is { } app
                 && await global::Windows.System.Launcher.QueryUriSupportAsync(app, global::Windows.System.LaunchQuerySupportType.Uri)
                     == global::Windows.System.LaunchQuerySupportStatus.Available
                 && await global::Windows.System.Launcher.LaunchUriAsync(app))
@@ -364,7 +370,7 @@ public sealed class SuggestionItem
         }
         else if (Suggestion.MediaType == SuggestionKind.Network)
         {
-            model.Browse(MediaType.Tv, networkId: Suggestion.Id);
+            model.OpenNetwork(Suggestion.Id);
         }
     }
 }

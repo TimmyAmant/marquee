@@ -70,6 +70,10 @@ Declining a request can carry a reason, which the requester then sees next to th
 
 Your Marquee server tells the app about new notifications itself, over one long-lived connection (`GET /notifications/stream`); nothing goes through Microsoft's or anyone else's push service. While Marquee is open, each one (something started downloading, is ready to watch, a request was approved or declined) shows as a Windows notification, and clicking it opens the title. The connection comes back by itself after the server restarts or the PC sleeps, and on every reconnect the app catches up with `GET /notifications`, showing only what is newer than the last one it showed: it remembers that per server and account, so a relaunch shows what arrived while it was closed rather than the whole history. Nothing arrives while the app is closed. The choice is per server and account, on this PC only, and stored with the app's other settings in `%LocalAppData%\Marquee\settings.json`. They need a server released after 0.29.0, which is when the stream arrived; on an older one Settings says so.
 
+### Links
+
+The installer registers `marquee://` links for your Windows account, the same ones the Mac app opens: `marquee://title/movie/603`, `marquee://person/287`, `marquee://company/420`, `marquee://discover/trending`, `marquee://settings` and `marquee://search?q=…`. A click on one opens that page in Marquee (starting it, or handing the link to the copy already running); one that arrives before you're signed in opens once you are. A link only ever opens a page, never does anything on your behalf.
+
 ### Profile photos
 
 Each account's photo shows in the navigation rail and menu and next to each household member, with initials on the accent gradient when there's none. Edit on a member's row has **Add photo** / **Change photo** and **Remove**, saved as soon as you pick one: Windows decodes the photo, turns it upright and scales it down to 1600 pixels on its longest side, and it goes up as a JPEG. A file Windows can't decode (HEIC without the HEIF Image Extensions, say) goes up as it is, and the server says whether it can read it. You can change your own photo; the admin can change anyone's. Photos need a server running 0.29.0 or later.
@@ -79,7 +83,6 @@ Each account's photo shows in the navigation rail and menu and next to each hous
 This is the first cut, and it deliberately stops at the screens above. Not built yet:
 
 - **Settings → Integrations.** Connecting or reconfiguring TMDb, Plex, Jellyfin, Sonarr, Radarr and the rest is done on the website for now. Settings covers your own account (name, password), household members, the server and About.
-- **Deep links.** No `marquee://` handler yet, so a link from another app doesn't open the title in the Windows app. (A click on one of the app's own Windows notifications does.)
 - **Notifications while the app is closed.** Windows notifications come over the app's own connection to the server, so they stop when Marquee is closed; the next launch shows what arrived meanwhile. The bell and the Requests badge also poll `GET /badges` every minute.
 - **Discovery scan.** The Mac app's **Search my network** isn't ported yet; type the server's address instead.
 - **Cached lists don't learn about your own actions yet.** Adding or requesting a title on its page updates that page; a grid you came from re-fetches on its next visit rather than redrawing the card in place (the Mac's `TitleStateStore`).

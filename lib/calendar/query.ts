@@ -83,11 +83,16 @@ export async function getUpcomingReleases(
     // resolve each series' TMDb id and poster once per render, not once per
     // episode. The promise is cached so later episodes share the lookup.
     const seriesLookups = new Map<number, Promise<{ tmdbId: number; posterPath: string | null } | null>>();
-    const lookupSeries = (tvdbId: number) => {
+    const lookupSeries = (tvdbId: number, knownTmdbId: number | undefined) => {
       let lookup = seriesLookups.get(tvdbId);
       if (!lookup) {
         lookup = (async () => {
-          const tmdbId = await resolveTmdbIdFromTvdbId(tvdbId).catch(() => null);
+          // Sonarr's own TMDb id first: a failed TVDB→TMDb lookup used to
+          // drop every episode of the show from the calendar.
+          const tmdbId =
+            knownTmdbId && knownTmdbId > 0
+              ? knownTmdbId
+              : await resolveTmdbIdFromTvdbId(tvdbId).catch(() => null);
           if (tmdbId == null) return null;
           const title = await getOrFetchTitle("tv", tmdbId).catch(() => null);
           return { tmdbId, posterPath: title?.posterPath ?? null };
@@ -100,7 +105,7 @@ export async function getUpcomingReleases(
       if (!episode.series) continue;
       const date = episodeDateKey(episode);
       if (!date) continue;
-      const series = await lookupSeries(episode.series.tvdbId);
+      const series = await lookupSeries(episode.series.tvdbId, episode.series.tmdbId);
       if (!series) continue;
       entries.push({
         date,

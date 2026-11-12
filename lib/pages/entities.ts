@@ -1,4 +1,5 @@
-import { getOrFetchPersonWithCredits, getOrFetchCompanyWithCatalog } from "@/lib/tmdb/cache";
+import { defaultCreditFilter, type CreditKind } from "@/lib/tmdb/credit-kind";
+import { getOrFetchPersonWithCredits, getOrFetchCompanyWithCatalog, getNetworkWithCatalog } from "@/lib/tmdb/cache";
 import { findGroupForCompanyId } from "@/lib/tmdb/company-groups";
 import { getEpisodeCountMap, getLibraryStatusMap } from "@/lib/library/query";
 import type { EpisodeCounts } from "@/lib/library/episode-counts";
@@ -9,14 +10,16 @@ import type { LibraryStatus } from "@/components/status-badge";
 import type { MediaType, titles } from "@/lib/db/schema";
 import { pickCatalogKnownFor } from "@/lib/tmdb/known-for";
 import { buildEntityLinks, type EntityLink, type TmdbPersonExternalIds } from "@/lib/tmdb/entity-links";
-import { getLocale } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
+import { jobMessageKey } from "@/lib/tmdb/crew-jobs";
 import type { Locale } from "@/lib/i18n/locales";
 import { contentLanguageFor, getLocalizedPerson } from "@/lib/tmdb/client";
 import { getSavedTranslations, saveLightTranslations } from "@/lib/tmdb/translations";
 import { overlayCard, pick, type TitleTranslation } from "@/lib/tmdb/language";
 
-// Person (/person/[id]) and studio (/company/[id]) page data — shared with
-// GET /api/v1/people/[id] and GET /api/v1/companies/[id].
+// Person (/person/[id]), studio (/company/[id]) and network (/network/[id])
+// page data — shared with GET /api/v1/people/[id], /companies/[id] and
+// /networks/[id].
 
 type TitleRow = typeof titles.$inferSelect;
 
@@ -33,6 +36,8 @@ export type EntityMediaEntry = {
   status?: LibraryStatus;
   /** Series in the library: have/total aired episodes. */
   episodes?: EpisodeCounts | null;
+  /** A person's page only: what they did on it, for the Roles filter. */
+  creditKinds?: CreditKind[];
 };
 
 /** The title a person or studio is best known for: its backdrop goes behind
@@ -146,11 +151,9 @@ async function enrichEntries(viewer: ViewerIdentity, entries: EntityMediaEntry[]
 
 /** Returns null when TMDb has no such person (the page's notFound()). */
 export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
-  const { person, filmography, knownFor } = await getOrFetchPersonWithCredits(tmdbId).catch(() => ({
-    person: undefined,
-    filmography: [],
-    knownFor: null,
-  }));
+  const { person, filmography, knownFor, knownForDepartment } = await getOrFetchPersonWithCredits(tmdbId).catch(
+    () => ({ person: undefined, filmography: [], knownFor: null, knownForDepartment: null }),
+  );
 
   if (!person) return null;
 
@@ -168,8 +171,21 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
       ])
     : [new Map<string, LibraryStatus>(), null, null, false];
 
-  const entries: EntityMediaEntry[] = filmography.map(({ credit, title }) =>
-    overlayCard(
+  // The role column: the character they played, then what they did behind
+  // the camera ("Cobb", "Director, Writer", "Mr. White · Director").
+  const t = await getT();
+  const role = (character: string | null | undefined, jobs: string[]) => {
+    const work = jobs
+      .map((job) => {
+        const key = jobMessageKey(job);
+        return key ? t(key) : job;
+      })
+      .join(", ");
+    return [character, work].filter(Boolean).join(" · ") || null;
+  };
+
+  const entries: EntityMediaEntry[] = filmography.map(({ credit, crewJobs, kinds, title }) => ({
+    ...overlayCard(
       {
         titleId: title.id,
         mediaType: title.mediaType,
@@ -177,12 +193,13 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
         name: title.name,
         posterPath: title.posterPath,
         year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
-        subtitle: credit.characterName,
+        subtitle: role(credit?.characterName, crewJobs),
         status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
       },
       inLanguage?.cards.get(title.id),
     ),
-  );
+    creditKinds: kinds,
+  }));
 
   const favoritedKeys = await enrichEntries(viewer, entries);
   const shownKnownFor = knownForTitle(knownFor);
@@ -197,6 +214,11 @@ export async function loadPersonPage(viewer: ViewerIdentity, tmdbId: number) {
         : shownKnownFor,
     links: linksFromRaw(person.rawTmdb),
     entries,
+    // Where the Roles filter opens: their parts for an actor.
+    defaultCreditFilter: defaultCreditFilter(
+      knownForDepartment,
+      entries.map((entry) => entry.creditKinds ?? []),
+    ),
     favorited: favorited as boolean,
     favoritedKeys,
     arrConfigured: {
@@ -302,6 +324,66 @@ export async function loadCompanyPage(viewer: ViewerIdentity, tmdbId: number) {
     links: linksFromRaw(rawTmdb).filter((link) => link.kind === "homepage"),
     entries,
     favorited: favorited as boolean,
+    favoritedKeys,
+    arrConfigured: {
+      movie: isArrFullyConfigured(radarrCredential),
+      tv: isArrFullyConfigured(sonarrCredential),
+    },
+  };
+}
+
+/** Returns null when TMDb has no such network (the page's notFound()). The
+ * same header and list as a studio's, without a favorite. */
+export async function loadNetworkPage(viewer: ViewerIdentity, tmdbId: number) {
+  const loaded = await getNetworkWithCatalog(tmdbId).catch(() => null);
+  if (!loaded) return null;
+  const { network, catalog } = loaded;
+
+  const translations = await getSavedTranslations(
+    catalog.map((title) => title.id),
+    await getLocale(),
+  ).catch(() => new Map<string, TitleTranslation>());
+
+  const [statusMap, radarrCredential, sonarrCredential] = viewer.libraryOwnerId
+    ? await Promise.all([
+        getLibraryStatusMap(
+          viewer.libraryOwnerId,
+          catalog.map((title) => ({ mediaType: title.mediaType, tmdbId: title.tmdbId })),
+        ),
+        getArrCredential(viewer.userId, "radarr"),
+        getArrCredential(viewer.userId, "sonarr"),
+      ])
+    : [new Map<string, LibraryStatus>(), null, null];
+
+  const entries: EntityMediaEntry[] = catalog.map((title) =>
+    overlayCard(
+      {
+        titleId: title.id,
+        mediaType: title.mediaType,
+        tmdbId: title.tmdbId,
+        name: title.name,
+        posterPath: title.posterPath,
+        year: (title.releaseDate || title.firstAirDate || "").slice(0, 4) || null,
+        status: statusMap.get(`${title.mediaType}:${title.tmdbId}`),
+      },
+      translations.get(title.id),
+    ),
+  );
+
+  const favoritedKeys = await enrichEntries(viewer, entries);
+  const catalogKnownFor = pickCatalogKnownFor(catalog);
+  const shownKnownFor = knownForTitle(catalogKnownFor);
+
+  return {
+    network: { name: network.name, logoPath: network.logo_path, count: catalog.length },
+    knownFor:
+      shownKnownFor && catalogKnownFor
+        ? { ...shownKnownFor, name: pick(translations.get(catalogKnownFor.id)?.name, shownKnownFor.name) }
+        : shownKnownFor,
+    links: buildEntityLinks({ homepage: network.homepage || null, externalIds: null }).filter(
+      (link) => link.kind === "homepage",
+    ),
+    entries,
     favoritedKeys,
     arrConfigured: {
       movie: isArrFullyConfigured(radarrCredential),

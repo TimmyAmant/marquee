@@ -166,6 +166,27 @@ final class UpdateServiceTests: XCTestCase {
         }
     }
 
+    func testADownloadBiggerThanPromisedIsRefused() async throws {
+        let body = Data((0..<700_000).map { UInt8($0 % 251) })
+        StubURLProtocol.handler = { _ in (200, ["Content-Type": "application/zip"], body) }
+        let service = UpdateService(session: StubURLProtocol.session())
+        let long = try update(size: body.count - 1, sha256: Self.hex(body))
+        do {
+            _ = try await service.download(long, sha256: Self.hex(body), into: try workspace()) { _ in }
+            XCTFail("A download past its listed size must be refused")
+        } catch {
+            XCTAssertEqual(error as? UpdateError, .sizeMismatch)
+        }
+    }
+
+    func testTheFileIsHashedAcrossChunks() throws {
+        // Several 256 KB reads plus a partial one.
+        let body = Data((0..<(3 * 256 * 1024 + 17)).map { UInt8($0 % 239) })
+        let file = try workspace().appendingPathComponent("chunks.bin")
+        try body.write(to: file)
+        XCTAssertEqual(try UpdateService.sha256(of: file), Self.hex(body))
+    }
+
     func testTheChecksumFileIsReadWhenThereIsNoDigest() async throws {
         let hex = String(repeating: "cd", count: 32)
         StubURLProtocol.handler = { request in

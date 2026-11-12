@@ -3133,6 +3133,9 @@
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Aufgaben</value>
   </data>
+  <data name="Network_EmptyTitles" xml:space="preserve">
+    <value>Für diesen Sender wurden noch keine Serien gefunden.</value>
+  </data>
   <data name="Notifications_Empty.Text" xml:space="preserve">
     <value>Noch keine Benachrichtigungen.</value>
   </data>
@@ -4207,6 +4210,15 @@
   <data name="Shell_RailUpdateButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Marquee aktualisieren</value>
   </data>
+  <data name="Shell_RecentSearches" xml:space="preserve">
+    <value>Letzte Suchen</value>
+  </data>
+  <data name="Shell_RecentSearchesClear.Content" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="Shell_RemoveRecentSearch" xml:space="preserve">
+    <value>„{0}“ aus den letzten Suchen entfernen</value>
+  </data>
   <data name="Shell_RequestsLabel" xml:space="preserve">
     <value>Anfragen</value>
   </data>
@@ -4536,6 +4548,18 @@
   </data>
   <data name="Title_Retry.Content" xml:space="preserve">
     <value>Erneut versuchen</value>
+  </data>
+  <data name="Title_SearchMissingHintMovie" xml:space="preserve">
+    <value>Radarr sucht nach diesem Film und lädt ihn herunter.</value>
+  </data>
+  <data name="Title_SearchMissingHintTv" xml:space="preserve">
+    <value>Sonarr sucht nach allen überwachten Episoden, die noch fehlen, und lädt herunter, was es findet.</value>
+  </data>
+  <data name="Title_SearchMissingMovie" xml:space="preserve">
+    <value>Film suchen</value>
+  </data>
+  <data name="Title_SearchMissingTv" xml:space="preserve">
+    <value>Fehlende suchen</value>
   </data>
   <data name="Title_Searching" xml:space="preserve">
     <value>Wird gesucht …</value>
@@ -5676,5 +5700,35 @@
   </data>
   <data name="CollectionOffer_NotNow" xml:space="preserve">
     <value>Jetzt nicht</value>
+  </data>
+  <data name="Connect_NotEncryptedTitle" xml:space="preserve">
+    <value>Nicht verschlüsselt</value>
+  </data>
+  <data name="Connect_NotEncryptedDetail" xml:space="preserve">
+    <value>Dieser Server wird über unverschlüsseltes http erreicht, daher können dein Passwort und alles andere unterwegs mitgelesen werden. Verwende seine https://-Adresse, falls er eine hat.</value>
+  </data>
+  <data name="Trailer_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Fertig</value>
+  </data>
+  <data name="Trailer_Dialog.SecondaryButtonText" xml:space="preserve">
+    <value>Auf YouTube öffnen</value>
+  </data>
+  <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Trailer</value>
+  </data>
+  <data name="Media_RoleActing" xml:space="preserve">
+    <value>Schauspielrollen</value>
+  </data>
+  <data name="Media_RoleSelf" xml:space="preserve">
+    <value>Als sie selbst</value>
+  </data>
+  <data name="Media_RoleCrew" xml:space="preserve">
+    <value>Hinter der Kamera</value>
+  </data>
+  <data name="Media_RoleAll" xml:space="preserve">
+    <value>Alle Mitwirkungen</value>
+  </data>
+  <data name="Media_RoleBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Rollen</value>
   </data>
 </root>

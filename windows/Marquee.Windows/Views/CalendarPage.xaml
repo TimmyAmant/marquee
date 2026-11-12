@@ -17,14 +17,16 @@
         <Style x:Key="CalendarWeekday" TargetType="TextBlock" BasedOn="{StaticResource CaptionTextBlockStyle}">
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,8" />
+            <Setter Property="Margin" Value="0,10" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
     </Page.Resources>
 
     <Grid>
         <ScrollViewer Visibility="{x:Bind ViewModel.ShowsCalendar, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-            <!-- Up to 1240 wide (the Mac's); a Stretch element under its MaxWidth is centered in the page. -->
-            <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="1240" HorizontalAlignment="Stretch">
+            <!-- Up to 1680 wide (the Mac's); a Stretch element under its MaxWidth is centered in the page. -->
+            <StackPanel Padding="28,20,28,40" Spacing="20" MaxWidth="1680" HorizontalAlignment="Stretch">
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -90,8 +92,8 @@
                                      the weekday row's seven star columns match. -->
                                 <UniformGridLayout
                                     MaximumRowsOrColumns="7"
-                                    MinItemWidth="80"
-                                    MinItemHeight="150"
+                                    MinItemWidth="104"
+                                    MinItemHeight="200"
                                     MinColumnSpacing="1"
                                     MinRowSpacing="1"
                                     ItemsStretch="Fill" />
@@ -99,16 +101,17 @@
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="vm:CalendarDayCell">
                                     <Border
-                                        Height="150"
-                                        Padding="6"
+                                        Height="200"
+                                        Padding="8"
                                         Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                                         Opacity="{x:Bind CellOpacity}">
-                                        <StackPanel Spacing="3">
+                                        <StackPanel Spacing="4">
                                             <Grid HorizontalAlignment="Left">
                                                 <TextBlock
                                                     Text="{x:Bind DayNumber}"
-                                                    Padding="6,1"
-                                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                                    Padding="7,1"
+                                                    FontSize="14"
+                                                    FontWeight="Medium"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     Visibility="{x:Bind IsToday, Converter={StaticResource InvertedBoolToVisibility}}" />
                                                 <Border
@@ -118,8 +121,8 @@
                                                     Visibility="{x:Bind IsToday, Converter={StaticResource BoolToVisibility}}">
                                                     <TextBlock
                                                         Text="{x:Bind DayNumber}"
-                                                        Style="{StaticResource CaptionTextBlockStyle}"
-                                                        FontWeight="SemiBold"
+                                                        FontSize="14"
+                                                        FontWeight="Bold"
                                                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
                                                 </Border>
                                             </Grid>
@@ -136,35 +139,95 @@
                                                             HorizontalContentAlignment="Stretch"
                                                             Background="Transparent"
                                                             BorderThickness="0"
-                                                            Padding="3,1"
+                                                            Padding="4,3"
                                                             ToolTipService.ToolTip="{x:Bind AccessibleName}"
                                                             AutomationProperties.Name="{x:Bind AccessibleName}">
-                                                            <Grid ColumnSpacing="6">
+                                                            <Grid ColumnSpacing="8">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto" />
                                                                     <ColumnDefinition Width="*" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <Border Grid.Column="0" Width="16" Height="24" CornerRadius="2" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                                                                <Border Grid.Column="0" Width="22" Height="33" CornerRadius="3" Background="{ThemeResource LayerFillColorDefaultBrush}">
                                                                     <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
                                                                 </Border>
-                                                                <TextBlock
-                                                                    Grid.Column="1"
-                                                                    Text="{x:Bind Name}"
-                                                                    FontSize="11"
-                                                                    TextTrimming="CharacterEllipsis"
-                                                                    TextWrapping="NoWrap"
-                                                                    VerticalAlignment="Center" />
+                                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                                                    <TextBlock
+                                                                        Text="{x:Bind Name}"
+                                                                        FontSize="13"
+                                                                        FontWeight="SemiBold"
+                                                                        TextTrimming="CharacterEllipsis"
+                                                                        TextWrapping="NoWrap" />
+                                                                    <TextBlock
+                                                                        Text="{x:Bind Subtitle}"
+                                                                        FontSize="11.5"
+                                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                        TextTrimming="CharacterEllipsis"
+                                                                        TextWrapping="NoWrap" />
+                                                                </StackPanel>
                                                             </Grid>
                                                         </Button>
                                                     </DataTemplate>
                                                 </ItemsRepeater.ItemTemplate>
                                             </ItemsRepeater>
-                                            <TextBlock
-                                                Text="{x:Bind MoreText}"
-                                                FontSize="10"
-                                                Padding="4,0,0,0"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Visibility="{x:Bind HasMore, Converter={StaticResource BoolToVisibility}}" />
+                                            <!-- "+N more" opens the rest of the day's titles. -->
+                                            <Button
+                                                Content="{x:Bind MoreText}"
+                                                FontSize="12"
+                                                Padding="6,0"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                Visibility="{x:Bind HasMore, Converter={StaticResource BoolToVisibility}}">
+                                                <Button.Flyout>
+                                                    <Flyout Placement="Bottom">
+                                                        <Grid Width="260">
+                                                        <ItemsRepeater ItemsSource="{x:Bind Overflow}">
+                                                            <ItemsRepeater.Layout>
+                                                                <StackLayout Orientation="Vertical" Spacing="1" />
+                                                            </ItemsRepeater.Layout>
+                                                            <ItemsRepeater.ItemTemplate>
+                                                                <DataTemplate x:DataType="vm:CalendarEntryItem">
+                                                                    <Button
+                                                                        Command="{x:Bind Open}"
+                                                                        CommandParameter="{x:Bind}"
+                                                                        HorizontalAlignment="Stretch"
+                                                                        HorizontalContentAlignment="Stretch"
+                                                                        Background="Transparent"
+                                                                        BorderThickness="0"
+                                                                        Padding="4,3"
+                                                                        ToolTipService.ToolTip="{x:Bind AccessibleName}"
+                                                                        AutomationProperties.Name="{x:Bind AccessibleName}">
+                                                                        <Grid ColumnSpacing="8">
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                                <ColumnDefinition Width="*" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Border Grid.Column="0" Width="22" Height="33" CornerRadius="3" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                                                                                <Image Source="{x:Bind Poster}" Stretch="UniformToFill" />
+                                                                            </Border>
+                                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                                                                <TextBlock
+                                                                                    Text="{x:Bind Name}"
+                                                                                    FontSize="13"
+                                                                                    FontWeight="SemiBold"
+                                                                                    TextTrimming="CharacterEllipsis"
+                                                                                    TextWrapping="NoWrap" />
+                                                                                <TextBlock
+                                                                                    Text="{x:Bind Subtitle}"
+                                                                                    FontSize="11.5"
+                                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                                    TextTrimming="CharacterEllipsis"
+                                                                                    TextWrapping="NoWrap" />
+                                                                            </StackPanel>
+                                                                        </Grid>
+                                                                    </Button>
+                                                                </DataTemplate>
+                                                            </ItemsRepeater.ItemTemplate>
+                                                        </ItemsRepeater>
+                                                        </Grid>
+                                                    </Flyout>
+                                                </Button.Flyout>
+                                            </Button>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>

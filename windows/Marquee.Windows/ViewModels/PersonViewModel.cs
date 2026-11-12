@@ -173,7 +173,7 @@ public sealed partial class PersonViewModel : ObservableObject
             photoUrl = fresh.ProfilePath.Url(ImageSize.W342);
             photo = null;
             IsFavorited = fresh.Favorited;
-            Credits = new MediaListViewModel(model, fresh.Credits, MediaListNoun.Credit, EmptyCredits);
+            Credits = new MediaListViewModel(model, fresh.Credits, MediaListNoun.Credit, EmptyCredits, fresh.DefaultCreditFilter);
             Hero = EntityHeroItem.For(model, fresh.KnownForTitle);
             Links = EntityLinkItems.From(fresh.Links);
             Person = fresh;

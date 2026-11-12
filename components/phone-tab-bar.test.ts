@@ -7,7 +7,7 @@ vi.mock("@/lib/requests/actions", () => ({ getPendingRequestCountAction: () => P
 
 const { PhoneTabBar } = await import("@/components/phone-tab-bar");
 const { I18nProvider } = await import("@/lib/i18n/client");
-const { messagesFor } = await import("@/lib/i18n/catalog");
+const { clientMessagesFor } = await import("@/lib/i18n/catalog");
 
 type Props = Parameters<typeof PhoneTabBar>[0];
 
@@ -27,7 +27,7 @@ function render(overrides: Partial<Props> = {}): string {
     createElement(
       I18nProvider,
       // children goes as createElement's third argument.
-      { locale: "en", messages: messagesFor("en") } as Parameters<typeof I18nProvider>[0],
+      { locale: "en", messages: clientMessagesFor("en") } as Parameters<typeof I18nProvider>[0],
       createElement(PhoneTabBar, { ...MEMBER, ...overrides }),
     ),
   );

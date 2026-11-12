@@ -83,6 +83,16 @@ export function resolveAdd(
   };
 }
 
+/** The server's own spelling of a root folder picked by path, or null when
+ * the server has no such folder. A trailing slash either side doesn't
+ * matter (Sonarr/Radarr keep one; a hand-typed path may not). */
+export function matchRootFolder(folders: { path: string }[], picked: string): string | null {
+  const bare = (path: string) => path.replace(/(.)[\\/]+$/, "$1");
+  const want = bare(picked);
+  if (!want) return null;
+  return folders.find((folder) => bare(folder.path) === want)?.path ?? null;
+}
+
 export function hasOverrides(overrides: AddOverrides | null | undefined): boolean {
   return Boolean(
     overrides &&

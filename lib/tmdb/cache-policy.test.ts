@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isStale, isIncomplete, isCacheHit, TTL_MS, INCOMPLETE_RETRY_WINDOW_MS } from "./cache-policy";
+import { isStale, isIncomplete, isCacheHit, isActiveTitle, TTL_MS, INCOMPLETE_RETRY_WINDOW_MS } from "./cache-policy";
 
 const complete = { posterPath: "/poster.jpg", backdropPath: "/backdrop.jpg", overview: "A story." };
 
@@ -70,5 +70,20 @@ describe("isCacheHit", () => {
         true,
       ),
     ).toBe(true);
+  });
+});
+
+describe("active titles", () => {
+  const day = 24 * 60 * 60 * 1000;
+  const complete = { posterPath: "/p.jpg", backdropPath: "/b.jpg", overview: "x" };
+
+  it("re-reads a show on the air or a fresh movie after a day, an old one after two weeks", () => {
+    expect(isActiveTitle({ status: "Returning Series" })).toBe(true);
+    expect(isActiveTitle({ status: "Ended", last_air_date: "2010-01-01" })).toBe(false);
+    expect(isActiveTitle({ status: "Released", release_date: new Date(Date.now() - 10 * day).toISOString().slice(0, 10) })).toBe(true);
+    expect(isActiveTitle({ status: "Post Production" })).toBe(true);
+    const twoDaysOld = new Date(Date.now() - 2 * day);
+    expect(isCacheHit({ ...complete, refreshedAt: twoDaysOld, active: true }, true)).toBe(false);
+    expect(isCacheHit({ ...complete, refreshedAt: twoDaysOld, active: false }, true)).toBe(true);
   });
 });

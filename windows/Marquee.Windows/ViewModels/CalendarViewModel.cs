@@ -12,25 +12,68 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace Marquee.Windows.ViewModels;
 
-/// <summary>One release or air date in a day of the calendar grid.</summary>
+/// <summary>
+/// One title in a day of the calendar grid: its entries that day merged
+/// (lib/calendar/group.ts), so four episodes of a show read as one
+/// "S01E03–E06" row.
+/// </summary>
 public sealed class CalendarEntryItem
 {
     private readonly Uri? posterUrl;
     private ImageSource? poster;
 
-    public CalendarEntryItem(CalendarEntry entry, ICommand open)
+    public CalendarEntryItem(IReadOnlyList<CalendarEntry> entries, ICommand open)
     {
+        var entry = entries[0];
         Name = entry.Name;
-        Subtitle = entry.Subtitle;
+        Subtitle = MergedSubtitle(entries.Select(e => e.Subtitle).ToList());
         TitleId = entry.TitleId;
         posterUrl = entry.PosterPath.Url(ImageSize.W92);
         Open = open;
-        AccessibleName = Loc.Format("Calendar_EntryAccessibleName", entry.Name, entry.Subtitle);
+        AccessibleName = Loc.Format("Calendar_EntryAccessibleName", entry.Name, Subtitle);
+    }
+
+    /// <summary>A day's entries, one item per title, in the order each first appears.</summary>
+    public static List<CalendarEntryItem> Group(IEnumerable<CalendarEntry> entries, ICommand open) =>
+        entries
+            .GroupBy(entry => (entry.TitleId.MediaType, entry.TitleId.TmdbId))
+            .Select(group => new CalendarEntryItem(group.ToList(), open))
+            .ToList();
+
+    /// <summary>"S01E03–E06" for one season's run, else the codes joined with " · ".</summary>
+    public static string MergedSubtitle(IReadOnlyList<string> codes)
+    {
+        if (codes.Count <= 1)
+        {
+            return codes.Count == 1 ? codes[0] : "";
+        }
+        var episodes = codes.Select(EpisodeCode).ToList();
+        if (episodes.All(e => e != null) && episodes.Select(e => e!.Value.Season).Distinct().Count() == 1)
+        {
+            var numbers = episodes.Select(e => e!.Value.Episode).ToList();
+            return string.Create(
+                CultureInfo.InvariantCulture,
+                $"S{episodes[0]!.Value.Season:00}E{numbers.Min():00}–E{numbers.Max():00}");
+        }
+        return string.Join(" · ", codes);
+    }
+
+    private static (int Season, int Episode)? EpisodeCode(string code)
+    {
+        var text = code.Trim().ToUpperInvariant();
+        var split = text.IndexOf('E', StringComparison.Ordinal);
+        if (!text.StartsWith('S') || split < 2
+            || !int.TryParse(text.AsSpan(1, split - 1), NumberStyles.None, CultureInfo.InvariantCulture, out var season)
+            || !int.TryParse(text.AsSpan(split + 1), NumberStyles.None, CultureInfo.InvariantCulture, out var episode))
+        {
+            return null;
+        }
+        return (season, episode);
     }
 
     public string Name { get; }
 
-    /// <summary>"S01E03", "In theaters", "Digital release" or "On disc".</summary>
+    /// <summary>"S01E03", "S01E03–E06", "In theaters", "Digital release" or "On disc".</summary>
     public string Subtitle { get; }
 
     public TitleId TitleId { get; }
@@ -56,6 +99,9 @@ public sealed class CalendarDayCell(DateOnly day, bool isToday, bool inMonth, IR
     public bool IsToday { get; } = isToday;
     public double CellOpacity { get; } = inMonth ? 1 : 0.4;
     public IReadOnlyList<CalendarEntryItem> Entries { get; } = entries.Take(MaxVisible).ToList();
+
+    /// <summary>The titles past <see cref="MaxVisible"/>: "+N more" opens them in a flyout.</summary>
+    public IReadOnlyList<CalendarEntryItem> Overflow { get; } = entries.Skip(MaxVisible).ToList();
     public bool HasMore { get; } = entries.Count > MaxVisible;
     public string MoreText { get; } = entries.Count > MaxVisible ? Loc.Format("Calendar_More", entries.Count - MaxVisible) : "";
 }
@@ -227,7 +273,7 @@ public sealed partial class CalendarViewModel : ObservableObject
                 day == fresh.Today,
                 CalendarMonth.Of(day) == fresh.Month,
                 byDay.TryGetValue(day, out var entries)
-                    ? entries.Select(entry => new CalendarEntryItem(entry, OpenEntryCommand)).ToList()
+                    ? CalendarEntryItem.Group(entries, OpenEntryCommand)
                     : []))
             .ToList();
         HasEntries = fresh.GridDays.Any(day => byDay.ContainsKey(day) && CalendarMonth.Of(day) == fresh.Month);

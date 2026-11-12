@@ -81,7 +81,10 @@ gets **Add to Radarr / Sonarr** instead. *Everyone.*
 Clicking an actor, director, studio or network opens their own page with
 everything they've made, each poster showing its status. You can favorite
 people and studios to find them again later. Person pages list each title
-once, even when the character name changed. *Everyone.*
+once, even when the character name changed, and a **Roles** menu narrows
+them to acting roles (where an actor's page opens), appearances as
+themselves (documentaries, talk shows, stand-up), work behind the camera
+(where a director's page opens) or everything. *Everyone.*
 
 ## Search
 

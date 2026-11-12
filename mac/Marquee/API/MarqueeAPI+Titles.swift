@@ -159,5 +159,11 @@ extension MarqueeAPI {
         func detail(_ tmdbId: Int) async throws -> API.CompanyDetail {
             try await transport.get("/companies/\(tmdbId)", timeout: Timeout.tmdb)
         }
+
+        /// `GET /networks/{tmdbId}` (0.76+) — a TV network and its series, in
+        /// a studio's shape. An older server answers 404.
+        func network(_ tmdbId: Int) async throws -> API.CompanyDetail {
+            try await transport.get("/networks/\(tmdbId)", timeout: Timeout.tmdb)
+        }
     }
 }

@@ -27,8 +27,8 @@ public sealed class JobsFixtureTests
         Assert.Equal("Every 3 hours", jobs[4].Schedule);
         Assert.Equal("Can't Find Check", jobs[5].Name);
         Assert.Equal("Every hour", jobs[5].Schedule);
-        Assert.Equal("Daily at 3:00 AM", jobs[6].Schedule);
-        Assert.Equal("Daily at 3:30 AM", jobs[7].Schedule);
+        Assert.Equal("Daily at 3:00 AM (UTC)", jobs[6].Schedule);
+        Assert.Equal("Daily at 3:30 AM (UTC)", jobs[7].Schedule);
     }
 
     [Fact]

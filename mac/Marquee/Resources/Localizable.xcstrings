@@ -4788,6 +4788,34 @@
         }
       }
     },
+    "Acting roles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schauspielrollen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papeles de actuación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rôles d’acteur"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papéis de atuação"
+          }
+        }
+      }
+    },
     "Actions" : {
       "localizations" : {
         "de" : {
@@ -6622,6 +6650,34 @@
         }
       }
     },
+    "All credits" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Mitwirkungen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los créditos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les crédits"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os créditos"
+          }
+        }
+      }
+    },
     "All features" : {
       "localizations" : {
         "de" : {
@@ -7836,6 +7892,34 @@
         }
       }
     },
+    "As themselves" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als sie selbst"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como sí mismo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans son propre rôle"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Como si mesmo"
+          }
+        }
+      }
+    },
     "Ask for movies to be added." : {
       "localizations" : {
         "de" : {
@@ -8336,6 +8420,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Porque você assistiu %@"
+          }
+        }
+      }
+    },
+    "Behind the camera" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinter der Kamera"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detrás de cámara"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Derrière la caméra"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por trás das câmeras"
           }
         }
       }
@@ -12038,6 +12150,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível carregar o calendário"
+          }
+        }
+      }
+    },
+    "Couldn't load this network" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Sender konnte nicht geladen werden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo cargar esta cadena"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger cette chaîne"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível carregar esta emissora"
           }
         }
       }
@@ -17201,6 +17341,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cuidar dos relatos de problemas"
+          }
+        }
+      }
+    },
+    "Have Radarr look for this movie and download it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radarr sucht nach diesem Film und lädt ihn herunter."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radarr cherche ce film et le télécharge."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radarr busca esta película y la descarga."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Radarr procura este filme e o baixa."
+          }
+        }
+      }
+    },
+    "Have Sonarr look for every monitored episode you don't have yet and download what it finds." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr sucht nach allen überwachten Episoden, die noch fehlen, und lädt herunter, was es findet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr cherche chaque épisode surveillé qui vous manque et télécharge ce qu’il trouve."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonarr busca cada episodio monitorizado que te falta y descarga lo que encuentre."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Sonarr procura cada episódio monitorado que falta e baixa o que encontrar."
           }
         }
       }
@@ -24000,6 +24196,34 @@
         }
       }
     },
+    "No series found for this network yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für diesen Sender wurden noch keine Serien gefunden."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todavía no se encontraron series de esta cadena."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune série trouvée pour cette chaîne pour l’instant."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma série encontrada para esta emissora ainda."
+          }
+        }
+      }
+    },
     "No tags in %@ yet." : {
       "localizations" : {
         "de" : {
@@ -24276,6 +24500,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ainda não verificada"
+          }
+        }
+      }
+    },
+    "Not encrypted" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin cifrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non chiffré"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verschlüsselt"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não criptografado"
           }
         }
       }
@@ -28102,6 +28354,34 @@
         }
       }
     },
+    "Recent searches" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Suchen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Búsquedas recientes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherches récentes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesquisas recentes"
+          }
+        }
+      }
+    },
     "Recently Added" : {
       "localizations" : {
         "de" : {
@@ -29224,6 +29504,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remover esta fileira?"
+          }
+        }
+      }
+    },
+    "Remove “%@” from recent searches" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ aus den letzten Suchen entfernen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitar «%@» de las búsquedas recientes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer « %@ » des recherches récentes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remover “%@” das pesquisas recentes"
           }
         }
       }
@@ -31228,6 +31536,34 @@
         }
       }
     },
+    "Roles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rollen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papeles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rôles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Papéis"
+          }
+        }
+      }
+    },
     "Root folder" : {
       "localizations" : {
         "de" : {
@@ -31952,6 +32288,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Busque um ator, um estúdio, um título…"
+          }
+        }
+      }
+    },
+    "Search for missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehlende suchen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher les manquants"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar faltantes"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar faltantes"
+          }
+        }
+      }
+    },
+    "Search for movie" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Film suchen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le film"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar película"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar filme"
           }
         }
       }
@@ -38076,6 +38468,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Este servidor é mais novo do que este app suporta. Atualize o Marquee para iPhone para conectar."
+          }
+        }
+      }
+    },
+    "This server is reached over plain http, so your password and everything else can be read on the way. Use its https:// address if it has one." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A este servidor se llega por http sin cifrar, así que tu contraseña y todo lo demás pueden leerse por el camino. Usa su dirección https:// si tiene una."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce serveur est joint en http non chiffré : votre mot de passe et tout le reste peuvent être lus en chemin. Utilisez son adresse https:// s’il en a une."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server wird über unverschlüsseltes http erreicht, daher können dein Passwort und alles andere unterwegs mitgelesen werden. Verwende seine https://-Adresse, falls er eine hat."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este servidor é acessado por http sem criptografia, então sua senha e todo o resto podem ser lidos no caminho. Use o endereço https:// dele, se houver um."
           }
         }
       }

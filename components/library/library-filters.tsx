@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DEFAULT_PAGE_SIZE,
@@ -48,18 +48,29 @@ export function LibraryFilters({
   const t = useT();
   const router = useRouter();
   const [search, setSearch] = useState(query.q ?? "");
+  // The selection as it is now, for the search box's timer: a filter picked
+  // while it was waiting must not be undone when it fires.
+  const latest = useRef({ query, view });
+  useEffect(() => {
+    latest.current = { query, view };
+  }, [query, view]);
 
-  function navigate(next: Partial<LibraryQuery>, nextView: "grid" | "table" = view) {
-    const params = libraryQueryParams({ ...query, ...next, page: 1, pageSize: DEFAULT_PAGE_SIZE });
+  function navigate(next: Partial<LibraryQuery>, nextView: "grid" | "table" = view, how: "push" | "replace" = "push") {
+    const merged = { ...latest.current.query, ...next, page: 1, pageSize: DEFAULT_PAGE_SIZE };
+    // Ahead of the new page's props, so the next change builds on this one.
+    latest.current = { query: merged, view: nextView };
+    const params = libraryQueryParams(merged);
     if (nextView === "table") params.set("view", "table");
     const qs = params.toString();
-    router.push(`/library${qs ? `?${qs}` : ""}`, { scroll: false });
+    router[how](`/library${qs ? `?${qs}` : ""}`, { scroll: false });
   }
 
   useEffect(() => {
     const trimmed = search.trim();
-    if (trimmed === (query.q ?? "")) return;
-    const handle = setTimeout(() => navigate({ q: trimmed || undefined }), 350);
+    if (trimmed === (latest.current.query.q ?? "")) return;
+    // Replaced rather than pushed: every pause while typing would otherwise
+    // be its own step for the back button.
+    const handle = setTimeout(() => navigate({ q: trimmed || undefined }, latest.current.view, "replace"), 350);
     return () => clearTimeout(handle);
     // Only the typed text should re-arm the timer.
     // eslint-disable-next-line react-hooks/exhaustive-deps

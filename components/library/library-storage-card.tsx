@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatBytes } from "@/lib/format";
 import { formatDate } from "@/lib/i18n/format";
+import { useDisplayTimeZone } from "@/lib/ui/use-hydrated";
 import { storageForecastLine, storageFullOnLine } from "@/lib/library/storage";
 import { useT } from "@/lib/i18n/client";
 import type { DiskSpaceForecast } from "@/lib/integrations/disk-space-logic";
@@ -29,6 +30,7 @@ export function LibraryStorageCard({
   isAdmin: boolean;
 }) {
   const t = useT();
+  const timeZone = useDisplayTimeZone();
 
   if (!hasArr && overview.folders.length === 0) {
     return (
@@ -79,7 +81,7 @@ export function LibraryStorageCard({
         <p className="mt-1 text-xs text-text-muted">
           {overview.live
             ? t("library.storageLive")
-            : t("library.storageSnapshot", { date: formatDate(t, new Date(overview.measuredAt), "medium") })}
+            : t("library.storageSnapshot", { date: formatDate(t, new Date(overview.measuredAt), "medium", timeZone) })}
         </p>
       )}
     </div>

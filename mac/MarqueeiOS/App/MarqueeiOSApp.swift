@@ -65,10 +65,9 @@ final class PhoneAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificatio
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        let route = response.notification.request.content.userInfo["route"] as? String
-        guard let route, let url = URL(string: route) else { return }
+        guard let click = NotificationClick(userInfo: response.notification.request.content.userInfo) else { return }
         await MainActor.run {
-            Self.model?.handle(url: url)
+            Self.model?.openNotification(click)
         }
     }
 }

@@ -3133,6 +3133,9 @@
   <data name="Nav_SettingsTabJobs" xml:space="preserve">
     <value>Tarefas</value>
   </data>
+  <data name="Network_EmptyTitles" xml:space="preserve">
+    <value>Nenhuma série encontrada para esta emissora ainda.</value>
+  </data>
   <data name="Notifications_Empty.Text" xml:space="preserve">
     <value>Nenhuma notificação ainda.</value>
   </data>
@@ -4207,6 +4210,15 @@
   <data name="Shell_RailUpdateButton.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
     <value>Atualizar o Marquee</value>
   </data>
+  <data name="Shell_RecentSearches" xml:space="preserve">
+    <value>Pesquisas recentes</value>
+  </data>
+  <data name="Shell_RecentSearchesClear.Content" xml:space="preserve">
+    <value>Limpar</value>
+  </data>
+  <data name="Shell_RemoveRecentSearch" xml:space="preserve">
+    <value>Remover “{0}” das pesquisas recentes</value>
+  </data>
   <data name="Shell_RequestsLabel" xml:space="preserve">
     <value>Pedidos</value>
   </data>
@@ -4536,6 +4548,18 @@
   </data>
   <data name="Title_Retry.Content" xml:space="preserve">
     <value>Tentar de novo</value>
+  </data>
+  <data name="Title_SearchMissingHintMovie" xml:space="preserve">
+    <value>O Radarr procura este filme e o baixa.</value>
+  </data>
+  <data name="Title_SearchMissingHintTv" xml:space="preserve">
+    <value>O Sonarr procura cada episódio monitorado que falta e baixa o que encontrar.</value>
+  </data>
+  <data name="Title_SearchMissingMovie" xml:space="preserve">
+    <value>Buscar filme</value>
+  </data>
+  <data name="Title_SearchMissingTv" xml:space="preserve">
+    <value>Buscar faltantes</value>
   </data>
   <data name="Title_Searching" xml:space="preserve">
     <value>Buscando…</value>
@@ -5676,5 +5700,35 @@
   </data>
   <data name="CollectionOffer_NotNow" xml:space="preserve">
     <value>Agora não</value>
+  </data>
+  <data name="Connect_NotEncryptedTitle" xml:space="preserve">
+    <value>Não criptografado</value>
+  </data>
+  <data name="Connect_NotEncryptedDetail" xml:space="preserve">
+    <value>Este servidor é acessado por http sem criptografia, então sua senha e todo o resto podem ser lidos no caminho. Use o endereço https:// dele, se houver um.</value>
+  </data>
+  <data name="Trailer_Dialog.CloseButtonText" xml:space="preserve">
+    <value>Concluído</value>
+  </data>
+  <data name="Trailer_Dialog.SecondaryButtonText" xml:space="preserve">
+    <value>Abrir no YouTube</value>
+  </data>
+  <data name="Trailer_Player.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Trailer</value>
+  </data>
+  <data name="Media_RoleActing" xml:space="preserve">
+    <value>Papéis de atuação</value>
+  </data>
+  <data name="Media_RoleSelf" xml:space="preserve">
+    <value>Como si mesmo</value>
+  </data>
+  <data name="Media_RoleCrew" xml:space="preserve">
+    <value>Por trás das câmeras</value>
+  </data>
+  <data name="Media_RoleAll" xml:space="preserve">
+    <value>Todos os créditos</value>
+  </data>
+  <data name="Media_RoleBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Papéis</value>
   </data>
 </root>

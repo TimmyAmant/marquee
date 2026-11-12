@@ -34,7 +34,7 @@ function CastCard({
         {/* The favorite toggle has no room on a 112px-wide caption, so it
             rides in the portrait's corner instead of the name line. */}
         {favoriteAction && (
-          <div className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-bg-0/65 backdrop-blur-sm">
+          <div className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-bg-0/85">
             {favoriteAction}
           </div>
         )}

@@ -75,7 +75,7 @@ export function LogoCard({
       <div className="relative">
         {tile}
         {favoriteAction && (
-          <div className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-bg-0/70 backdrop-blur-sm">
+          <div className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-bg-0/85">
             {favoriteAction}
           </div>
         )}

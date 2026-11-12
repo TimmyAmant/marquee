@@ -21,23 +21,8 @@ extension API {
     /// plain http). Like `plexWebURL`, never a file, another app's URL
     /// scheme, or plain http anywhere else.
     static func signInPageURL(_ string: String, server: URL?) -> URL? {
-        guard let url = URL(string: string), let scheme = url.scheme?.lowercased(),
-              let host = url.host, !host.isEmpty
-        else { return nil }
-        if scheme == "https" { return url }
-        guard let server, sameOrigin(url, server) else { return nil }
+        guard let url = SafeLink.web(string), SafeLink.allowsSignInPage(url, server: server) else { return nil }
         return url
-    }
-
-    /// Same scheme, host and port (a missing port is the scheme's default).
-    static func sameOrigin(_ lhs: URL, _ rhs: URL) -> Bool {
-        func origin(_ url: URL) -> (String, String, Int)? {
-            guard let scheme = url.scheme?.lowercased(), let host = url.host?.lowercased(), !host.isEmpty else { return nil }
-            let port = url.port ?? (scheme == "https" ? 443 : scheme == "http" ? 80 : -1)
-            return (scheme, host, port)
-        }
-        guard let left = origin(lhs), let right = origin(rhs) else { return false }
-        return left == right
     }
 
     typealias User = Marquee.User

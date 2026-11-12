@@ -43,6 +43,7 @@ export async function Sidebar() {
     <>
       <NavMenu
         isSignedIn={Boolean(session?.user)}
+        userId={session?.user?.id ?? null}
         showRequestsBadge={showRequestsBadge}
         pendingRequestCount={pendingRequestCount}
         userLabel={session?.user ? session.user.name || session.user.username || null : null}
@@ -51,7 +52,7 @@ export async function Sidebar() {
         serverVersion={APP_VERSION}
       />
       {/* Asks about notifications on this device after signing in. */}
-      {session?.user && <PushPrompt />}
+      {session?.user?.id && <PushPrompt key={session.user.id} userId={session.user.id} />}
       {/* "What's new" once after the server is upgraded (once per device). */}
       {session?.user?.id && <WhatsNew userId={session.user.id} serverVersion={APP_VERSION} />}
     </>

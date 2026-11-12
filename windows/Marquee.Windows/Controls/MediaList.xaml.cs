@@ -40,6 +40,8 @@ public sealed partial class MediaList : UserControl
             // Setting a picker fires its change event, which writes the same
             // value straight back: harmless.
             control.SearchBox.Text = list.Query;
+            control.RoleBox.ItemsSource = list.RoleOptions;
+            control.RoleBox.SelectedIndex = list.HasRoleOptions ? list.RoleIndex : -1;
             control.TypeBox.SelectedIndex = list.TypeIndex;
             control.OrderBox.SelectedIndex = list.OrderIndex;
         }
@@ -58,6 +60,14 @@ public sealed partial class MediaList : UserControl
         if (List is { } list && TypeBox.SelectedIndex >= 0)
         {
             list.TypeIndex = TypeBox.SelectedIndex;
+        }
+    }
+
+    private void OnRoleChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (List is { } list && RoleBox.SelectedIndex >= 0)
+        {
+            list.RoleIndex = RoleBox.SelectedIndex;
         }
     }
 

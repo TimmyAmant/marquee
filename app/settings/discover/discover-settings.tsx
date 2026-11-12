@@ -16,6 +16,7 @@ import type { DiscoverLookupResult } from "@/lib/api/types";
 import { tmdbImageUrl } from "@/lib/tmdb/image";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
+import { orError } from "@/lib/async/or-error";
 
 const inputClass =
   "rounded-lg border border-border bg-bg-0 px-3.5 py-2.5 text-sm text-text-primary outline-none transition-colors focus:border-accent";
@@ -198,7 +199,10 @@ function SourcePicker({
     if (!lists && query.trim().length < 2) return;
     const timer = setTimeout(async () => {
       setSearching(true);
-      const result = await lookUpDiscoverSourceAction(kind, query, kind === "genre" ? (mediaType === "tv" ? "tv" : "movie") : null);
+      const result = await orError(
+        lookUpDiscoverSourceAction(kind, query, kind === "genre" ? (mediaType === "tv" ? "tv" : "movie") : null),
+        t("common.somethingWentWrong"),
+      );
       if (cancelled) return;
       setSearching(false);
       setError(result.error ?? null);
@@ -208,7 +212,7 @@ function SourcePicker({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [kind, query, mediaType, lists]);
+  }, [kind, query, mediaType, lists, t]);
 
   if (picked) {
     return (
@@ -312,7 +316,7 @@ function AddShelfForm({
     if (mediaChoices) body.mediaType = mediaType;
     setBusy(true);
     setError(null);
-    const result = await addDiscoverShelfAction(body);
+    const result = await orError(addDiscoverShelfAction(body), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) {
       setError(result.error);
@@ -439,7 +443,9 @@ export function DiscoverSettingsEditor({
     if (optimistic) setShelves(optimistic);
     setBusy(true);
     setError(null);
-    const result = await action;
+    // A dropped connection or a server error is a failure too: the list
+    // goes back to how it was rather than staying moved and greyed out.
+    const result = await orError(action, t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) {
       setShelves(before);

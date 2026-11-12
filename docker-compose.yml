@@ -20,6 +20,9 @@ services:
       TVDB_API_KEY: ${TVDB_API_KEY}
       TVDB_PIN: ${TVDB_PIN}
       TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-0}
+      # Your time zone (e.g. America/New_York). Jobs set to run at a time of
+      # day (Settings › Jobs) run at that time here; UTC when unset.
+      TZ: ${TZ:-UTC}
     volumes:
       - marquee_postgres_data:/var/lib/postgresql/data
       # Settings › Logs' rolling log file, kept when the container is recreated.

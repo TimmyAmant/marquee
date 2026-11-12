@@ -19,6 +19,7 @@ import {
   SettingsGroupHeader,
   StatusPill,
 } from "@/components/settings/settings-ui";
+import { orError } from "@/lib/async/or-error";
 
 const CALLBACK_PATH = "/api/auth/sso/callback";
 
@@ -72,7 +73,7 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
   async function runTest() {
     setTesting(true);
     setTest(null);
-    const result = await testSsoIssuerAction(issuer);
+    const result = await orError(testSsoIssuerAction(issuer), t("common.somethingWentWrong"));
     setTest(result);
     setTesting(false);
     if (result.error) showToast(result.error, "error");
@@ -81,11 +82,13 @@ export function SsoSettingsCard({ initial, defaultPublicUrl }: { initial: SsoSet
 
   async function turnOff() {
     setRemoving(true);
-    const result = await removeSsoSettingsAction();
+    const result = await orError(removeSsoSettingsAction(), t("common.somethingWentWrong"));
     setRemoving(false);
     if (result.success) {
       setRemoved(true);
       showToast(t("settings.removedToast"));
+    } else if (result.error) {
+      showToast(result.error, "error");
     }
   }
 

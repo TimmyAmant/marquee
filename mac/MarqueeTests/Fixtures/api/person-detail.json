@@ -40,7 +40,11 @@
       "favorited": false,
       "requested": false,
       "canQuickAdd": true,
-      "canRequest": false
+      "canRequest": false,
+      "creditKinds": [
+        "acting"
+      ]
     }
-  ]
+  ],
+  "defaultCreditFilter": "acting"
 }

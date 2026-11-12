@@ -355,7 +355,10 @@ struct PosterCard: View {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .strokeBorder(hovering ? Theme.borderStrong : Theme.border, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(hovering ? 0.28 : 0.12), radius: hovering ? 10 : 4, y: hovering ? 6 : 2)
+            // Only while lifted: a resting shadow under every poster costs an
+            // offscreen pass per card on each scrolled frame, for a shade the
+            // dark page barely shows.
+            .shadow(color: hovering ? .black.opacity(0.28) : .clear, radius: hovering ? 10 : 0, y: hovering ? 6 : 0)
             .offset(y: hovering ? -4 : 0)
             .contentShape(Rectangle())
             .onTapGesture(perform: action)

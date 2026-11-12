@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ImportCandidate } from "@/lib/auth/media-signin";
 import { importMembersAction, listImportCandidatesAction, setMediaServerSignupAction } from "./media-actions";
 import { useT } from "@/lib/i18n/client";
+import { orError } from "@/lib/async/or-error";
 
 const LABEL = { plex: "Plex", jellyfin: "Jellyfin" } as const;
 type Provider = keyof typeof LABEL;
@@ -55,7 +56,7 @@ function ImportDialog({
   async function handleImport() {
     setBusy(true);
     setError(null);
-    const result = await importMembersAction(provider, [...selected]);
+    const result = await orError(importMembersAction(provider, [...selected]), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) {
       setError(result.error);

@@ -51,9 +51,14 @@ export function PushSettings() {
   async function run(action: () => Promise<void>) {
     setBusy(true);
     setMessage(null);
-    await action();
-    await refresh();
-    setBusy(false);
+    try {
+      await action();
+      await refresh();
+    } catch {
+      setMessage({ tone: "error", text: t("common.somethingWentWrong") });
+    } finally {
+      setBusy(false);
+    }
   }
 
   const turnOn = () =>

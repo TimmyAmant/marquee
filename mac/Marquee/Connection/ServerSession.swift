@@ -52,8 +52,8 @@ final class InMemoryTokenStore: TokenStore {
 
 /// A launch-time pin to one server, for automated UI runs.
 ///
-/// With `MARQUEE_PINNED_SERVER` set in the environment (or the
-/// `-marquee.server.pinned` launch argument), the session ignores the saved
+/// In a Debug build, with `MARQUEE_PINNED_SERVER` set in the environment (or
+/// the `-marquee.server.pinned` launch argument), the session ignores the saved
 /// server, keeps its token in memory instead of the sessions file, and refuses to
 /// talk to any other host. A stray click in an automated run then can't reach
 /// — or sign out of — the real server this Mac normally uses.
@@ -77,10 +77,16 @@ struct PinnedServer: Sendable, Equatable {
         environment: [String: String] = ProcessInfo.processInfo.environment,
         defaults: UserDefaults = .standard
     ) -> PinnedServer? {
+        // Debug builds only (screenshot and UI-check runs): a download never
+        // takes a server or a token from its environment or launch arguments.
+        #if DEBUG
         let raw = environment[environmentKey] ?? defaults.string(forKey: defaultsKey)
         guard let raw, let address = try? ServerAddress.parse(raw) else { return nil }
         let token = environment[tokenEnvironmentKey].flatMap { $0.isEmpty ? nil : $0 }
         return PinnedServer(address: address, token: token)
+        #else
+        return nil
+        #endif
     }
 }
 

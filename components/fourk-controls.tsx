@@ -11,6 +11,7 @@ import { PILL } from "@/components/pill-styles";
 import type { FourKViewerState } from "@/lib/api/types";
 import { useT } from "@/lib/i18n/client";
 import type { MessageKey } from "@/lib/i18n/translator";
+import { orError } from "@/lib/async/or-error";
 
 const FOURK_LABEL: Record<FourKViewerState["status"], MessageKey | null> = {
   owned: "title.fourKOwned",
@@ -55,7 +56,7 @@ export function FourKControls({
   async function run(action: () => Promise<{ error?: string; success?: boolean }>, onDone: () => void) {
     setBusy(true);
     setError(null);
-    const result = await action();
+    const result = await orError(action(), t("common.somethingWentWrong"));
     setBusy(false);
     if (result.error) setError(result.error);
     else {

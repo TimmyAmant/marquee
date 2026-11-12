@@ -19,6 +19,36 @@ export function isStale(refreshedAt: Date): boolean {
   return Date.now() - refreshedAt.getTime() > TTL_MS;
 }
 
+/** How long a title that's still changing is trusted: a show on the air (a
+ * new season, its episodes, the next air date) or a movie not out yet or
+ * just out (release dates, where it's streaming). */
+export const ACTIVE_TTL_MS = 24 * 60 * 60 * 1000;
+
+const RECENT_RELEASE_MS = 90 * 24 * 60 * 60 * 1000;
+
+/** Whether TMDb's saved details describe a title that's still changing. */
+export function isActiveTitle(raw: unknown, now = Date.now()): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  const details = raw as {
+    status?: string;
+    next_episode_to_air?: unknown;
+    in_production?: boolean;
+    release_date?: string;
+    last_air_date?: string;
+  };
+  if (details.next_episode_to_air || details.in_production) return true;
+  if (details.status === "Returning Series" || details.status === "In Production" || details.status === "Planned") {
+    return true;
+  }
+  if (details.status && details.status !== "Released" && details.status !== "Ended" && details.status !== "Canceled") {
+    return true;
+  }
+  const latest = details.release_date || details.last_air_date;
+  if (!latest) return false;
+  const at = Date.parse(latest);
+  return Number.isFinite(at) && now - at < RECENT_RELEASE_MS;
+}
+
 /** A title first cached before TMDb had finished uploading its poster,
  * backdrop, or writing an overview (common right after a title is
  * announced, or for niche/non-English releases) would otherwise be locked
@@ -42,11 +72,22 @@ export function isIncomplete(row: {
  * pulled out so the "when do we trust the cache" policy itself is testable
  * without touching the database. */
 export function isCacheHit(
-  row: { posterPath: string | null; backdropPath: string | null; overview: string | null; refreshedAt: Date },
+  row: {
+    posterPath: string | null;
+    backdropPath: string | null;
+    overview: string | null;
+    refreshedAt: Date;
+    /** isActiveTitle of the saved details. */
+    active?: boolean;
+  },
   hasRawTmdb: boolean,
 ): boolean {
   if (!hasRawTmdb) return false;
   if (isStale(row.refreshedAt)) return false;
+  // A show on the air or a movie around its release changes week to week:
+  // a new season, its episodes, release dates. Re-read daily, not every two
+  // weeks.
+  if (row.active && Date.now() - row.refreshedAt.getTime() > ACTIVE_TTL_MS) return false;
   if (!isIncomplete(row)) return true;
   // Incomplete, but only forgive it (treat as a hit) once we're past the
   // aggressive-retry window.
