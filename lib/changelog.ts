@@ -11,6 +11,13 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.77.1",
+    date: "2026-11-11",
+    changes: [
+      "A show with no episodes on disk no longer shows as Owned, or appears in Recently Added with a count like 0/50. Plex and Jellyfin can list a show whose folder is empty (the one Sonarr makes when a show is added, or one whose episodes were deleted); only shows with at least one episode file count as in your library now.",
+    ],
+  },
+  {
     version: "0.77.0",
     date: "2026-10-27",
     changes: [

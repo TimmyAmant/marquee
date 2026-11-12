@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { parseExternalIds, getFileSize, parseMediaDetail } from "./client";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import {
+  parseExternalIds,
+  getFileSize,
+  parseMediaDetail,
+  getEpisodeFileCountsBySeries,
+  seriesWithEpisodeFiles,
+} from "./client";
 import type { JellyfinItem } from "./client";
 
 describe("parseExternalIds", () => {
@@ -134,5 +140,61 @@ describe("parseMediaDetail", () => {
   it("returns every field null for a Series, which carries no MediaSources", () => {
     const detail = parseMediaDetail({ Id: "1", Name: "Test", Type: "Series" });
     expect(Object.values(detail).every((value) => value === null)).toBe(true);
+  });
+});
+
+describe("getEpisodeFileCountsBySeries", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const config = { baseUrl: "http://jellyfin.lan:8096", apiKey: "key" };
+
+  /** A pretend Jellyfin answering the episode listing with `body`. */
+  function answering(body: unknown) {
+    vi.stubGlobal(
+      "fetch",
+      async () => new Response(JSON.stringify(body), { headers: { "content-type": "application/json" } }),
+    );
+  }
+
+  it("counts each series' regular episode files, and says which series have any file", async () => {
+    answering({
+      Items: [
+        { SeriesId: "a", ParentIndexNumber: 1 },
+        { SeriesId: "a", ParentIndexNumber: 2 },
+        { SeriesId: "a", ParentIndexNumber: 0 },
+        { SeriesId: "b", ParentIndexNumber: 0 },
+      ],
+    });
+    const { counts, withFiles } = await getEpisodeFileCountsBySeries(config);
+    expect([...counts]).toEqual([["a", 2]]);
+    expect([...withFiles].sort()).toEqual(["a", "b"]);
+  });
+
+  it("takes an empty listing as an answer: no series has a file", async () => {
+    answering({ Items: [] });
+    const { counts, withFiles } = await getEpisodeFileCountsBySeries(config);
+    expect(counts.size).toBe(0);
+    expect(withFiles.size).toBe(0);
+  });
+
+  // The sync drops a show with no files, so an answer that can't be read
+  // must not pass for "no series has a file".
+  it("fails on a listing with no list, or whose episodes don't name their series", async () => {
+    answering({});
+    await expect(getEpisodeFileCountsBySeries(config)).rejects.toThrow("unusable");
+    answering({ Items: [{ ParentIndexNumber: 1 }, { ParentIndexNumber: 2 }] });
+    await expect(getEpisodeFileCountsBySeries(config)).rejects.toThrow("unusable");
+  });
+});
+
+describe("seriesWithEpisodeFiles", () => {
+  it("counts specials, not episodes Jellyfin only knows from metadata", () => {
+    expect([
+      ...seriesWithEpisodeFiles([
+        { SeriesId: "a", ParentIndexNumber: 0 },
+        { SeriesId: "b", ParentIndexNumber: 1, LocationType: "Virtual" },
+        { ParentIndexNumber: 1 },
+      ]),
+    ]).toEqual(["a"]);
   });
 });
