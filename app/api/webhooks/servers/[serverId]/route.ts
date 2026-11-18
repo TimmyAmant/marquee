@@ -12,5 +12,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ ser
   const server = await getArrServerById(serverId);
   if (!secret || !server || !secretsMatch(secret, server.webhookSecret)) return rejectSecret(request);
 
-  return handleArrWebhookEvent(request, { ownerId: server.userId, kind: server.kind, fourK: server.is4k });
+  return handleArrWebhookEvent(request, { ownerId: server.userId, kind: server.kind, fourK: server.is4k, server });
 }

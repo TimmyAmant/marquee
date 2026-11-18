@@ -1,10 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
-import type { Translator } from "@/lib/i18n/translator";
 import { NextResponse } from "next/server";
 import type { ArrProvider } from "@/lib/db/schema";
 import { syncArrLibrary } from "@/lib/arr/sync";
+import { holdGrabNotice, episodesLabel, type GrabEpisode } from "@/lib/arr/grab-notice";
+import type { ArrServer } from "@/lib/arr/servers";
 import { debounce } from "@/lib/async/single-flight";
-import { createNotification } from "@/lib/notifications/query";
 import { scheduleCompletionCheck } from "@/lib/requests/complete";
 import { clearNotFoundForTitle } from "@/lib/requests/not-found";
 import { resolveTmdbIdFromTvdbId } from "@/lib/tmdb/cross-reference";
@@ -25,11 +25,6 @@ const WEBHOOK_RATE_WINDOW_MS = 60 * 1000;
 /** Quiet period after the last event before re-syncing — a burst of
  * per-episode events collapses into one library sync. */
 const SYNC_DEBOUNCE_MS = 5000;
-
-/** A season pack is grabbed as one Grab event per episode. Within this
- * window a repeat event for the same title is the same news, so it doesn't
- * notify (or post to Discord/ntfy/the webhook/push) again. */
-const NOTIFICATION_DEDUPE_WINDOW_MS = 30 * 60 * 1000;
 
 export function secretsMatch(provided: string, expected: string): boolean {
   const a = Buffer.from(provided);
@@ -61,24 +56,40 @@ export function rejectSecret(request: Request): NextResponse {
   return NextResponse.json({ error: "Invalid or missing secret" }, { status: 401 });
 }
 
-type RadarrWebhookBody = {
+/** What every Grab and Download carries about the release, for the log. */
+type ReleaseFields = {
+  release?: { releaseTitle?: string };
+  downloadClient?: string;
+  downloadId?: string;
+};
+
+type RadarrWebhookBody = ReleaseFields & {
   eventType?: string;
   movie?: { title?: string; tmdbId?: number };
 };
 
-type SonarrWebhookBody = {
+type SonarrWebhookBody = ReleaseFields & {
   eventType?: string;
   series?: { title?: string; tvdbId?: number };
+  episodes?: GrabEpisode[];
 };
 
-/** After the secret checked out: tells the admin about a Grab, checks
- * whether a Download completed anyone's request, and re-syncs the library.
- * `ownerId` is the admin the server belongs to. */
+/** A payload string, or null when it's missing or not a string. */
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/** After the secret checked out: tells the admin about a Grab (once it's
+ * confirmed, lib/arr/grab-notice.ts), checks whether a Download completed
+ * anyone's request, and re-syncs the library. `ownerId` is the admin the
+ * server belongs to; `server` the server the webhook URL names, null for
+ * the older per-account URLs. */
 export async function handleArrWebhookEvent(
   request: Request,
-  target: { ownerId: string; kind: ArrProvider; fourK: boolean },
+  target: { ownerId: string; kind: ArrProvider; fourK: boolean; server?: ArrServer | null },
 ): Promise<NextResponse> {
   const { ownerId: userId, kind: provider, fourK } = target;
+  const server = target.server ?? null;
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || typeof (body as { eventType?: unknown }).eventType !== "string") {
     return NextResponse.json({ error: "Malformed webhook payload" }, { status: 400 });
@@ -101,6 +112,7 @@ export async function handleArrWebhookEvent(
 
   let title: string | null = null;
   let tmdbId: number | null = null;
+  let episodes: GrabEpisode[] = [];
   const mediaType = provider === "radarr" ? "movie" : "tv";
 
   if (provider === "radarr") {
@@ -111,24 +123,24 @@ export async function handleArrWebhookEvent(
     const series = (body as SonarrWebhookBody).series;
     title = series?.title ?? null;
     tmdbId = series?.tvdbId != null ? await resolveTmdbIdFromTvdbId(series.tvdbId).catch(() => null) : null;
+    const listed = (body as SonarrWebhookBody).episodes;
+    episodes = Array.isArray(listed) ? listed.filter((e) => e && typeof e === "object") : [];
   }
+
+  // One line per event, so a notification can be matched to the server's
+  // own History: which server, which release, which download.
+  const fields = body as ReleaseFields;
+  const downloadId = text(fields.downloadId);
+  const from = server ? `${server.name} (${provider}${fourK ? ", 4K" : ""})` : `${provider}${fourK ? " 4K" : ""}`;
+  const what = [title ?? "?", episodesLabel(episodes)].filter(Boolean).join(" ");
+  console.info(
+    `[webhook] ${from} ${eventType}: ${what}, release "${text(fields.release?.releaseTitle) ?? "?"}", ` +
+      `client "${text(fields.downloadClient) ?? "?"}", download ${downloadId ?? "?"}`,
+  );
 
   if (title && tmdbId != null) {
     if (eventType === "Grab") {
-      const name = title;
-      // In the account's language, and the household's for its channels.
-      const message = (t: Translator) =>
-        t("notify.startedDownloading", { title: fourK ? t("notify.requestIn4k", { request: name }) : name });
-      await createNotification({
-        userId,
-        mediaType,
-        tmdbId,
-        title,
-        eventType: "grabbed",
-        message,
-        dedupeSince: new Date(Date.now() - NOTIFICATION_DEDUPE_WINDOW_MS),
-        is4k: fourK,
-      }).catch(() => undefined);
+      holdGrabNotice({ ownerId: userId, kind: provider, fourK, server, mediaType, tmdbId, title, episodes, downloadId });
     } else {
       // A file arrived. Nobody is told about the file itself: once the
       // title's requests have everything they asked for, each requester is

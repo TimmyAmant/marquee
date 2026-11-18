@@ -11,6 +11,16 @@ export type ChangelogEntry = {
  * from 0.7.0 onward is written at push time. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "0.77.2",
+    date: "2026-11-18",
+    changes: [
+      "\"Started downloading\" now means it. Marquee waits a couple of minutes after Sonarr or Radarr grabs something, checks the download is really in the queue (or already imported), and stays quiet about grabs that failed or were removed. Fake releases of episodes that haven't aired yet, which Sonarr grabs a day early and then throws away, no longer tell you something is downloading.",
+      "The notification says which episodes started downloading (\"Severance (S02E05) started downloading\"), and when they haven't aired yet it says so, since early releases are often fakes.",
+      "A torrent still fetching its details, a failed download, or a release Sonarr or Radarr is holding back under a delay profile no longer shows as Downloading or sends \"Ready to move\".",
+      "Every Grab and Download that Sonarr and Radarr send Marquee is written to Settings → Logs, with the server, release, download client and download id, so a notification can be matched to their History.",
+    ],
+  },
+  {
     version: "0.77.1",
     date: "2026-11-11",
     changes: [

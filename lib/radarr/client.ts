@@ -209,6 +209,27 @@ export async function getQueueSummaries(config: ArrConfig): Promise<Map<number, 
   return summarizeQueue(res.records, (r) => r.movieId);
 }
 
+/** The download ids (torrent hashes, usenet ids) in the queue right now,
+ * upper-cased: the same download's id isn't always written in the same case
+ * by the webhook, the queue and the history. */
+export async function getQueueDownloadIds(config: ArrConfig): Promise<Set<string>> {
+  const res = await radarrFetch<{ records: { downloadId?: string }[] }>(config, "/queue?pageSize=1000");
+  return new Set(res.records.flatMap((r) => (r.downloadId ? [r.downloadId.toUpperCase()] : [])));
+}
+
+/** What Radarr's history says happened to one download, newest first:
+ * "grabbed", "downloadFolderImported", "downloadFailed", "downloadIgnored"…
+ * Matched on the id here too, in case an older Radarr ignores the filter and
+ * answers with everything. */
+export async function getDownloadHistory(config: ArrConfig, downloadId: string): Promise<string[]> {
+  const res = await radarrFetch<{ records: { eventType?: string; downloadId?: string }[] }>(
+    config,
+    `/history?downloadId=${encodeURIComponent(downloadId)}&pageSize=50`,
+  );
+  const wanted = downloadId.toUpperCase();
+  return res.records.flatMap((r) => (r.eventType && r.downloadId?.toUpperCase() === wanted ? [r.eventType] : []));
+}
+
 export interface RadarrCalendarMovie extends RadarrMovie {
   inCinemas?: string;
   physicalRelease?: string;
