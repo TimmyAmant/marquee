@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveRadarrStatus, deriveSonarrStatus, isActiveQueueRecord, statusWithQueue, summarizeQueue } from "./arr-status-logic";
+import { deriveRadarrStatus, deriveSonarrStatus, isActiveQueueRecord, queueRecordKind, statusWithQueue, summarizeQueue } from "./arr-status-logic";
 import type { RadarrMovie } from "@/lib/radarr/client";
 import type { SonarrSeries } from "@/lib/sonarr/client";
 
@@ -220,5 +220,45 @@ describe("statusWithQueue", () => {
   it("goes by what's on disk otherwise", () => {
     expect(statusWithQueue("owned", queue(false, true))).toEqual({ status: "owned", progress: null });
     expect(statusWithQueue("tracked_monitored", undefined)).toEqual({ status: "tracked_monitored", progress: null });
+  });
+});
+
+describe("queueRecordKind", () => {
+  it("leaves out a release Sonarr/Radarr is holding back and hasn't sent to the client", () => {
+    // A delay profile's pending release: in /queue with its full size left.
+    expect(queueRecordKind({ status: "delay", size: 1000, sizeleft: 1000 })).toBe("none");
+    expect(queueRecordKind({ status: "downloadClientUnavailable", size: 1000, sizeleft: 1000 })).toBe("none");
+  });
+
+  it("leaves out a download that failed or was ignored, even with nothing left", () => {
+    // Caught by the download watch in the moments before Sonarr removes it.
+    expect(queueRecordKind({ trackedDownloadState: "failedPending", status: "failed", size: 500, sizeleft: 0 })).toBe("none");
+    expect(queueRecordKind({ trackedDownloadState: "failed", size: 500, sizeleft: 0 })).toBe("none");
+    expect(queueRecordKind({ trackedDownloadState: "ignored", size: 500, sizeleft: 0 })).toBe("none");
+  });
+
+  it("counts a magnet still fetching its metadata as on its way, not finished", () => {
+    // qBittorrent reports size 0 until it knows what's in the torrent.
+    expect(queueRecordKind({ trackedDownloadState: "downloading", status: "queued", size: 0, sizeleft: 0 })).toBe("active");
+  });
+
+  it("still calls a download with nothing left that was never imported finished", () => {
+    expect(queueRecordKind({ trackedDownloadState: "downloading", status: "warning", size: 500, sizeleft: 0 })).toBe("finished");
+    expect(queueRecordKind({ trackedDownloadState: "importBlocked", size: 500, sizeleft: 0 })).toBe("finished");
+  });
+
+  it("keeps a failed fake out of a title's summary, so it isn't ready to move", () => {
+    const summary = summarizeQueue(
+      [{ id: 1, trackedDownloadState: "failedPending", status: "failed", size: 500, sizeleft: 0 }],
+      (r) => r.id,
+    );
+    expect(summary.get(1)).toEqual({ active: false, progress: null, finished: false });
+  });
+});
+
+describe("summarizeQueue and releases not sent yet", () => {
+  it("leaves a title with only a held-back release out of the queue altogether", () => {
+    const summary = summarizeQueue([{ id: 1, status: "delay", size: 1000, sizeleft: 1000 }], (r) => r.id);
+    expect(summary.has(1)).toBe(false);
   });
 });

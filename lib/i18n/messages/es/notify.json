@@ -175,6 +175,8 @@
   "titleReady": "{title} está listo para ver",
   "showReady": "{title}: todos los episodios emitidos están listos para ver",
   "startedDownloading": "{title} empezó a descargarse",
+  "startedDownloadingEpisodes": "{title} ({episodes}) empezó a descargarse",
+  "startedDownloadingEarly": "{title} ({episodes}) empezó a descargarse antes de su emisión. Las publicaciones anticipadas suelen ser falsas, y Sonarr las descarta en cuanto las detecta.",
   "reconciled4k": "{title} ya está en la biblioteca 4K o de camino.",
   "reconciledSeasons": "{request} ya está en tu biblioteca o de camino.",
   "reconciledComingSoon": "{title} ya se está siguiendo: aún no se ha estrenado.",

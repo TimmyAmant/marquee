@@ -41,22 +41,51 @@ export function deriveSonarrStatus(series: SonarrSeries): LibraryStatus {
   return "tracked_monitored";
 }
 
-/** One record from Radarr's or Sonarr's /queue. */
-export type ArrQueueRecord = { trackedDownloadState?: string; size?: number; sizeleft?: number };
+/** One record from Radarr's or Sonarr's /queue. `status` is the queue's own
+ * word for it ("downloading", "warning", "delay", …). */
+export type ArrQueueRecord = { trackedDownloadState?: string; status?: string; size?: number; sizeleft?: number };
+
+/** Releases Sonarr/Radarr found but haven't sent to the download client:
+ * held by a delay profile, or waiting for the client to come back. They're
+ * in /queue (as "Pending" in their own UI) with nothing downloading yet. */
+const NOT_SENT_STATUSES = new Set(["delay", "downloadClientUnavailable", "fallback"]);
+
+/** Downloads that are over without arriving: failed (a fake release Sonarr
+ * rejected, say), or ignored by hand. Sonarr/Radarr remove these from the
+ * client and the queue moments later, but the download watch looks every
+ * minute and can catch one on the way out. Imported ones are simply done. */
+const OVER_STATES = new Set(["imported", "failedPending", "failed", "ignored"]);
 
 /**
- * Whether a queue record is still on its way in: bytes left to download, or
- * being imported right now. A finished download can sit in the queue for
- * good — imported and seeding, or never imported at all (e.g. a torrent
- * saved straight into the client's download folder, which Radarr and Sonarr
- * won't import, so it stays "downloading" with nothing left). Counting those
- * would show the title as "Downloading" forever.
+ * What a queue record means for its title: still on its way in
+ * ("active": bytes left, or being imported right now), finished but never
+ * imported ("finished": e.g. a torrent saved straight into the client's
+ * download folder, which Radarr and Sonarr won't import, so it stays
+ * "downloading" with nothing left), or neither ("none": imported, failed,
+ * or not sent to the client yet). Counting a finished one as active would
+ * show the title as "Downloading" forever.
  */
-export function isActiveQueueRecord(record: ArrQueueRecord): boolean {
+export function queueRecordKind(record: ArrQueueRecord): "active" | "finished" | "none" {
   const state = record.trackedDownloadState;
-  if (state === "imported") return false;
-  if (state === "importPending" || state === "importing") return true;
-  return record.sizeleft == null || record.sizeleft > 0;
+  if (state && OVER_STATES.has(state)) return "none";
+  if (isNotSent(record)) return "none";
+  if (state === "importPending" || state === "importing") return "active";
+  if (record.sizeleft == null || record.sizeleft > 0) return "active";
+  // Nothing left of nothing: a magnet still fetching its metadata (dead
+  // and fake releases can stay that way for good) reports a size of 0, so
+  // it hasn't downloaded anything yet, let alone finished.
+  if (record.size === 0) return "active";
+  return "finished";
+}
+
+/** A release Sonarr/Radarr hasn't handed to the download client yet. */
+function isNotSent(record: ArrQueueRecord): boolean {
+  return !record.trackedDownloadState && !!record.status && NOT_SENT_STATUSES.has(record.status);
+}
+
+/** Whether a queue record is still on its way in (see queueRecordKind). */
+export function isActiveQueueRecord(record: ArrQueueRecord): boolean {
+  return queueRecordKind(record) === "active";
 }
 
 /** What a title's queue records add up to. */
@@ -77,6 +106,9 @@ export function summarizeQueue<R extends ArrQueueRecord>(
 ): Map<number, QueueSummary> {
   const groups = new Map<number, R[]>();
   for (const record of records) {
+    // Not in the download client, so not "in the queue" for Marquee's
+    // purposes either: the download watch has nothing to follow yet.
+    if (isNotSent(record)) continue;
     const id = idOf(record);
     groups.set(id, [...(groups.get(id) ?? []), record]);
   }
@@ -88,7 +120,7 @@ export function summarizeQueue<R extends ArrQueueRecord>(
     summaries.set(id, {
       active: active.length > 0,
       progress: active.length > 0 && size > 0 ? Math.min(100, Math.max(0, Math.floor(((size - left) / size) * 100))) : null,
-      finished: group.some((r) => r.trackedDownloadState !== "imported" && !isActiveQueueRecord(r)),
+      finished: group.some((r) => queueRecordKind(r) === "finished"),
     });
   }
   return summaries;
